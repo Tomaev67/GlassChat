@@ -499,9 +499,17 @@
         updateProfileUI();
       });
 
+      // ФИЛЬТР: берем только тех, у кого есть почта (чтобы убрать дубли от удаленных акков)
       db.ref('users').on('value', snapshot => {
-        ALL_USERS = snapshot.val() || {};
+        const rawUsers = snapshot.val() || {};
+        ALL_USERS = {};
+        for (let k in rawUsers) {
+          if (rawUsers[k].email && !rawUsers[k].deleted) {
+            ALL_USERS[k] = rawUsers[k];
+          }
+        }
         if (state.currentChatId) updateChatHeader(state.currentChatId);
+        renderChatList();
       });
 
       db.ref('user_chats/' + user.uid).on('value', snapshot => {
@@ -543,7 +551,6 @@
     if (!un.startsWith('@')) un = '@' + un;
     if (un.length < 4) { alert('Минимум 4 символа'); return; }
     
-    // Проверка на занятость
     const taken = Object.values(ALL_USERS).some(u => u.username.toLowerCase() === un);
     if (taken) { alert('Этот username уже занят!'); return; }
     
@@ -560,6 +567,7 @@
     try {
       const cred = await auth.createUserWithEmailAndPassword(tempEmail, tempPass);
       await db.ref('users/' + cred.user.uid).set({
+        email: tempEmail, // Обязательно сохраняем email, чтобы фильтр работал!
         nick: state.nick, username: state.username, avatar: state.avatar || null,
         verified: false, deleted: false, glass: 0, online: true, bio: ''
       });
@@ -688,6 +696,7 @@
 
   function renderChatList() {
     const list = document.getElementById('chatList');
+    if (!list) return;
     list.innerHTML = '';
     if (MY_CHATS.length === 0) { list.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">Найдите друга через поиск!</div>'; return; }
     
@@ -745,6 +754,7 @@
   // 6. ПРОФИЛЬ, РЕДАКТИРОВАНИЕ И ПОДАРКИ
   function openUserProfile(uid) {
     const u = ALL_USERS[uid];
+    if(!u) return;
     document.getElementById('upAvatar').innerHTML = u.avatar ? `<img src="${u.avatar}">` : '👤';
     document.getElementById('upName').innerText = u.nick;
     document.getElementById('upUsername').innerText = u.username;
@@ -771,12 +781,23 @@
     document.getElementById('editProfileInput').value = field === 'nick' ? state.nick : (field === 'username' ? state.username : state.bio);
     document.getElementById('editProfileModal').classList.add('show');
   }
-  function saveProfileEdit() {
+  
+  async function saveProfileEdit() {
     const val = document.getElementById('editProfileInput').value.trim();
     if (!val) return;
-    if (currentEditField === 'nick') db.ref('users/' + state.uid + '/nick').set(val);
-    if (currentEditField === 'username') db.ref('users/' + state.uid + '/username').set(val);
-    if (currentEditField === 'bio') db.ref('users/' + state.uid + '/bio').set(val);
+    
+    if (currentEditField === 'username') {
+       let un = val.toLowerCase();
+       if (!un.startsWith('@')) un = '@' + un;
+       if (un.length < 4) { alert('Минимум 4 символа'); return; }
+       if (un !== state.username && Object.values(ALL_USERS).some(u => u.username.toLowerCase() === un)) {
+           alert('Этот username уже занят!'); return;
+       }
+       db.ref('users/' + state.uid + '/username').set(un);
+    }
+    else if (currentEditField === 'nick') db.ref('users/' + state.uid + '/nick').set(val);
+    else if (currentEditField === 'bio') db.ref('users/' + state.uid + '/bio').set(val);
+    
     document.getElementById('editProfileModal').classList.remove('show');
   }
 
