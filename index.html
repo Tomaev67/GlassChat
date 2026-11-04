@@ -405,7 +405,7 @@
       <div class="chat-avatar" id="chatHeaderAvatar">👤</div>
       <div class="chat-header-info"><h3 id="chatHeaderName">Имя</h3><span id="chatHeaderStatus">в сети</span></div>
     </div>
-    <button class="chat-header-btn" onclick="openChatHeaderMenu()">⋮</button>
+    <button class="chat-header-btn" onclick="event.stopPropagation(); openChatHeaderMenu()">⋮</button>
   </div>
   
   <div class="pinned-banner" id="pinnedBanner" onclick="scrollToPinned()">
@@ -832,6 +832,7 @@
   }
 
   function openChatView(chatId) {
+    if (!ALL_USERS[chatId]) { alert('Профиль ещё загружается...'); return; }
     state.currentChatId = chatId;
     document.getElementById('chatView').classList.add('active');
     document.getElementById('chatHeaderAvatar').innerHTML = ALL_USERS[chatId].avatar ? `<img src="${ALL_USERS[chatId].avatar}">` : '👤';
@@ -946,13 +947,16 @@
       let displayName = (state.contacts && state.contacts[cid]) ? state.contacts[cid] : u.nick;
 
       list.innerHTML += `
-        <div class="chat-item" onclick="openChatView('${cid}')">
-          <div class="chat-avatar" style="${u.premium ? 'border: 2px solid #fbbf24;' : ''}">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
-          <div class="chat-info">
+        <div class="chat-item">
+          <div class="chat-avatar" style="${u.premium ? 'border: 2px solid #fbbf24;' : ''}"
+               onclick="event.stopPropagation(); openUserProfile('${cid}')">
+            ${u.avatar ? `<img src="${u.avatar}">` : '👤'}
+          </div>
+          <div class="chat-info" onclick="openChatView('${cid}')">
             <div class="chat-name">${displayName} ${badges}</div>
             <div class="chat-preview ${unread > 0 ? 'unread' : ''}">${u.username}</div>
           </div>
-          ${unread > 0 ? `<div class="chat-unread-badge">${unread}</div>` : ''}
+          ${unread > 0 ? `<div class="chat-unread-badge" onclick="event.stopPropagation(); openChatView('${cid}')">${unread}</div>` : ''}
         </div>`;
     });
   }
@@ -972,9 +976,14 @@
       if (u.username.toLowerCase() === val) {
         found = true;
         list.innerHTML += `
-          <div class="chat-item" onclick="startChatWith('${uid}')">
-            <div class="chat-avatar">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
-            <div class="chat-info"><div class="chat-name">${u.nick}</div><div class="chat-preview">${u.username}</div></div>
+          <div class="chat-item">
+            <div class="chat-avatar" onclick="event.stopPropagation(); openUserProfile('${uid}')">
+              ${u.avatar ? `<img src="${u.avatar}">` : '👤'}
+            </div>
+            <div class="chat-info" onclick="startChatWith('${uid}')">
+              <div class="chat-name">${u.nick}</div>
+              <div class="chat-preview">${u.username}</div>
+            </div>
           </div>`;
       }
     }
@@ -994,13 +1003,23 @@
 
   // 5. ПРОФИЛЬ И КОНТАКТЫ
   function openUserProfile(uid) {
+    if (!uid) return;
     const u = ALL_USERS[uid];
-    if(!u) return;
+    if (u) { fillUserProfile(uid, u); return; }
+    db.ref('users/' + uid).once('value').then(snap => {
+      const data = snap.val();
+      if (!data) { alert('Профиль не найден'); return; }
+      ALL_USERS[uid] = data;
+      fillUserProfile(uid, data);
+    });
+  }
+
+  function fillUserProfile(uid, u) {
     document.getElementById('upAvatar').innerHTML = u.avatar ? `<img src="${u.avatar}">` : '👤';
     document.getElementById('upAvatar').style.border = u.premium ? '3px solid #fbbf24' : '3px solid var(--glass-border)';
     
     let displayName = (state.contacts && state.contacts[uid]) ? state.contacts[uid] : u.nick;
-    document.getElementById('upName').innerText = displayName;
+    document.getElementById('upName').childNodes[0].textContent = displayName + ' ';
     document.getElementById('upUsername').innerText = u.username;
     
     document.getElementById('upBadgeDev').style.display = u.verified_dev ? 'inline' : 'none';
@@ -1014,7 +1033,9 @@
 
   function saveContact() {
     if (!state.currentChatId) return;
-    const newName = prompt('Введите имя для этого контакта:', ALL_USERS[state.currentChatId].nick);
+    const target = ALL_USERS[state.currentChatId];
+    if (!target) return;
+    const newName = prompt('Введите имя для этого контакта:', target.nick);
     if (newName) {
       db.ref('users/' + state.uid + '/contacts/' + state.currentChatId).set(newName).then(() => {
         alert('Контакт сохранен!');
@@ -1025,6 +1046,7 @@
   }
 
   function updateProfileUI() {
+    if (!document.getElementById('profileName')) return;
     document.getElementById('profileName').childNodes[0].textContent = state.nick + ' ';
     document.getElementById('profileUsername').innerText = state.username;
     document.getElementById('infoNick').innerText = state.nick;
@@ -1202,9 +1224,13 @@
   }
 
   // 8. ЛЕНТА (FEED)
-  function openCreatePostModal() { document.getElementById('createPostModal').classList.add('show'); }
+  function openCreatePostModal() {
+    if (!state.uid) { alert('Сначала войдите в аккаунт'); return; }
+    document.getElementById('createPostModal').classList.add('show');
+  }
 
   function publishPost() {
+    if (!state.uid) { alert('Сначала войдите в аккаунт'); return; }
     const text = document.getElementById('postText').value.trim();
     const fileInput = document.getElementById('postImage');
     const file = fileInput.files[0];
@@ -1212,10 +1238,11 @@
     if (!text && !file) { alert('Напишите текст или добавьте фото'); return; }
 
     const publish = (imgData) => {
-      db.ref('posts').push({
+      const newPostRef = db.ref('posts').push();
+      newPostRef.set({
         authorUid: state.uid,
-        authorName: state.nick,
-        authorAvatar: state.avatar,
+        authorName: state.nick || 'Без имени',
+        authorAvatar: state.avatar || null,
         text: text,
         image: imgData || null,
         timestamp: Date.now(),
@@ -1225,8 +1252,8 @@
         document.getElementById('postText').value = '';
         fileInput.value = '';
         document.getElementById('createPostModal').classList.remove('show');
-        switchPage('feed', document.querySelector('[onclick*="feed"]'));
-      });
+        switchPage('feed', document.querySelector('.nav-btn[onclick*="feed"]'));
+      }).catch(e => alert('Ошибка публикации: ' + e.message));
     };
 
     if (file) {
@@ -1243,13 +1270,18 @@
     const container = document.getElementById('feedContainer');
     if (!container) return;
     container.innerHTML = '';
-    
-    const arr = Object.values(posts).sort((a,b) => b.timestamp - a.timestamp);
-    
+
+    const arr = Object.keys(posts).map(k => ({ key: k, ...posts[k] })).sort((a,b) => b.timestamp - a.timestamp);
+
+    if (arr.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding:30px; opacity:0.5;">Пока нет постов. Будьте первым!</div>';
+      return;
+    }
+
     arr.forEach(p => {
       const isLiked = p.likes && p.likes[state.uid];
       const likesCount = p.likes ? Object.keys(p.likes).length : 0;
-      
+
       let commentsHtml = '';
       if (p.comments) {
         Object.values(p.comments).forEach(c => {
@@ -1260,17 +1292,19 @@
       container.innerHTML += `
         <div class="feed-post">
           <div class="feed-header">
-            <div class="feed-avatar">${p.authorAvatar ? `<img src="${p.authorAvatar}">` : '👤'}</div>
+            <div class="feed-avatar" onclick="openUserProfile('${p.authorUid}')" style="cursor:pointer;">
+              ${p.authorAvatar ? `<img src="${p.authorAvatar}">` : '👤'}
+            </div>
             <div class="feed-info">
-              <div class="feed-name">${p.authorName}</div>
+              <div class="feed-name" onclick="openUserProfile('${p.authorUid}')" style="cursor:pointer;">${p.authorName}</div>
               <div class="feed-time">${new Date(p.timestamp).toLocaleString()}</div>
             </div>
           </div>
           <div class="feed-content">${p.text || ''}</div>
           ${p.image ? `<img src="${p.image}" class="feed-media">` : ''}
           <div class="feed-actions">
-            <div class="feed-action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${p.timestamp}')">${isLiked ? '❤️' : '🤍'} ${likesCount}</div>
-            <div class="feed-action-btn" onclick="promptComment('${p.timestamp}')">💬 Комментировать</div>
+            <div class="feed-action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${p.key}')">${isLiked ? '❤️' : '🤍'} ${likesCount}</div>
+            <div class="feed-action-btn" onclick="promptComment('${p.key}')">💬 Комментировать</div>
           </div>
           <div class="feed-comments">${commentsHtml}</div>
         </div>
@@ -1279,6 +1313,7 @@
   });
 
   function toggleLike(postKey) {
+    if (!state.uid) return;
     const likeRef = db.ref('posts/' + postKey + '/likes/' + state.uid);
     likeRef.once('value').then(snap => {
       if (snap.exists()) likeRef.remove();
@@ -1287,10 +1322,11 @@
   }
 
   function promptComment(postKey) {
+    if (!state.uid) return;
     const text = prompt('Ваш комментарий:');
     if (!text) return;
     db.ref('posts/' + postKey + '/comments').push({
-      authorName: state.nick,
+      authorName: state.nick || 'Без имени',
       text: text
     });
   }
