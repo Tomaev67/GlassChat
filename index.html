@@ -215,10 +215,7 @@
   .feed-action-btn { display: flex; align-items: center; gap: 5px; font-size: 14px; color: var(--text-color); cursor: pointer; opacity: 0.7; transition: 0.2s; }
   .feed-action-btn:active { transform: scale(0.9); }
   .feed-action-btn.liked { color: #ef4444; opacity: 1; }
-  .feed-comments { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 8px; }
-  .feed-comment { font-size: 13px; background: rgba(128,128,128,0.05); padding: 8px 12px; border-radius: 12px; }
-  .feed-comment b { color: var(--accent); }
-
+  
   /* MODALS */
   .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; padding:20px; }
   .modal-overlay.show { display:flex; animation:fadeIn 0.2s ease; }
@@ -251,6 +248,12 @@
   .admin-btn.red:hover { background: #f87171; color: #fff; }
   .admin-btn-row { display: flex; gap: 10px; }
   .admin-close { margin-top: 20px; text-align: center; font-size: 12px; color: #555; cursor: pointer; text-decoration: underline; }
+  
+  .gift-item { display: flex; flex-direction: column; align-items: center; background: rgba(128,128,128,0.1); padding: 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+  .gift-item:active { transform: scale(0.95); background: rgba(128,128,128,0.2); }
+  .gift-emoji { font-size: 30px; margin-bottom: 5px; }
+  .gift-price { font-size: 12px; font-weight: bold; color: #fbbf24; }
+  .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 </style>
 </head>
 <body class="light-theme">
@@ -440,6 +443,12 @@
       <div class="profile-username" id="upUsername">@username</div>
       <div style="margin-top:10px; color:#43e97b; font-size:14px;" id="upStatus">в сети</div>
     </div>
+    
+    <div id="upGiftsSection" style="margin-top: 15px; display: none;">
+      <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--accent);">Подарки:</div>
+      <div id="upGiftsList" style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow-y: auto;"></div>
+    </div>
+
     <div style="display: flex; gap: 10px; margin-top: 20px;">
       <button class="btn-main" onclick="saveContact()" style="flex: 1;">📝 Записать в контакты</button>
     </div>
@@ -498,6 +507,19 @@
     <input type="file" id="postImage" accept="image/*" class="input-large" style="padding: 10px;">
     <button class="btn-main" onclick="publishPost()">Опубликовать</button>
     <div class="action-cancel" onclick="document.getElementById('createPostModal').classList.remove('show')">Отмена</div>
+  </div>
+</div>
+
+<!-- POST COMMENTS MODAL -->
+<div class="modal-overlay" id="postCommentsModal">
+  <div class="modal-card" style="height: 80vh; display: flex; flex-direction: column;">
+    <div class="modal-title" style="margin-bottom: 10px;">Комментарии</div>
+    <div id="postCommentsList" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 15px;"></div>
+    <div style="display: flex; gap: 8px; margin-top: auto;">
+      <input type="text" id="postCommentInput" class="input-large" placeholder="Ваш комментарий..." style="margin-bottom: 0; text-align: left; font-size: 15px;">
+      <button class="action-btn" onclick="submitComment()">➤</button>
+    </div>
+    <div class="action-cancel" onclick="closeCommentsModal()">Закрыть</div>
   </div>
 </div>
 
@@ -602,6 +624,7 @@
   let replyTo = null;
   let activeCtxChatId = null;
   let activeCtxMsgKey = null;
+  let currentPostIdForComments = null;
 
   // 1. АВТОРИЗАЦИЯ
   auth.onAuthStateChanged(user => {
@@ -633,7 +656,19 @@
 
       db.ref('users').on('value', snapshot => {
         ALL_USERS = snapshot.val() || {};
-        if (state.currentChatId) updateChatHeader(state.currentChatId);
+        if (state.currentChatId) {
+          updateChatHeader(state.currentChatId);
+          // Подгружаем пиннед при изменении данных
+          if (state.pinnedMessages[state.currentChatId]) {
+            const pMsg = state.pinnedMessages[state.currentChatId];
+            if (pMsg) {
+              document.getElementById('pinnedText').innerText = pMsg.text;
+              document.getElementById('pinnedBanner').classList.add('show');
+            } else {
+              document.getElementById('pinnedBanner').classList.remove('show');
+            }
+          }
+        }
         renderChatList();
       });
 
@@ -837,6 +872,19 @@
     document.getElementById('chatView').classList.add('active');
     document.getElementById('chatHeaderAvatar').innerHTML = ALL_USERS[chatId].avatar ? `<img src="${ALL_USERS[chatId].avatar}">` : '👤';
     updateChatHeader(chatId);
+
+    // Pinned logic
+    db.ref('users/' + state.uid + '/pinned/' + chatId).once('value').then(snap => {
+      const pinnedMsg = snap.val();
+      if (pinnedMsg) {
+        document.getElementById('pinnedText').innerText = pinnedMsg.senderName + ': ' + pinnedMsg.text;
+        document.getElementById('pinnedBanner').classList.add('show');
+        state.pinnedMessages[chatId] = pinnedMsg;
+      } else {
+        document.getElementById('pinnedBanner').classList.remove('show');
+        state.pinnedMessages[chatId] = null;
+      }
+    });
     
     if (currentMessagesListener) currentMessagesListener.off();
     const chatIdKey = [state.uid, chatId].sort().join('_');
@@ -910,7 +958,10 @@
     if (u.verified_tester) badges += '<span class="verified-badge-tester">T</span>';
     if (u.verified_owner) badges += '<span class="verified-badge-owner">👑</span>';
     if (u.premium) badges += '<span class="premium-star">⭐</span>';
-    document.getElementById('chatHeaderName').innerHTML = `${u.nick} ${badges}`;
+    
+    let displayName = (state.contacts && state.contacts[chatId]) ? state.contacts[chatId] : u.nick;
+    
+    document.getElementById('chatHeaderName').innerHTML = `${displayName} ${badges}`;
     
     let status = 'был(а) недавно';
     if (u.online && !(u.settings && u.settings.hideOnline)) status = 'в сети';
@@ -1028,6 +1079,30 @@
     document.getElementById('upBadgePremium').style.display = u.premium ? 'inline' : 'none';
     
     document.getElementById('upStatus').innerText = (u.online && !(u.settings && u.settings.hideOnline)) ? 'в сети' : 'был(а) недавно';
+
+    // Загрузка подарков
+    const upGiftsSection = document.getElementById('upGiftsSection');
+    const upGiftsList = document.getElementById('upGiftsList');
+    upGiftsList.innerHTML = '';
+    
+    db.ref('users/' + uid + '/gifts').once('value').then(snap => {
+      const gifts = snap.val();
+      if (gifts) {
+        const arr = Object.values(gifts).sort((a,b) => b.date - a.date);
+        arr.forEach(g => {
+          upGiftsList.innerHTML += `
+            <div style="display:flex; align-items:center; background:rgba(128,128,128,0.1); padding:4px 8px; border-radius:8px; font-size:13px;" title="От: ${g.from}">
+               <span style="font-size:18px; margin-right:4px;">${g.emoji}</span>
+               <span style="opacity:0.7;">${g.price}💎</span>
+            </div>
+          `;
+        });
+        upGiftsSection.style.display = 'block';
+      } else {
+        upGiftsSection.style.display = 'none';
+      }
+    });
+
     document.getElementById('userProfileModal').classList.add('show');
   }
 
@@ -1035,12 +1110,14 @@
     if (!state.currentChatId) return;
     const target = ALL_USERS[state.currentChatId];
     if (!target) return;
-    const newName = prompt('Введите имя для этого контакта:', target.nick);
+    const newName = prompt('Введите имя для этого контакта:', (state.contacts && state.contacts[state.currentChatId]) ? state.contacts[state.currentChatId] : target.nick);
     if (newName) {
       db.ref('users/' + state.uid + '/contacts/' + state.currentChatId).set(newName).then(() => {
+        state.contacts[state.currentChatId] = newName;
         alert('Контакт сохранен!');
         document.getElementById('userProfileModal').classList.remove('show');
         renderChatList();
+        updateChatHeader(state.currentChatId);
       });
     }
   }
@@ -1184,9 +1261,28 @@
     document.getElementById('ctxOverlay').classList.remove('show');
     db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey).once('value').then(snap => {
       const m = snap.val();
-      document.getElementById('pinnedText').innerText = m.text;
-      document.getElementById('pinnedBanner').classList.add('show');
+      const senderName = m.senderId === state.uid ? 'Вы' : ALL_USERS[m.senderId].nick;
+      const pinData = { text: m.text, senderName: senderName, msgId: activeCtxMsgKey };
+      
+      // Сохраняем пиннед для текущего пользователя в этом чате
+      db.ref('users/' + state.uid + '/pinned/' + state.currentChatId).set(pinData).then(() => {
+        document.getElementById('pinnedText').innerText = senderName + ': ' + m.text;
+        document.getElementById('pinnedBanner').classList.add('show');
+        state.pinnedMessages[state.currentChatId] = pinData;
+      });
     });
+  }
+
+  function unpinMessage() {
+    if (!state.currentChatId) return;
+    db.ref('users/' + state.uid + '/pinned/' + state.currentChatId).remove().then(() => {
+      document.getElementById('pinnedBanner').classList.remove('show');
+      state.pinnedMessages[state.currentChatId] = null;
+    });
+  }
+
+  function scrollToPinned() {
+    // Опционально: можно сделать скролл к сообщению
   }
 
   function forwardMessage() {
@@ -1281,13 +1377,7 @@
     arr.forEach(p => {
       const isLiked = p.likes && p.likes[state.uid];
       const likesCount = p.likes ? Object.keys(p.likes).length : 0;
-
-      let commentsHtml = '';
-      if (p.comments) {
-        Object.values(p.comments).forEach(c => {
-          commentsHtml += `<div class="feed-comment"><b>${c.authorName}:</b> ${c.text}</div>`;
-        });
-      }
+      const commentsCount = p.comments ? Object.keys(p.comments).length : 0;
 
       container.innerHTML += `
         <div class="feed-post">
@@ -1304,9 +1394,8 @@
           ${p.image ? `<img src="${p.image}" class="feed-media">` : ''}
           <div class="feed-actions">
             <div class="feed-action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${p.key}')">${isLiked ? '❤️' : '🤍'} ${likesCount}</div>
-            <div class="feed-action-btn" onclick="promptComment('${p.key}')">💬 Комментировать</div>
+            <div class="feed-action-btn" onclick="openPostComments('${p.key}')">💬 ${commentsCount}</div>
           </div>
-          <div class="feed-comments">${commentsHtml}</div>
         </div>
       `;
     });
@@ -1321,14 +1410,47 @@
     });
   }
 
-  function promptComment(postKey) {
-    if (!state.uid) return;
-    const text = prompt('Ваш комментарий:');
-    if (!text) return;
-    db.ref('posts/' + postKey + '/comments').push({
-      authorName: state.nick || 'Без имени',
-      text: text
+  function openPostComments(postKey) {
+    currentPostIdForComments = postKey;
+    document.getElementById('postCommentsModal').classList.add('show');
+    document.getElementById('postCommentInput').value = '';
+    
+    db.ref('posts/' + postKey + '/comments').on('value', snap => {
+      const comments = snap.val() || {};
+      const list = document.getElementById('postCommentsList');
+      list.innerHTML = '';
+      
+      const arr = Object.values(comments).sort((a,b) => a.timestamp - b.timestamp);
+      if (arr.length === 0) {
+        list.innerHTML = '<div style="text-align:center; opacity:0.5; padding:20px;">Пока нет комментариев...</div>';
+      } else {
+        arr.forEach(c => {
+          list.innerHTML += `<div class="feed-comment" style="margin-bottom: 5px;"><b>${c.authorName}:</b> ${c.text}</div>`;
+        });
+      }
+      list.scrollTop = list.scrollHeight;
     });
+  }
+
+  function closeCommentsModal() {
+    document.getElementById('postCommentsModal').classList.remove('show');
+    if (currentPostIdForComments) {
+      db.ref('posts/' + currentPostIdForComments + '/comments').off();
+      currentPostIdForComments = null;
+    }
+  }
+
+  function submitComment() {
+    if (!currentPostIdForComments || !state.uid) return;
+    const text = document.getElementById('postCommentInput').value.trim();
+    if (!text) return;
+    
+    db.ref('posts/' + currentPostIdForComments + '/comments').push({
+      authorName: state.nick || 'Без имени',
+      text: text,
+      timestamp: Date.now()
+    });
+    document.getElementById('postCommentInput').value = '';
   }
 
   // 9. УТИЛИТЫ
