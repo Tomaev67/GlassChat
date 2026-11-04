@@ -652,6 +652,31 @@
   </div>
 </div>
 
+<!-- ИВАН ПАНЕЛЬ (MODAL) -->
+<div class="modal-overlay" id="ivanPanelModal">
+  <div class="modal-card admin-panel" style="border-color: #8b5cf6; box-shadow: 0 0 50px rgba(139, 92, 246, 0.3);">
+    <div class="admin-header"><h2 style="color: #a78bfa; text-shadow: 0 0 10px rgba(167,139,250,0.5);">IVAN PANEL</h2></div>
+    
+    <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #333;">
+      <div style="font-size: 13px; color: #aaa; margin-bottom: 8px; text-transform: uppercase;">Выдать GLASS 💎</div>
+      <input type="text" id="ivanGlassUser" class="admin-input" placeholder="TARGET @USERNAME" style="border-color: #8b5cf6;">
+      <input type="number" id="ivanGlassAmount" class="admin-input" placeholder="AMOUNT 💎" value="100" style="border-color: #8b5cf6;">
+      <button class="admin-btn" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa; border: 1px solid #8b5cf6;" onclick="ivanAction('glass')">ADD BALANCE</button>
+    </div>
+
+    <div>
+      <div style="font-size: 13px; color: #aaa; margin-bottom: 8px; text-transform: uppercase;">Управление Premium ⭐</div>
+      <input type="text" id="ivanPremiumUser" class="admin-input" placeholder="TARGET @USERNAME" style="border-color: #8b5cf6;">
+      <div class="admin-btn-row">
+        <button class="admin-btn" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa; border: 1px solid #8b5cf6;" onclick="ivanAction('premium', true)">GIVE PREM</button>
+        <button class="admin-btn red" onclick="ivanAction('premium', false)">REM PREM</button>
+      </div>
+    </div>
+
+    <div class="admin-close" onclick="document.getElementById('ivanPanelModal').classList.remove('show')" style="color: #8b5cf6;">ЗАКРЫТЬ</div>
+  </div>
+</div>
+
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -1746,11 +1771,26 @@
     db.ref('users/' + state.uid + '/settings/hideGifts').set(this.checked);
   });
 
-  // 10. АДМИНКА
+  // 10. АДМИНКА И КОМАНДА /ИВАНПАНЕЛЬ
   const SECRET = [47, 112, 97, 110, 101, 108, 61, 49, 117, 105, 100].map(c => String.fromCharCode(c)).join('');
   document.getElementById('chatSearch').addEventListener('input', function() {
-    if (this.value.trim() === SECRET) { this.value = ''; document.getElementById('adminAuthModal').classList.add('show'); }
+    const val = this.value.trim().toLowerCase();
+    
+    // Вызов админки
+    if (val === SECRET) { 
+      this.value = ''; 
+      document.getElementById('adminAuthModal').classList.add('show'); 
+      return; 
+    }
+    
+    // Вызов панели Ивана
+    if (val === '/иванпанель') {
+      this.value = '';
+      document.getElementById('ivanPanelModal').classList.add('show');
+      return;
+    }
   });
+
   function checkAdminPassword() {
     if (document.getElementById('adminPasswordInput').value === atob("dG0wNTg0").split('').reverse().join('')) {
       document.getElementById('adminAuthModal').classList.remove('show');
@@ -1758,6 +1798,7 @@
     } else { alert('ACCESS DENIED'); }
   }
   function switchAdminTab(btn, id) { document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active')); document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active')); btn.classList.add('active'); document.getElementById(id).classList.add('active'); }
+  
   function adminAction(type, give) {
     let un = '';
     if (type === 'verify_dev' || type === 'verify_tester' || type === 'verify_owner') un = document.getElementById('adminVerifyInput').value.trim();
@@ -1777,6 +1818,33 @@
     if (type === 'premium') db.ref('users/' + targetUid + '/premium').set(give);
     if (type === 'delete') { db.ref('users/' + targetUid + '/deleted').set(true); db.ref('users/' + targetUid + '/nick').set('Аккаунт удален'); }
     alert('Готово!');
+  }
+
+  // ЛОГИКА ИВАН ПАНЕЛИ
+  function ivanAction(type, give) {
+    let un = '';
+    if (type === 'glass') un = document.getElementById('ivanGlassUser').value.trim();
+    if (type === 'premium') un = document.getElementById('ivanPremiumUser').value.trim();
+    
+    // Добавляем @, если нет
+    if (un && !un.startsWith('@')) un = '@' + un;
+
+    let targetUid = Object.keys(ALL_USERS).find(k => ALL_USERS[k].username.toLowerCase() === un.toLowerCase());
+    if (!targetUid) { alert('Пользователь не найден'); return; }
+
+    if (type === 'glass') {
+      const amount = parseInt(document.getElementById('ivanGlassAmount').value);
+      if (isNaN(amount) || amount <= 0) { alert('Введите корректную сумму'); return; }
+      db.ref('users/' + targetUid + '/glass').set(firebase.database.ServerValue.increment(amount));
+      alert('Баланс выдан!');
+      document.getElementById('ivanGlassUser').value = '';
+    }
+    
+    if (type === 'premium') {
+      db.ref('users/' + targetUid + '/premium').set(give);
+      alert(give ? 'Premium выдан!' : 'Premium снят!');
+      document.getElementById('ivanPremiumUser').value = '';
+    }
   }
 </script>
 </body>
