@@ -551,6 +551,7 @@
     if (!un.startsWith('@')) un = '@' + un;
     if (un.length < 4) { alert('Минимум 4 символа'); return; }
     
+    // Проверка на занятость
     const taken = Object.values(ALL_USERS).some(u => u.username.toLowerCase() === un);
     if (taken) { alert('Этот username уже занят!'); return; }
     
@@ -596,8 +597,13 @@
     if (replyTo) { msg.replyTo = replyTo; replyTo = null; }
 
     db.ref('messages/' + chatId).push(msg);
-    db.ref('user_chats/' + state.uid + '/' + state.currentChatId).set(true);
-    db.ref('user_chats/' + state.currentChatId + '/' + state.uid).set(true);
+    
+    // ИСПОЛЬЗУЕМ UPDATE, ЧТОБЫ НЕ СТИРАТЬ ДРУГИЕ ЧАТЫ
+    let updates = {};
+    updates['user_chats/' + state.uid + '/' + state.currentChatId] = true;
+    updates['user_chats/' + state.currentChatId + '/' + state.uid] = true;
+    db.ref().update(updates);
+
     db.ref('users/' + state.uid + '/typing').set(false);
 
     document.getElementById('msgInput').value = '';
@@ -744,8 +750,12 @@
   }
 
   function startChatWith(uid) {
-    db.ref('user_chats/' + state.uid + '/' + uid).set(true);
-    db.ref('user_chats/' + uid + '/' + state.uid).set(true);
+    // Используем update, чтобы не сбрасывать остальные чаты
+    let updates = {};
+    updates['user_chats/' + state.uid + '/' + uid] = true;
+    updates['user_chats/' + uid + '/' + state.uid] = true;
+    db.ref().update(updates);
+
     document.getElementById('chatSearch').value = '';
     openChatView(uid);
     setTimeout(renderChatList, 500); 
