@@ -46,7 +46,7 @@
 
   html, body {
     height: 100%; overflow: hidden;
-    overscroll-behavior-y: none; /* Фикс случайного свайпа назад */
+    overscroll-behavior-y: none;
     background: var(--bg-body);
     background-size: 400% 400%;
     animation: bgMove 20s ease infinite;
@@ -665,6 +665,7 @@
 
   let ALL_USERS = {};
   let MY_CHATS = [];
+  let chatMeta = {}; // Для хранения последнего сообщения и времени
   let state = { 
     uid: null, nick: '', username: '', avatar: null, bio: '', glass: 0, 
     verified_dev: false, verified_tester: false, verified_owner: false, premium: false,
@@ -729,6 +730,7 @@
       db.ref('user_chats/' + user.uid).on('value', snapshot => {
         const chatsObj = snapshot.val() || {};
         MY_CHATS = Object.keys(chatsObj);
+        loadChatMetas();
         renderChatList();
         loadUnreadCounts();
       });
@@ -813,11 +815,16 @@
     let msg = { senderId: state.uid, text: text, timestamp: Date.now(), type: 'text' };
     if (replyTo) { msg.replyTo = replyTo; replyTo = null; }
 
-    db.ref('messages/' + chatId).push(msg);
+    const newMsgRef = db.ref('messages/' + chatId).push();
+    newMsgRef.set(msg);
     
     let updates = {};
     updates['user_chats/' + state.uid + '/' + state.currentChatId] = true;
     updates['user_chats/' + state.currentChatId + '/' + state.uid] = true;
+    
+    // Счетчик непрочитанных у собеседника
+    updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+    
     db.ref().update(updates);
 
     db.ref('users/' + state.uid + '/typing').set(false);
@@ -842,7 +849,13 @@
     reader.onload = ev => {
       const isVideo = file.type.startsWith('video');
       const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
-      db.ref('messages/' + chatIdKey).push({ senderId: state.uid, text: ev.target.result, type: isVideo ? 'video' : 'image', timestamp: Date.now() });
+      
+      const newMsgRef = db.ref('messages/' + chatIdKey).push();
+      newMsgRef.set({ senderId: state.uid, text: ev.target.result, type: isVideo ? 'video' : 'image', timestamp: Date.now() });
+      
+      let updates = {};
+      updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+      db.ref().update(updates);
     };
     reader.readAsDataURL(file);
     document.getElementById('attachModal').classList.remove('show');
@@ -855,7 +868,14 @@
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
         const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
-        db.ref('messages/' + chatIdKey).push({ senderId: state.uid, text: `Геопозиция: ${lat.toFixed(4)}, ${lon.toFixed(4)}`, type: 'location', timestamp: Date.now() });
+        
+        const newMsgRef = db.ref('messages/' + chatIdKey).push();
+        newMsgRef.set({ senderId: state.uid, text: `Геопозиция: ${lat.toFixed(4)}, ${lon.toFixed(4)}`, type: 'location', timestamp: Date.now() });
+        
+        let updates = {};
+        updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+        db.ref().update(updates);
+        
       }, () => {
         alert('Разрешите доступ к геопозиции');
       });
@@ -896,7 +916,13 @@
         reader.onloadend = () => {
           const base64data = reader.result;
           const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
-          db.ref('messages/' + chatIdKey).push({ senderId: state.uid, text: base64data, type: 'voice', timestamp: Date.now() });
+          
+          const newMsgRef = db.ref('messages/' + chatIdKey).push();
+          newMsgRef.set({ senderId: state.uid, text: base64data, type: 'voice', timestamp: Date.now() });
+          
+          let updates = {};
+          updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+          db.ref().update(updates);
         };
         stream.getTracks().forEach(track => track.stop());
       };
@@ -948,6 +974,8 @@
       const msgs = snapshot.val() || {};
       const container = document.getElementById('messages');
       container.innerHTML = '';
+      
+      let lastMsgText = '';
       
       Object.keys(msgs).forEach(key => {
         const m = msgs[key];
@@ -1046,13 +1074,37 @@
     });
   }
 
+  function loadChatMetas() {
+    MY_CHATS.forEach(cid => {
+      if (cid === state.uid) return;
+      const chatIdKey = [state.uid, cid].sort().join('_');
+      db.ref('messages/' + chatIdKey).limitToLast(1).on('value', snap => {
+        const msgs = snap.val();
+        if (msgs) {
+          const lastMsg = Object.values(msgs)[0];
+          chatMeta[cid] = lastMsg;
+        } else {
+          chatMeta[cid] = { timestamp: 0, text: '' };
+        }
+        renderChatList();
+      });
+    });
+  }
+
   function renderChatList() {
     const list = document.getElementById('chatList');
     if (!list) return;
     list.innerHTML = '';
     if (MY_CHATS.length === 0) { list.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">Найдите друга через поиск!</div>'; return; }
     
-    MY_CHATS.forEach(cid => {
+    // Сортировка по времени последнего сообщения
+    const sortedChats = [...MY_CHATS].sort((a, b) => {
+      const timeA = (chatMeta[a] && chatMeta[a].timestamp) || 0;
+      const timeB = (chatMeta[b] && chatMeta[b].timestamp) || 0;
+      return timeB - timeA;
+    });
+    
+    sortedChats.forEach(cid => {
       if (cid === state.uid) return;
       const u = ALL_USERS[cid];
       if (!u) return;
@@ -1065,6 +1117,20 @@
       if (u.premium) badges += '<span class="premium-star">⭐</span>';
 
       let displayName = (state.contacts && state.contacts[cid]) ? state.contacts[cid] : u.nick;
+      
+      // Форматируем превью
+      let previewText = u.username;
+      const meta = chatMeta[cid];
+      if (meta && meta.text) {
+        if (meta.type === 'image') previewText = '📷 Фото';
+        else if (meta.type === 'video') previewText = '🎥 Видео';
+        else if (meta.type === 'voice') previewText = '🎤 Голосовое';
+        else if (meta.type === 'gift') previewText = '🎁 Подарок';
+        else if (meta.type === 'location') previewText = '📍 Геопозиция';
+        else previewText = meta.text;
+        
+        if (meta.senderId === state.uid) previewText = 'Вы: ' + previewText;
+      }
 
       list.innerHTML += `
         <div class="chat-item">
@@ -1074,7 +1140,7 @@
           </div>
           <div class="chat-info" onclick="openChatView('${cid}')">
             <div class="chat-name">${displayName} ${badges}</div>
-            <div class="chat-preview ${unread > 0 ? 'unread' : ''}">${u.username}</div>
+            <div class="chat-preview ${unread > 0 ? 'unread' : ''}">${previewText}</div>
           </div>
           ${unread > 0 ? `<div class="chat-unread-badge" onclick="event.stopPropagation(); openChatView('${cid}')">${unread}</div>` : ''}
         </div>`;
@@ -1322,6 +1388,11 @@
 
     const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
     db.ref('messages/' + chatIdKey).push({ senderId: state.uid, text: emoji, type: 'gift', timestamp: Date.now() });
+    
+    let updates = {};
+    updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+    db.ref().update(updates);
+    
     document.getElementById('giftPickerModal').classList.remove('show');
   }
 
@@ -1439,6 +1510,11 @@
         timestamp: Date.now(),
         forwardedFrom: authorName
       });
+      
+      let updates = {};
+      updates['unread/' + targetUid + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+      db.ref().update(updates);
+      
       alert('Сообщение переслано!');
     });
   }
