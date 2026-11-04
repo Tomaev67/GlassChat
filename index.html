@@ -208,8 +208,13 @@
   .page-inner { padding:0 16px 24px; }
   .card { background:var(--card-bg); backdrop-filter:blur(20px); border:1px solid var(--glass-border); border-radius:24px; padding:8px 18px; margin-bottom:16px; animation: fadeInUp 0.4s ease; }
   .profile-head { display:flex; flex-direction:column; align-items:center; padding:16px 0 24px; }
-  .profile-avatar { width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg,#8b5cf6,#0ea5e9); display:flex; align-items:center; justify-content:center; font-size:44px; overflow:hidden; border:3px solid var(--glass-border); margin-bottom:16px; color: #fff; transition: 0.3s; }
+  
+  .profile-avatar { position: relative; width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg,#8b5cf6,#0ea5e9); display:flex; align-items:center; justify-content:center; font-size:44px; overflow:hidden; border:3px solid var(--glass-border); margin-bottom:16px; color: #fff; transition: 0.3s; }
   .profile-avatar img { width:100%; height:100%; object-fit:cover; }
+  
+  /* Кнопка смены авы */
+  .change-avatar-btn { position: absolute; bottom: 0; right: 0; width: 36px; height: 36px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; cursor: pointer; border: 2px solid var(--panel-bg); box-shadow: 0 2px 10px rgba(0,0,0,0.3); z-index: 5; }
+
   .profile-name { font-size:24px; font-weight:700; display:flex; align-items:center; gap:8px; justify-content:center; flex-wrap: wrap; }
   .profile-username { font-size:15px; opacity:0.6; margin-top:4px; }
   .profile-stats { display: flex; gap: 20px; margin-top: 15px; font-size: 14px; }
@@ -398,7 +403,11 @@
   <div class="page" id="page-profile">
     <div class="page-inner" style="padding-top: 20px;">
       <div class="profile-head">
-        <div class="profile-avatar" id="profileAvatar"><span>👤</span></div>
+        <div class="profile-avatar" id="profileAvatar">
+          <span>👤</span>
+          <div class="change-avatar-btn" onclick="document.getElementById('myAvatarInput').click()">📷</div>
+        </div>
+        <input type="file" id="myAvatarInput" accept="image/*" hidden onchange="changeMyAvatar(event)">
         <div class="profile-name" id="profileName">Ник <span class="verified-badge-dev" id="profileBadgeDev" style="display:none;">✓</span> <span class="verified-badge-tester" id="profileBadgeTester" style="display:none;">T</span> <span class="verified-badge-owner" id="profileBadgeOwner" style="display:none;">👑</span> <span class="premium-star" id="profileBadgePremium" style="display:none;">⭐</span></div>
         <div class="profile-username" id="profileUsername">@username</div>
         <div class="profile-bio" id="profileBio">Описание профиля</div>
@@ -665,7 +674,7 @@
 
   let ALL_USERS = {};
   let MY_CHATS = [];
-  let chatMeta = {}; // Для хранения последнего сообщения и времени
+  let chatMeta = {}; 
   let state = { 
     uid: null, nick: '', username: '', avatar: null, bio: '', glass: 0, 
     verified_dev: false, verified_tester: false, verified_owner: false, premium: false,
@@ -710,6 +719,7 @@
         if (document.getElementById('setHideGifts')) document.getElementById('setHideGifts').checked = state.settings.hideGifts;
       });
 
+      // Слушатель всех юзеров для обновления ав
       db.ref('users').on('value', snapshot => {
         ALL_USERS = snapshot.val() || {};
         if (state.currentChatId) {
@@ -725,6 +735,11 @@
           }
         }
         renderChatList();
+        
+        // Обновляем модалку, если она открыта
+        if (state.viewedProfileId && ALL_USERS[state.viewedProfileId]) {
+           fillUserProfile(state.viewedProfileId, ALL_USERS[state.viewedProfileId]);
+        }
       });
 
       db.ref('user_chats/' + user.uid).on('value', snapshot => {
@@ -821,8 +836,6 @@
     let updates = {};
     updates['user_chats/' + state.uid + '/' + state.currentChatId] = true;
     updates['user_chats/' + state.currentChatId + '/' + state.uid] = true;
-    
-    // Счетчик непрочитанных у собеседника
     updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
     
     db.ref().update(updates);
@@ -950,6 +963,8 @@
     if (!ALL_USERS[chatId]) { alert('Профиль ещё загружается...'); return; }
     state.currentChatId = chatId;
     document.getElementById('chatView').classList.add('active');
+    
+    // Аватарка и шапка
     document.getElementById('chatHeaderAvatar').innerHTML = ALL_USERS[chatId].avatar ? `<img src="${ALL_USERS[chatId].avatar}">` : '👤';
     updateChatHeader(chatId);
 
@@ -974,8 +989,6 @@
       const msgs = snapshot.val() || {};
       const container = document.getElementById('messages');
       container.innerHTML = '';
-      
-      let lastMsgText = '';
       
       Object.keys(msgs).forEach(key => {
         const m = msgs[key];
@@ -1295,6 +1308,20 @@
     }, 300);
   }
 
+  // Смена своей авы
+  function changeMyAvatar(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const base64data = ev.target.result;
+      db.ref('users/' + state.uid + '/avatar').set(base64data).then(() => {
+        alert('Аватар обновлен!');
+      }).catch(e => alert('Ошибка загрузки: ' + e.message));
+    };
+    reader.readAsDataURL(file);
+  }
+
   function saveContact() {
     if (!state.currentChatId) return;
     const target = ALL_USERS[state.currentChatId];
@@ -1319,8 +1346,15 @@
     document.getElementById('infoUsername').innerText = state.username;
     document.getElementById('infoBio').innerText = state.bio || '—';
     document.getElementById('profileBio').innerText = state.bio || 'Описание профиля';
-    document.getElementById('profileAvatar').innerHTML = state.avatar ? `<img src="${state.avatar}">` : '👤';
-    document.getElementById('profileAvatar').style.border = state.premium ? '3px solid #fbbf24' : '3px solid var(--glass-border)';
+    
+    // Устанавливаем свою аву (не затирая кнопку смены)
+    const profileAva = document.getElementById('profileAvatar');
+    if (state.avatar) {
+      profileAva.innerHTML = `<img src="${state.avatar}"><div class="change-avatar-btn" onclick="document.getElementById('myAvatarInput').click()">📷</div>`;
+    } else {
+      profileAva.innerHTML = `<span>👤</span><div class="change-avatar-btn" onclick="document.getElementById('myAvatarInput').click()">📷</div>`;
+    }
+    profileAva.style.border = state.premium ? '3px solid #fbbf24' : '3px solid var(--glass-border)';
     
     document.getElementById('profileBadgeDev').style.display = state.verified_dev ? 'inline' : 'none';
     document.getElementById('profileBadgeTester').style.display = state.verified_tester ? 'inline' : 'none';
@@ -1597,7 +1631,11 @@
       const likesCount = p.likes ? Object.keys(p.likes).length : 0;
       const commentsCount = p.comments ? Object.keys(p.comments).length : 0;
       
+      // Получаем актуальные данные автора из кэша (чтобы ава была самой новой)
       const author = ALL_USERS[p.authorUid] || {};
+      const actualAvatar = author.avatar || p.authorAvatar; 
+      const actualName = author.nick || p.authorName;
+
       const isSubscribed = author.followers && author.followers[state.uid];
       const subBtnText = isSubscribed ? 'Вы подписаны' : 'Подписаться';
       const subBtnClass = isSubscribed ? 'btn-subscribe subscribed feed-btn' : 'btn-subscribe feed-btn';
@@ -1606,10 +1644,10 @@
         <div class="feed-post">
           <div class="feed-header">
             <div class="feed-avatar" onclick="openUserProfile('${p.authorUid}')" style="cursor:pointer;">
-              ${p.authorAvatar ? `<img src="${p.authorAvatar}">` : '👤'}
+              ${actualAvatar ? `<img src="${actualAvatar}">` : '👤'}
             </div>
             <div class="feed-info">
-              <div class="feed-name" onclick="openUserProfile('${p.authorUid}')" style="cursor:pointer;">${p.authorName}</div>
+              <div class="feed-name" onclick="openUserProfile('${p.authorUid}')" style="cursor:pointer;">${actualName}</div>
               <div class="feed-time">${new Date(p.timestamp).toLocaleString()}</div>
             </div>
             ${p.authorUid !== state.uid ? `<button class="${subBtnClass}" onclick="toggleSubscribe('${p.authorUid}')">${subBtnText}</button>` : ''}
