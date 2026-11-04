@@ -204,7 +204,7 @@
   .admin-content { display: none; }
   .admin-content.active { display: block; }
   .admin-input { width: 100%; padding: 12px; background: #111; border: 1px solid #444; border-radius: 8px; color: #fff; font-size: 14px; margin-bottom: 10px; outline: none; }
-  .admin-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+  .admin-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; margin-bottom:10px; }
   .admin-btn.green { background: rgba(67, 233, 123, 0.2); color: #43e97b; border: 1px solid #43e97b; }
   .admin-btn.red { background: rgba(248, 113, 113, 0.2); color: #f87171; border: 1px solid #f87171; }
   .admin-btn-row { display: flex; gap: 10px; }
@@ -499,15 +499,9 @@
         updateProfileUI();
       });
 
-      // ФИЛЬТР: берем только тех, у кого есть почта (чтобы убрать дубли от удаленных акков)
+      // Просто загружаем всех, кто есть в базе
       db.ref('users').on('value', snapshot => {
-        const rawUsers = snapshot.val() || {};
-        ALL_USERS = {};
-        for (let k in rawUsers) {
-          if (rawUsers[k].email && !rawUsers[k].deleted) {
-            ALL_USERS[k] = rawUsers[k];
-          }
-        }
+        ALL_USERS = snapshot.val() || {};
         if (state.currentChatId) updateChatHeader(state.currentChatId);
         renderChatList();
       });
@@ -568,7 +562,7 @@
     try {
       const cred = await auth.createUserWithEmailAndPassword(tempEmail, tempPass);
       await db.ref('users/' + cred.user.uid).set({
-        email: tempEmail, // Обязательно сохраняем email, чтобы фильтр работал!
+        email: tempEmail,
         nick: state.nick, username: state.username, avatar: state.avatar || null,
         verified: false, deleted: false, glass: 0, online: true, bio: ''
       });
