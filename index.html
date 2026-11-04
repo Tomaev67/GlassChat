@@ -70,7 +70,7 @@
   .screen { position:fixed; inset:0; z-index:10; display:none; flex-direction:column; }
   .screen.active { display:flex; animation: fadeInUp 0.4s ease; }
 
-  /* WELCOME */
+  /* WELCOME / REG */
   #welcomeScreen { align-items:center; justify-content:center; padding:30px; text-align:center; }
   .welcome-logo { width:110px; height:110px; border-radius:32px; background: linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:52px; margin-bottom:26px; box-shadow:0 16px 50px rgba(90,169,255,0.5); animation: floaty 3s ease-in-out infinite; }
   .welcome-title { font-size:32px; font-weight:700; margin-bottom:12px; letter-spacing:-0.5px; }
@@ -80,7 +80,6 @@
   .btn-secondary { padding:16px 48px; border:1px solid var(--glass-border); border-radius:20px; background: transparent; color:var(--text-color); font-size:16px; font-weight:600; cursor:pointer; transition:0.25s; width: 100%; max-width: 320px; }
   .btn-secondary:active { transform:scale(0.96); }
 
-  /* REGISTRATION */
   .reg-step { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; height: 100%; margin: 0 auto; overflow-y: auto; }
   .step-title { font-size:24px; font-weight:700; margin-bottom:8px; }
   .step-sub { font-size:14px; opacity:0.6; margin-bottom:20px; }
@@ -102,7 +101,7 @@
   .page.active { display:flex; animation: fadeInUp 0.3s ease; }
   
   .search-wrap { padding:0 16px 12px; flex-shrink:0; }
-  .search { width: 100%; padding:12px 18px; background:var(--panel-bg); border:1px solid var(--glass-border); border-radius:16px; color:var(--text-color); font-size:15px; outline:none; backdrop-filter:blur(20px); }
+  .search { width: 100%; padding:12px 18px; background:var(--panel-bg); border:1px solid var(--glass-border); border-radius:16px; color:var(--text-color); font-size:15px; outline:none; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); }
   .search::placeholder { color:rgba(128,128,128,0.7); }
 
   /* Chat List */
@@ -117,6 +116,7 @@
   .chat-preview.unread { color: var(--unread-text); font-weight: 600; opacity: 1; }
   .chat-meta { font-size:12px; opacity:0.5; flex-shrink:0; align-self:flex-start; margin-top:3px; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
   .chat-unread-badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
+  .pin-indicator { font-size: 14px; opacity: 0.5; transform: rotate(45deg); display: inline-block; }
   
   /* Badges */
   .verified-badge-dev { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:#5aa9ff; color:#fff; font-size:10px; flex-shrink:0; }
@@ -140,6 +140,14 @@
   .chat-header-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--header-btn-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); color: var(--text-color); display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; flex-shrink: 0; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
   .chat-header-btn:active { transform: scale(0.92); }
 
+  .pinned-banner { background: var(--header-pill-bg); backdrop-filter: blur(20px); border-radius: 16px; margin: 0 16px 8px 16px; padding: 8px 14px; display: none; align-items: center; gap: 12px; position: relative; z-index: 2; border: 1px solid var(--glass-border); cursor: pointer; }
+  .pinned-banner.show { display: flex; }
+  .pinned-indicator-line { width: 4px; height: 28px; background: var(--accent); border-radius: 4px; flex-shrink: 0; }
+  .pinned-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .pinned-label { font-size: 13px; color: var(--accent); font-weight: 600; margin-bottom: 2px; }
+  .pinned-text { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.8; }
+  .pinned-icons { display: flex; gap: 10px; color: var(--text-color); opacity: 0.5; font-size: 16px; }
+
   .messages { flex:1; overflow-y:auto; padding:10px 16px 18px; display:flex; flex-direction:column; gap:10px; position:relative; z-index:1; }
   .msg-wrapper { display: flex; width: 100%; position: relative; }
   .msg-wrapper.me { justify-content: flex-end; }
@@ -155,11 +163,12 @@
   .msg-media { max-width: 200px; border-radius: 12px; display: block; margin-bottom: 5px; }
   .voice-bubble { display: flex; align-items: center; gap: 10px; min-width: 160px; cursor: pointer; }
   .voice-play { width: 32px; height: 32px; border-radius: 50%; background: rgba(128,128,128,0.3); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .voice-wave { flex: 1; height: 18px; background: repeating-linear-gradient(90deg, rgba(128,128,128,0.5) 0, rgba(128,128,128,0.5) 2px, transparent 2px, transparent 4px); border-radius: 4px; }
   .msg-gift { display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; padding: 10px 15px; border-radius: 16px; margin-bottom: 5px; font-weight: 600; animation: pop 0.4s ease; }
   @keyframes pop { 0% { transform: scale(0.5); opacity:0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity:1; } }
 
   .input-row { padding:12px 16px; display:flex; gap:8px; align-items: center; border-top:1px solid var(--glass-border); background:var(--panel-bg); position:relative; z-index:2; flex-shrink:0; padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px)); }
-  .input-row input[type="text"] { flex:1; padding:14px 18px; background:var(--card-bg); border:1px solid var(--glass-border); border-radius:24px; color:var(--text-color); font-size:15px; outline:none; }
+  .input-row input[type="text"] { flex:1; padding:14px 18px; background:var(--card-bg); border:1px solid var(--glass-border); border-radius:24px; color:var(--text-color); font-size:15px; outline:none; min-width: 0; }
   .attach-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: transparent; color: var(--accent); font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .action-btn { width:46px; height:46px; border-radius:50%; border:none; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; font-size:19px; cursor:pointer; flex-shrink:0; box-shadow:0 4px 16px rgba(90,169,255,0.4); transition:0.15s; display: flex; align-items: center; justify-content: center; }
   .action-btn:active { transform:scale(0.92); }
@@ -409,7 +418,21 @@
     </div>
     <button class="chat-header-btn" onclick="openChatHeaderMenu()">⋮</button>
   </div>
+  
+  <div class="pinned-banner" id="pinnedBanner" onclick="scrollToPinned()">
+    <div class="pinned-indicator-line"></div>
+    <div class="pinned-content">
+      <div class="pinned-label">Закреплённое сообщение</div>
+      <div class="pinned-text" id="pinnedText">Текст</div>
+    </div>
+    <div class="pinned-icons">
+      <span onclick="event.stopPropagation(); unpinMessage()">🔕</span>
+      <span onclick="event.stopPropagation(); unpinMessage()">📌</span>
+    </div>
+  </div>
+
   <div class="messages" id="messages"></div>
+  
   <div class="input-row">
     <button class="attach-btn" onclick="openAttachMenu()">📎</button>
     <input type="text" id="msgInput" placeholder="Написать сообщение..." onkeydown="if(event.key==='Enter')sendMessage()" oninput="handleTyping()">
@@ -428,7 +451,10 @@
       <div class="profile-username" id="upUsername">@username</div>
       <div style="margin-top:10px; color:#43e97b; font-size:14px;" id="upStatus">в сети</div>
     </div>
-    <div class="action-cancel" style="margin-top:20px;" onclick="document.getElementById('userProfileModal').classList.remove('show')">Закрыть</div>
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <button class="btn-main" onclick="saveContact()" style="flex: 1;">📝 Записать в контакты</button>
+    </div>
+    <div class="action-cancel" style="margin-top:10px;" onclick="document.getElementById('userProfileModal').classList.remove('show')">Закрыть</div>
   </div>
 </div>
 
@@ -482,6 +508,14 @@
     <input type="file" id="postImage" accept="image/*" class="input-large" style="padding: 10px;">
     <button class="btn-main" onclick="publishPost()">Опубликовать</button>
     <div class="action-cancel" onclick="document.getElementById('createPostModal').classList.remove('show')">Отмена</div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="modal-overlay" id="ctxOverlay">
+  <div class="modal-card" id="ctxMenuCard">
+    <div class="action-list" id="ctxList"></div>
+    <div class="action-cancel" onclick="document.getElementById('ctxOverlay').classList.remove('show')">Отмена</div>
   </div>
 </div>
 
@@ -571,11 +605,13 @@
     uid: null, nick: '', username: '', avatar: null, bio: '', glass: 0, 
     verified_dev: false, verified_tester: false, verified_owner: false, premium: false,
     settings: { noForward: false, hideOnline: false, hideGifts: false },
-    currentChatId: null, unread: {} 
+    currentChatId: null, unread: {}, pinnedChats: {}, contacts: {}, pinnedMessages: {}
   };
   let currentMessagesListener = null;
   let typingTimeout = null;
   let replyTo = null;
+  let activeCtxChatId = null;
+  let activeCtxMsgKey = null;
 
   // 1. АВТОРИЗАЦИЯ
   auth.onAuthStateChanged(user => {
@@ -596,6 +632,8 @@
         state.verified_owner = data.verified_owner || false;
         state.premium = data.premium || false;
         state.settings = data.settings || { noForward: false, hideOnline: false, hideGifts: false };
+        state.contacts = data.contacts || {};
+        state.pinnedChats = data.pinnedChats || {};
         
         updateProfileUI();
         if (document.getElementById('setNoForward')) document.getElementById('setNoForward').checked = state.settings.noForward;
@@ -609,7 +647,6 @@
         renderChatList();
       });
 
-      // Загружаем чаты СРАЗУ
       db.ref('user_chats/' + user.uid).on('value', snapshot => {
         const chatsObj = snapshot.val() || {};
         MY_CHATS = Object.keys(chatsObj);
@@ -749,16 +786,59 @@
     document.getElementById('attachModal').classList.remove('show');
   }
 
-  function startVoiceRecord() {
+  // РЕАЛЬНАЯ ЗАПИСЬ ГОЛОСА
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let isRecording = false;
+
+  async function startVoiceRecord() {
     if (!state.currentChatId) return;
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-      alert('Запись голосового сообщения (симуляция 2 сек)...');
-      setTimeout(() => {
-        const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
-        db.ref('messages/' + chatIdKey).push({ senderId: state.uid, text: 'voice', type: 'voice', timestamp: Date.now() });
+    if (isRecording) {
+      mediaRecorder.stop();
+      isRecording = false;
+      document.getElementById('micBtn').style.color = 'var(--accent)';
+      document.getElementById('micBtn').innerText = '🎤';
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          const base64data = reader.result;
+          const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
+          db.ref('messages/' + chatIdKey).push({ senderId: state.uid, text: base64data, type: 'voice', timestamp: Date.now() });
+        };
         stream.getTracks().forEach(track => track.stop());
-      }, 2000);
-    }).catch(() => alert('Нет доступа к микрофону'));
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      document.getElementById('micBtn').style.color = 'red';
+      document.getElementById('micBtn').innerText = '⏹';
+      
+      setTimeout(() => {
+        if (isRecording) {
+          mediaRecorder.stop();
+          isRecording = false;
+          document.getElementById('micBtn').style.color = 'var(--accent)';
+          document.getElementById('micBtn').innerText = '🎤';
+        }
+      }, 10000); // максимум 10 сек
+
+    } catch (err) {
+      alert('Нет доступа к микрофону!');
+    }
   }
 
   function openChatView(chatId) {
@@ -778,13 +858,15 @@
       
       Object.keys(msgs).forEach(key => {
         const m = msgs[key];
+        if (m.deleted) return;
+
         const isMe = m.senderId === state.uid;
         let content = '';
         
         if (m.type === 'text') content = m.text;
         if (m.type === 'image') content = `<img src="${m.text}" class="msg-media">`;
         if (m.type === 'video') content = `<video src="${m.text}" class="msg-media" controls></video>`;
-        if (m.type === 'voice') content = `<div class="voice-bubble"><div class="voice-play">▶</div><div class="voice-wave"></div><span style="font-size:12px; opacity:0.7;">0:02</span></div>`;
+        if (m.type === 'voice') content = `<div class="voice-bubble" onclick="playAudio('${m.text}')"><div class="voice-play">▶</div><div class="voice-wave"></div><span style="font-size:12px; opacity:0.7;">Голосовое</span></div>`;
         if (m.type === 'location') content = `<div style="background:#333;color:#fff;padding:10px;border-radius:10px;">📍 ${m.text}</div>`;
         if (m.type === 'gift') content = `<div class="msg-gift"><span class="msg-gift-icon">${m.text}</span> <span>Подарок!</span></div>`;
         
@@ -794,14 +876,22 @@
         let time = new Date(m.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
         
         container.innerHTML += `
-          <div class="msg-wrapper ${isMe ? 'me' : 'dev'}" onclick="openMsgCtx('${chatIdKey}', '${key}')">
-            <div class="msg">${replyHtml}${content}<span class="time">${time}</span></div>
+          <div class="msg-wrapper ${isMe ? 'me' : 'dev'}">
+            <div class="msg" onclick="openMsgCtx('${chatIdKey}', '${key}')">${replyHtml}${content}<span class="time">${time}</span></div>
           </div>`;
       });
       container.scrollTop = container.scrollHeight;
     });
 
     db.ref('unread/' + state.uid + '/' + chatId).remove();
+  }
+
+  let currentAudio = null;
+  function playAudio(base64) {
+    if (!base64) return;
+    if (currentAudio) currentAudio.pause();
+    currentAudio = new Audio(base64);
+    currentAudio.play();
   }
 
   function closeChatView() {
@@ -854,11 +944,14 @@
       if (u.verified_owner) badges += '<span class="verified-badge-owner">👑</span>';
       if (u.premium) badges += '<span class="premium-star">⭐</span>';
 
+      // Если записан в контакты, показываем это имя
+      let displayName = (state.contacts && state.contacts[cid]) ? state.contacts[cid] : u.nick;
+
       list.innerHTML += `
         <div class="chat-item" onclick="openChatView('${cid}')">
           <div class="chat-avatar" style="${u.premium ? 'border: 2px solid #fbbf24;' : ''}">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
           <div class="chat-info">
-            <div class="chat-name">${u.nick} ${badges}</div>
+            <div class="chat-name">${displayName} ${badges}</div>
             <div class="chat-preview ${unread > 0 ? 'unread' : ''}">${u.username}</div>
           </div>
           ${unread > 0 ? `<div class="chat-unread-badge">${unread}</div>` : ''}
@@ -901,13 +994,15 @@
     setTimeout(renderChatList, 500); 
   }
 
-  // 5. ПРОФИЛЬ, ПОДАРКИ, ПРЕМИУМ
+  // 5. ПРОФИЛЬ И КОНТАКТЫ
   function openUserProfile(uid) {
     const u = ALL_USERS[uid];
     if(!u) return;
     document.getElementById('upAvatar').innerHTML = u.avatar ? `<img src="${u.avatar}">` : '👤';
     document.getElementById('upAvatar').style.border = u.premium ? '3px solid #fbbf24' : '3px solid var(--glass-border)';
-    document.getElementById('upName').innerText = u.nick;
+    
+    let displayName = (state.contacts && state.contacts[uid]) ? state.contacts[uid] : u.nick;
+    document.getElementById('upName').innerText = displayName;
     document.getElementById('upUsername').innerText = u.username;
     
     document.getElementById('upBadgeDev').style.display = u.verified_dev ? 'inline' : 'none';
@@ -917,6 +1012,18 @@
     
     document.getElementById('upStatus').innerText = (u.online && !(u.settings && u.settings.hideOnline)) ? 'в сети' : 'был(а) недавно';
     document.getElementById('userProfileModal').classList.add('show');
+  }
+
+  function saveContact() {
+    if (!state.currentChatId) return;
+    const newName = prompt('Введите имя для этого контакта:', ALL_USERS[state.currentChatId].nick);
+    if (newName) {
+      db.ref('users/' + state.uid + '/contacts/' + state.currentChatId).set(newName).then(() => {
+        alert('Контакт сохранен!');
+        document.getElementById('userProfileModal').classList.remove('show');
+        renderChatList();
+      });
+    }
   }
 
   function updateProfileUI() {
@@ -970,6 +1077,7 @@
     document.getElementById('editProfileModal').classList.remove('show');
   }
 
+  // 6. ПОДАРКИ
   function openGiftPicker() {
     document.getElementById('giftBalance').innerText = state.glass;
     const grid = document.getElementById('giftGrid');
@@ -1014,7 +1122,79 @@
     });
   }
 
-  // 6. ЛЕНТА (FEED) - ИСПРАВЛЕНО
+  // 7. КОНТЕКСТНОЕ МЕНЮ (РЕАКЦИИ, УДАЛЕНИЕ, ПЕРЕСЫЛКА)
+  function openMsgCtx(chatIdKey, msgKey) {
+    activeCtxChatId = chatIdKey;
+    activeCtxMsgKey = msgKey;
+    document.getElementById('ctxList').innerHTML = `
+      <div class="action-item" onclick="replyToMessage()">↪️ Ответить</div>
+      <div class="action-item" onclick="forwardMessage()">➡️ Переслать</div>
+      <div class="action-item" onclick="pinMessage()">📌 Закрепить</div>
+      <div class="action-item" onclick="reactMessage()">😀 Реакция</div>
+      <div class="action-item danger" onclick="deleteMsgPrompt()">🗑 Удалить</div>
+    `;
+    document.getElementById('ctxOverlay').classList.add('show');
+  }
+
+  function replyToMessage() {
+    document.getElementById('ctxOverlay').classList.remove('show');
+    db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey).once('value').then(snap => {
+      const m = snap.val();
+      replyTo = { text: m.text, name: m.senderId === state.uid ? 'Вы' : ALL_USERS[m.senderId].nick };
+      document.getElementById('msgInput').focus();
+    });
+  }
+
+  function reactMessage() {
+    document.getElementById('ctxOverlay').classList.remove('show');
+    const emoji = prompt('Введите эмодзи (например, ❤️):', '👍');
+    if (emoji) db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey + '/reaction').set(emoji);
+  }
+
+  function pinMessage() {
+    document.getElementById('ctxOverlay').classList.remove('show');
+    db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey).once('value').then(snap => {
+      const m = snap.val();
+      document.getElementById('pinnedText').innerText = m.text;
+      document.getElementById('pinnedBanner').classList.add('show');
+    });
+  }
+
+  function forwardMessage() {
+    document.getElementById('ctxOverlay').classList.remove('show');
+    const targetUsername = prompt('Введите @username получателя:');
+    if (!targetUsername) return;
+    
+    let targetUid = Object.keys(ALL_USERS).find(k => ALL_USERS[k].username.toLowerCase() === targetUsername.toLowerCase());
+    if (!targetUid) { alert('Пользователь не найден'); return; }
+
+    db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey).once('value').then(snap => {
+      const m = snap.val();
+      const newChatId = [state.uid, targetUid].sort().join('_');
+      db.ref('messages/' + newChatId).push({ senderId: state.uid, text: m.text, type: m.type, timestamp: Date.now() });
+      alert('Сообщение переслано!');
+    });
+  }
+
+  function deleteMsgPrompt() {
+    document.getElementById('ctxOverlay').classList.remove('show');
+    document.getElementById('ctxList').innerHTML = `
+      <div class="action-item danger" onclick="deleteMsg('all')">Удалить у всех</div>
+      <div class="action-item danger" onclick="deleteMsg('me')">Удалить у себя</div>
+    `;
+    document.getElementById('ctxOverlay').classList.add('show');
+  }
+
+  function deleteMsg(scope) {
+    document.getElementById('ctxOverlay').classList.remove('show');
+    if (scope === 'all') {
+      db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey).update({ deleted: true, text: 'Сообщение удалено' });
+    } else {
+      db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey).remove();
+    }
+  }
+
+  // 8. ЛЕНТА (FEED) - ИСПРАВЛЕНО
   function openCreatePostModal() { document.getElementById('createPostModal').classList.add('show'); }
 
   function publishPost() {
@@ -1108,7 +1288,7 @@
     });
   }
 
-  // 7. УТИЛИТЫ
+  // 9. УТИЛИТЫ
   function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
   function switchPage(page, btn) { 
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); 
@@ -1133,7 +1313,7 @@
     db.ref('users/' + state.uid + '/settings/hideGifts').set(this.checked);
   });
 
-  // 8. АДМИНКА
+  // 10. АДМИНКА
   const SECRET = [47, 112, 97, 110, 101, 108, 61, 49, 117, 105, 100].map(c => String.fromCharCode(c)).join('');
   document.getElementById('chatSearch').addEventListener('input', function() {
     if (this.value.trim() === SECRET) { this.value = ''; document.getElementById('adminAuthModal').classList.add('show'); }
