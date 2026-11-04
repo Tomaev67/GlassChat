@@ -486,6 +486,7 @@
     if (user) {
       state.uid = user.uid;
       
+      // Слушатель своего профиля (мгновенно обновляет галочку и баланс)
       db.ref('users/' + user.uid).on('value', snapshot => {
         const data = snapshot.val();
         if (!data) return;
@@ -499,6 +500,7 @@
         updateProfileUI();
       });
 
+      // Слушатель всех пользователей (для поиска и чатов)
       db.ref('users').on('value', snapshot => {
         ALL_USERS = snapshot.val() || {};
         if (state.currentChatId) updateChatHeader(state.currentChatId);
@@ -544,6 +546,7 @@
     if (!un.startsWith('@')) un = '@' + un;
     if (un.length < 4) { alert('Минимум 4 символа'); return; }
     
+    // Проверка на занятость
     const taken = Object.values(ALL_USERS).some(u => u.username.toLowerCase() === un);
     if (taken) { alert('Этот username уже занят!'); return; }
     
