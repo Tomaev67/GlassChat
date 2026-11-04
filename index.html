@@ -113,7 +113,6 @@
   .chat-meta { font-size:12px; opacity:0.5; flex-shrink:0; align-self:flex-start; margin-top:3px; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
   .chat-unread-badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
   .verified-badge { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:var(--accent); color:#fff; font-size:10px; flex-shrink:0; cursor: help; }
-  .pin-indicator { font-size: 14px; opacity: 0.5; transform: rotate(45deg); display: inline-block; }
 
   /* CHAT VIEW */
   #chatView { position:fixed; inset:0; z-index:30; display:none; flex-direction:column; background:var(--panel-bg); backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px); }
@@ -142,13 +141,10 @@
   .msg .time { display:block; font-size:11px; opacity:0.7; margin-top:5px; text-align:right; color: var(--msg-time); }
   .msg-reactions { display: flex; gap: 4px; position: absolute; bottom: -12px; right: 10px; background: var(--panel-bg); padding: 2px 6px; border-radius: 12px; border: 1px solid var(--glass-border); font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 2; }
   .msg-wrapper.me .msg-reactions { right: auto; left: 10px; }
-  .msg-pinned-badge { position: absolute; top: 5px; right: 10px; font-size: 12px; opacity: 0.6; }
   .msg-reply-quote { background: rgba(0,0,0,0.1); border-left: 3px solid var(--accent); padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 13px; display: flex; flex-direction: column; }
-  .msg-reply-quote .r-name { color: var(--accent); font-weight: 600; }
   .msg-media { max-width: 200px; border-radius: 12px; display: block; margin-bottom: 5px; }
   .voice-bubble { display: flex; align-items: center; gap: 10px; min-width: 160px; cursor: pointer; }
   .voice-play { width: 32px; height: 32px; border-radius: 50%; background: rgba(128,128,128,0.3); display: flex; align-items: center; justify-content: center; font-size: 14px; }
-  .voice-wave { flex: 1; height: 18px; background: repeating-linear-gradient(90deg, rgba(128,128,128,0.5) 0, rgba(128,128,128,0.5) 2px, transparent 2px, transparent 4px); border-radius: 4px; }
   .msg-gift { display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; padding: 10px 15px; border-radius: 16px; margin-bottom: 5px; font-weight: 600; animation: pop 0.3s ease; }
   @keyframes pop { 0% { transform: scale(0.5); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
@@ -635,11 +631,14 @@
         let replyHtml = '';
         if (m.replyTo) replyHtml = `<div class="msg-reply-quote"><span class="r-name">${m.replyTo.name}</span><span>${m.replyTo.text}</span></div>`;
         
+        let reactionHtml = '';
+        if (m.reaction) reactionHtml = `<div class="msg-reactions">${m.reaction}</div>`;
+        
         let time = new Date(m.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
         
         container.innerHTML += `
           <div class="msg-wrapper ${isMe ? 'me' : 'dev'}" onclick="openMsgCtx('${chatIdKey}', '${key}')">
-            <div class="msg">${replyHtml}${content}<span class="time">${time}</span></div>
+            <div class="msg">${replyHtml}${content}<span class="time">${time}</span>${reactionHtml}</div>
           </div>`;
       });
       container.scrollTop = container.scrollHeight;
@@ -688,6 +687,7 @@
     if (MY_CHATS.length === 0) { list.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">Найдите друга через поиск!</div>'; return; }
     
     MY_CHATS.forEach(cid => {
+      if (cid === state.uid) return; // Защита от чата с самим собой
       const u = ALL_USERS[cid];
       if (!u) return;
       const unread = state.unread[cid] || 0;
