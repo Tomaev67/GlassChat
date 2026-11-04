@@ -88,7 +88,7 @@
   .avatar-upload span { font-size:40px; opacity:0.5; }
 
   /* MAIN APP */
-  #mainScreen { padding-bottom:calc(var(--nav-h) + 20px); }
+  #mainScreen { padding-bottom:calc(var(--nav-h) + 40px); }
   .topbar { padding:16px 20px 12px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
   .topbar h1 { font-size:26px; font-weight:700; letter-spacing:-0.5px; }
   .topbar-actions { display: flex; gap: 15px; align-items: center; }
@@ -499,7 +499,6 @@
         updateProfileUI();
       });
 
-      // Просто загружаем всех, кто есть в базе
       db.ref('users').on('value', snapshot => {
         ALL_USERS = snapshot.val() || {};
         if (state.currentChatId) updateChatHeader(state.currentChatId);
@@ -545,7 +544,6 @@
     if (!un.startsWith('@')) un = '@' + un;
     if (un.length < 4) { alert('Минимум 4 символа'); return; }
     
-    // Проверка на занятость
     const taken = Object.values(ALL_USERS).some(u => u.username.toLowerCase() === un);
     if (taken) { alert('Этот username уже занят!'); return; }
     
@@ -562,7 +560,7 @@
     try {
       const cred = await auth.createUserWithEmailAndPassword(tempEmail, tempPass);
       await db.ref('users/' + cred.user.uid).set({
-        email: tempEmail,
+        email: tempEmail, // Обязательно сохраняем email, чтобы фильтр работал!
         nick: state.nick, username: state.username, avatar: state.avatar || null,
         verified: false, deleted: false, glass: 0, online: true, bio: ''
       });
@@ -592,7 +590,6 @@
 
     db.ref('messages/' + chatId).push(msg);
     
-    // ИСПОЛЬЗУЕМ UPDATE, ЧТОБЫ НЕ СТИРАТЬ ДРУГИЕ ЧАТЫ
     let updates = {};
     updates['user_chats/' + state.uid + '/' + state.currentChatId] = true;
     updates['user_chats/' + state.currentChatId + '/' + state.uid] = true;
@@ -744,7 +741,6 @@
   }
 
   function startChatWith(uid) {
-    // Используем update, чтобы не сбрасывать остальные чаты
     let updates = {};
     updates['user_chats/' + state.uid + '/' + uid] = true;
     updates['user_chats/' + uid + '/' + state.uid] = true;
@@ -834,7 +830,7 @@
     document.getElementById('giftPickerModal').classList.remove('show');
   }
 
-  // 7. КОНТЕКСТНОЕ МЕНЮ (РЕАКЦИИ, ОТВЕТ, УДАЛЕНИЕ)
+  // 7. КОНТЕКСТНОЕ МЕНЮ
   let activeCtxChatId = null;
   let activeCtxMsgKey = null;
 
