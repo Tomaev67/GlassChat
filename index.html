@@ -156,7 +156,29 @@
   .msg .time { display:block; font-size:11px; opacity:0.7; margin-top:5px; text-align:right; color: var(--msg-time); }
   .msg-reactions { display: flex; gap: 4px; position: absolute; bottom: -12px; right: 10px; background: var(--panel-bg); padding: 2px 6px; border-radius: 12px; border: 1px solid var(--glass-border); font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 2; }
   .msg-wrapper.me .msg-reactions { right: auto; left: 10px; }
-  .msg-reply-quote { background: rgba(0,0,0,0.1); border-left: 3px solid var(--accent); padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 13px; display: flex; flex-direction: column; }
+  
+  /* Reply & Forward Bubbles */
+  .msg-reply-quote { 
+    background: rgba(0,0,0,0.15); 
+    border-left: 3px solid var(--accent); 
+    padding: 6px 10px; 
+    border-radius: 8px; 
+    margin-bottom: 8px; 
+    font-size: 13px; 
+    display: flex; 
+    flex-direction: column; 
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .msg-reply-quote .r-name { font-weight: 700; color: var(--accent); font-size: 12px; margin-bottom: 2px; }
+  .msg-wrapper.me .msg-reply-quote { background: rgba(0,0,0,0.1); border-left-color: #fff; color: #fff; }
+  .msg-wrapper.me .msg-reply-quote .r-name { color: #fff; opacity: 0.9; }
+
+  .msg-forwarded { font-size: 12px; font-weight: 600; opacity: 0.8; margin-bottom: 4px; font-style: italic; color: var(--accent); }
+  .msg-wrapper.me .msg-forwarded { color: #fff; }
+
   .msg-media { max-width: 200px; border-radius: 12px; display: block; margin-bottom: 5px; }
   
   .voice-bubble { display: flex; align-items: center; gap: 10px; min-width: 160px; cursor: pointer; }
@@ -254,6 +276,10 @@
   .gift-emoji { font-size: 30px; margin-bottom: 5px; }
   .gift-price { font-size: 12px; font-weight: bold; color: #fbbf24; }
   .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+  /* Interactive Gift Pills */
+  .gift-pill { display:flex; align-items:center; background:rgba(128,128,128,0.1); padding:4px 8px; border-radius:8px; font-size:13px; cursor:pointer; border: 1px solid transparent; transition: 0.2s; }
+  .gift-pill:hover { background: rgba(128,128,128,0.2); border-color: var(--glass-border); }
 </style>
 </head>
 <body class="light-theme">
@@ -446,13 +472,25 @@
     
     <div id="upGiftsSection" style="margin-top: 15px; display: none;">
       <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--accent);">Подарки:</div>
-      <div id="upGiftsList" style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow-y: auto;"></div>
+      <div id="upGiftsList" style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow-y: auto; align-content: flex-start;"></div>
     </div>
 
     <div style="display: flex; gap: 10px; margin-top: 20px;">
       <button class="btn-main" onclick="saveContact()" style="flex: 1;">📝 Записать в контакты</button>
     </div>
     <div class="action-cancel" style="margin-top:10px;" onclick="document.getElementById('userProfileModal').classList.remove('show')">Закрыть</div>
+  </div>
+</div>
+
+<!-- GIFT DETAILS MODAL -->
+<div class="modal-overlay" id="giftDetailsModal">
+  <div class="modal-card" style="text-align: center;">
+    <div class="modal-title">Информация о подарке</div>
+    <div id="giftDetailEmoji" style="font-size: 60px; margin-bottom: 15px;">🎁</div>
+    <div style="font-size: 15px; margin-bottom: 8px;"><b>От кого:</b> <span id="giftDetailFrom">@user</span></div>
+    <div style="font-size: 15px; margin-bottom: 8px;"><b>Цена:</b> <span id="giftDetailPrice" style="color:#fbbf24;">0</span> 💎</div>
+    <div style="font-size: 15px; margin-bottom: 15px;"><b>Дата:</b> <span id="giftDetailDate">00:00</span></div>
+    <div class="action-cancel" onclick="document.getElementById('giftDetailsModal').classList.remove('show')">Закрыть</div>
   </div>
 </div>
 
@@ -658,7 +696,6 @@
         ALL_USERS = snapshot.val() || {};
         if (state.currentChatId) {
           updateChatHeader(state.currentChatId);
-          // Подгружаем пиннед при изменении данных
           if (state.pinnedMessages[state.currentChatId]) {
             const pMsg = state.pinnedMessages[state.currentChatId];
             if (pMsg) {
@@ -916,7 +953,21 @@
         if (m.type === 'gift') content = `<div class="msg-gift"><span class="msg-gift-icon">${m.text}</span> <span>Подарок!</span></div>`;
         
         let replyHtml = '';
-        if (m.replyTo) replyHtml = `<div class="msg-reply-quote"><span class="r-name">${m.replyTo.name}</span><span>${m.replyTo.text}</span></div>`;
+        if (m.replyTo) {
+           let replyText = m.replyTo.text;
+           if(m.replyTo.type === 'image') replyText = '[Фото]';
+           else if(m.replyTo.type === 'video') replyText = '[Видео]';
+           else if(m.replyTo.type === 'voice') replyText = '[Голосовое]';
+           else if(m.replyTo.type === 'location') replyText = '[Геопозиция]';
+           else if(m.replyTo.type === 'gift') replyText = '[Подарок]';
+           
+           replyHtml = `<div class="msg-reply-quote"><span class="r-name">${m.replyTo.name}</span><span>${replyText}</span></div>`;
+        }
+        
+        let forwardHtml = '';
+        if (m.forwardedFrom) {
+           forwardHtml = `<div class="msg-forwarded">Переслано от ${m.forwardedFrom}</div>`;
+        }
         
         let reactionHtml = '';
         if (m.reaction) reactionHtml = `<div class="msg-reactions">${m.reaction}</div>`;
@@ -925,13 +976,14 @@
         
         container.innerHTML += `
           <div class="msg-wrapper ${isMe ? 'me' : 'dev'}">
-            <div class="msg" onclick="openMsgCtx('${chatIdKey}', '${key}')">${replyHtml}${content}<span class="time">${time}</span>${reactionHtml}</div>
+            <div class="msg" onclick="openMsgCtx('${chatIdKey}', '${key}')">${forwardHtml}${replyHtml}${content}<span class="time">${time}</span>${reactionHtml}</div>
           </div>`;
       });
       container.scrollTop = container.scrollHeight;
     });
 
     db.ref('unread/' + state.uid + '/' + chatId).remove();
+    renderChatList();
   }
 
   let currentAudio = null;
@@ -1080,7 +1132,7 @@
     
     document.getElementById('upStatus').innerText = (u.online && !(u.settings && u.settings.hideOnline)) ? 'в сети' : 'был(а) недавно';
 
-    // Загрузка подарков
+    // Загрузка подарков с интерактивом
     const upGiftsSection = document.getElementById('upGiftsSection');
     const upGiftsList = document.getElementById('upGiftsList');
     upGiftsList.innerHTML = '';
@@ -1088,10 +1140,10 @@
     db.ref('users/' + uid + '/gifts').once('value').then(snap => {
       const gifts = snap.val();
       if (gifts) {
-        const arr = Object.values(gifts).sort((a,b) => b.date - a.date);
+        const arr = Object.keys(gifts).map(k => ({ id: k, ...gifts[k] })).sort((a,b) => b.date - a.date);
         arr.forEach(g => {
           upGiftsList.innerHTML += `
-            <div style="display:flex; align-items:center; background:rgba(128,128,128,0.1); padding:4px 8px; border-radius:8px; font-size:13px;" title="От: ${g.from}">
+            <div class="gift-pill" onclick='showGiftDetails(${JSON.stringify(g).replace(/'/g, "&#39;")})'>
                <span style="font-size:18px; margin-right:4px;">${g.emoji}</span>
                <span style="opacity:0.7;">${g.price}💎</span>
             </div>
@@ -1104,6 +1156,14 @@
     });
 
     document.getElementById('userProfileModal').classList.add('show');
+  }
+
+  function showGiftDetails(gift) {
+    document.getElementById('giftDetailEmoji').innerText = gift.emoji;
+    document.getElementById('giftDetailFrom').innerText = gift.from;
+    document.getElementById('giftDetailPrice').innerText = gift.price;
+    document.getElementById('giftDetailDate').innerText = new Date(gift.date).toLocaleString();
+    document.getElementById('giftDetailsModal').classList.add('show');
   }
 
   function saveContact() {
@@ -1210,7 +1270,7 @@
       
       arr.forEach(g => {
         list.innerHTML += `
-          <div style="display:flex; align-items:center; gap:10px; background:rgba(128,128,128,0.1); padding:10px; border-radius:12px;">
+          <div style="display:flex; align-items:center; gap:10px; background:rgba(128,128,128,0.1); padding:10px; border-radius:12px; cursor:pointer;" onclick='showGiftDetails(${JSON.stringify(g).replace(/'/g, "&#39;")})'>
             <div style="font-size:24px;">${g.emoji}</div>
             <div style="flex:1; font-size:13px;">От: <b>${g.from}</b><br><span style="opacity:0.6;">${g.price} 💎</span></div>
           </div>
@@ -1252,7 +1312,7 @@
     document.getElementById('ctxOverlay').classList.remove('show');
     db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey).once('value').then(snap => {
       const m = snap.val();
-      replyTo = { text: m.text, name: m.senderId === state.uid ? 'Вы' : ALL_USERS[m.senderId].nick };
+      replyTo = { text: m.text, type: m.type, name: m.senderId === state.uid ? 'Вы' : ALL_USERS[m.senderId].nick };
       document.getElementById('msgInput').focus();
     });
   }
@@ -1264,7 +1324,6 @@
       const senderName = m.senderId === state.uid ? 'Вы' : ALL_USERS[m.senderId].nick;
       const pinData = { text: m.text, senderName: senderName, msgId: activeCtxMsgKey };
       
-      // Сохраняем пиннед для текущего пользователя в этом чате
       db.ref('users/' + state.uid + '/pinned/' + state.currentChatId).set(pinData).then(() => {
         document.getElementById('pinnedText').innerText = senderName + ': ' + m.text;
         document.getElementById('pinnedBanner').classList.add('show');
@@ -1282,7 +1341,7 @@
   }
 
   function scrollToPinned() {
-    // Опционально: можно сделать скролл к сообщению
+    // Опционально
   }
 
   function forwardMessage() {
@@ -1296,7 +1355,22 @@
     db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey).once('value').then(snap => {
       const m = snap.val();
       const newChatId = [state.uid, targetUid].sort().join('_');
-      db.ref('messages/' + newChatId).push({ senderId: state.uid, text: m.text, type: m.type, timestamp: Date.now() });
+      
+      // Получаем имя автора оригинального сообщения
+      let authorName = 'Пользователь';
+      if (m.senderId === state.uid) {
+        authorName = state.nick;
+      } else if (ALL_USERS[m.senderId]) {
+        authorName = ALL_USERS[m.senderId].nick;
+      }
+
+      db.ref('messages/' + newChatId).push({ 
+        senderId: state.uid, 
+        text: m.text, 
+        type: m.type, 
+        timestamp: Date.now(),
+        forwardedFrom: authorName
+      });
       alert('Сообщение переслано!');
     });
   }
@@ -1455,15 +1529,21 @@
 
   // 9. УТИЛИТЫ
   function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+  
   function switchPage(page, btn) { 
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); 
     document.getElementById(page ? 'page-' + page : 'page-chats').classList.add('active'); 
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); 
     if (btn) btn.classList.add('active'); 
     
+    // Меняем заголовок страницы
+    const titles = { chats: 'Чаты', feed: 'Лента', settings: 'Настройки', profile: 'Профиль' };
+    document.getElementById('pageTitle').innerText = titles[page] || 'Чаты';
+
     document.getElementById('createPostBtn').style.display = page === 'feed' ? 'block' : 'none';
     if (page === 'profile') updateProfileUI();
   }
+  
   function toggleTheme() { document.body.classList.toggle('dark-theme'); }
 
   document.getElementById('setNoForward').addEventListener('change', function() {
