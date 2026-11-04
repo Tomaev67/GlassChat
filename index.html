@@ -46,6 +46,7 @@
 
   html, body {
     height: 100%; overflow: hidden;
+    overscroll-behavior-y: none; /* Фикс случайного свайпа назад */
     background: var(--bg-body);
     background-size: 400% 400%;
     animation: bgMove 20s ease infinite;
@@ -122,7 +123,7 @@
   .premium-star { color: #fbbf24; font-size: 16px; text-shadow: 0 0 5px rgba(251,191,36,0.8); }
 
   /* CHAT VIEW */
-  #chatView { position:fixed; inset:0; z-index:30; display:none; flex-direction:column; background:var(--panel-bg); backdrop-filter:blur(30px); }
+  #chatView { position:fixed; inset:0; z-index:30; display:none; flex-direction:column; background:var(--panel-bg); backdrop-filter:blur(30px); overscroll-behavior-y: none; }
   #chatView.active { display:flex; animation: fadeInUp 0.3s ease; }
   .chat-view-bg { position:absolute; inset:0; background-size:cover; background-position:center; opacity:0.25; z-index:0; pointer-events:none; display:none; }
   #chatView.has-bg .chat-view-bg { display:block; }
@@ -145,7 +146,7 @@
   .pinned-text { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.8; }
   .pinned-icons { display: flex; gap: 10px; color: var(--text-color); opacity: 0.5; font-size: 16px; }
 
-  .messages { flex:1; overflow-y:auto; padding:10px 16px 18px; display:flex; flex-direction:column; gap:10px; position:relative; z-index:1; }
+  .messages { flex:1; overflow-y:auto; padding:10px 16px 18px; display:flex; flex-direction:column; gap:10px; position:relative; z-index:1; overscroll-behavior-y: none; }
   .msg-wrapper { display: flex; width: 100%; position: relative; }
   .msg-wrapper.me { justify-content: flex-end; }
   .msg-wrapper.dev { justify-content: flex-start; }
@@ -280,6 +281,12 @@
   /* Interactive Gift Pills */
   .gift-pill { display:flex; align-items:center; background:rgba(128,128,128,0.1); padding:4px 8px; border-radius:8px; font-size:13px; cursor:pointer; border: 1px solid transparent; transition: 0.2s; }
   .gift-pill:hover { background: rgba(128,128,128,0.2); border-color: var(--glass-border); }
+  
+  /* Subscribe Button */
+  .btn-subscribe { padding: 6px 14px; border-radius: 12px; border: 1px solid var(--accent); background: transparent; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+  .btn-subscribe:active { transform: scale(0.95); }
+  .btn-subscribe.subscribed { background: rgba(128,128,128,0.1); border-color: transparent; color: var(--text-color); opacity: 0.6; }
+  .btn-subscribe.feed-btn { padding: 4px 10px; font-size: 11px; border-radius: 8px; }
 </style>
 </head>
 <body class="light-theme">
@@ -468,6 +475,13 @@
       <div class="profile-name" id="upName">Имя <span class="verified-badge-dev" id="upBadgeDev" style="display:none;">✓</span> <span class="verified-badge-tester" id="upBadgeTester" style="display:none;">T</span> <span class="verified-badge-owner" id="upBadgeOwner" style="display:none;">👑</span> <span class="premium-star" id="upBadgePremium" style="display:none;">⭐</span></div>
       <div class="profile-username" id="upUsername">@username</div>
       <div style="margin-top:10px; color:#43e97b; font-size:14px;" id="upStatus">в сети</div>
+      
+      <div class="profile-stats" style="margin-bottom: 10px;">
+        <div class="profile-stat-item"><span class="profile-stat-val" id="upFollowers">0</span><span class="profile-stat-lbl">подписчиков</span></div>
+        <div class="profile-stat-item"><span class="profile-stat-val" id="upFollowing">0</span><span class="profile-stat-lbl">подписок</span></div>
+      </div>
+      
+      <button class="btn-subscribe" id="upSubscribeBtn" onclick="toggleSubscribe(state.viewedProfileId)">Подписаться</button>
     </div>
     
     <div id="upGiftsSection" style="margin-top: 15px; display: none;">
@@ -655,7 +669,8 @@
     uid: null, nick: '', username: '', avatar: null, bio: '', glass: 0, 
     verified_dev: false, verified_tester: false, verified_owner: false, premium: false,
     settings: { noForward: false, hideOnline: false, hideGifts: false },
-    currentChatId: null, unread: {}, pinnedChats: {}, contacts: {}, pinnedMessages: {}
+    currentChatId: null, unread: {}, pinnedChats: {}, contacts: {}, pinnedMessages: {},
+    followers: {}, following: {}, viewedProfileId: null
   };
   let currentMessagesListener = null;
   let typingTimeout = null;
@@ -685,6 +700,8 @@
         state.settings = data.settings || { noForward: false, hideOnline: false, hideGifts: false };
         state.contacts = data.contacts || {};
         state.pinnedChats = data.pinnedChats || {};
+        state.followers = data.followers || {};
+        state.following = data.following || {};
         
         updateProfileUI();
         if (document.getElementById('setNoForward')) document.getElementById('setNoForward').checked = state.settings.noForward;
@@ -1107,6 +1124,7 @@
   // 5. ПРОФИЛЬ И КОНТАКТЫ
   function openUserProfile(uid) {
     if (!uid) return;
+    state.viewedProfileId = uid;
     const u = ALL_USERS[uid];
     if (u) { fillUserProfile(uid, u); return; }
     db.ref('users/' + uid).once('value').then(snap => {
@@ -1131,6 +1149,27 @@
     document.getElementById('upBadgePremium').style.display = u.premium ? 'inline' : 'none';
     
     document.getElementById('upStatus').innerText = (u.online && !(u.settings && u.settings.hideOnline)) ? 'в сети' : 'был(а) недавно';
+    
+    // Stats
+    const followersCount = u.followers ? Object.keys(u.followers).length : 0;
+    const followingCount = u.following ? Object.keys(u.following).length : 0;
+    document.getElementById('upFollowers').innerText = followersCount;
+    document.getElementById('upFollowing').innerText = followingCount;
+    
+    // Subscribe button state
+    const btn = document.getElementById('upSubscribeBtn');
+    if (uid === state.uid) {
+      btn.style.display = 'none';
+    } else {
+      btn.style.display = 'block';
+      if (u.followers && u.followers[state.uid]) {
+        btn.innerText = 'Вы подписаны';
+        btn.classList.add('subscribed');
+      } else {
+        btn.innerText = 'Подписаться';
+        btn.classList.remove('subscribed');
+      }
+    }
 
     // Загрузка подарков с интерактивом
     const upGiftsSection = document.getElementById('upGiftsSection');
@@ -1166,6 +1205,30 @@
     document.getElementById('giftDetailsModal').classList.add('show');
   }
 
+  function toggleSubscribe(targetUid) {
+    if (!targetUid || targetUid === state.uid) return;
+    
+    const targetRef = db.ref('users/' + targetUid + '/followers/' + state.uid);
+    const myRef = db.ref('users/' + state.uid + '/following/' + targetUid);
+    
+    const isSubscribed = ALL_USERS[targetUid] && ALL_USERS[targetUid].followers && ALL_USERS[targetUid].followers[state.uid];
+    
+    if (isSubscribed) {
+      targetRef.remove();
+      myRef.remove();
+    } else {
+      targetRef.set(true);
+      myRef.set(true);
+    }
+    
+    // Небольшая задержка, чтобы БД обновилась, и перерисовываем
+    setTimeout(() => {
+      if (state.viewedProfileId === targetUid) {
+        fillUserProfile(targetUid, ALL_USERS[targetUid]);
+      }
+    }, 300);
+  }
+
   function saveContact() {
     if (!state.currentChatId) return;
     const target = ALL_USERS[state.currentChatId];
@@ -1199,6 +1262,11 @@
     document.getElementById('profileBadgePremium').style.display = state.premium ? 'inline' : 'none';
     
     document.getElementById('profileGlassBalance').innerText = state.glass;
+    
+    const followersCount = state.followers ? Object.keys(state.followers).length : 0;
+    const followingCount = state.following ? Object.keys(state.following).length : 0;
+    document.getElementById('profFollowers').innerText = followersCount;
+    document.getElementById('profFollowing').innerText = followingCount;
   }
 
   let currentEditField = '';
@@ -1452,6 +1520,11 @@
       const isLiked = p.likes && p.likes[state.uid];
       const likesCount = p.likes ? Object.keys(p.likes).length : 0;
       const commentsCount = p.comments ? Object.keys(p.comments).length : 0;
+      
+      const author = ALL_USERS[p.authorUid] || {};
+      const isSubscribed = author.followers && author.followers[state.uid];
+      const subBtnText = isSubscribed ? 'Вы подписаны' : 'Подписаться';
+      const subBtnClass = isSubscribed ? 'btn-subscribe subscribed feed-btn' : 'btn-subscribe feed-btn';
 
       container.innerHTML += `
         <div class="feed-post">
@@ -1463,6 +1536,7 @@
               <div class="feed-name" onclick="openUserProfile('${p.authorUid}')" style="cursor:pointer;">${p.authorName}</div>
               <div class="feed-time">${new Date(p.timestamp).toLocaleString()}</div>
             </div>
+            ${p.authorUid !== state.uid ? `<button class="${subBtnClass}" onclick="toggleSubscribe('${p.authorUid}')">${subBtnText}</button>` : ''}
           </div>
           <div class="feed-content">${p.text || ''}</div>
           ${p.image ? `<img src="${p.image}" class="feed-media">` : ''}
