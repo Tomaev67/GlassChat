@@ -26,6 +26,8 @@
     --header-pill-bg: rgba(255,255,255,0.85);
     --header-btn-bg: rgba(255,255,255,0.9);
     --admin-bg: #0a0a0c;
+    --success: #22c55e;
+    --danger: #ef4444;
   }
 
   body.dark-theme {
@@ -115,6 +117,7 @@
   .chat-preview.unread { color: var(--unread-text); font-weight: 600; opacity: 1; }
   .chat-meta { font-size:12px; opacity:0.5; flex-shrink:0; align-self:flex-start; margin-top:3px; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
   .chat-unread-badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
+  .chat-pin-icon { font-size: 12px; color: var(--accent); margin-left: 5px; }
   
   /* Badges */
   .verified-badge-dev { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:#5aa9ff; color:#fff; font-size:10px; flex-shrink:0; }
@@ -157,6 +160,7 @@
   .msg .time { display:block; font-size:11px; opacity:0.7; margin-top:5px; text-align:right; color: var(--msg-time); }
   .msg-reactions { display: flex; gap: 4px; position: absolute; bottom: -12px; right: 10px; background: var(--panel-bg); padding: 2px 6px; border-radius: 12px; border: 1px solid var(--glass-border); font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 2; }
   .msg-wrapper.me .msg-reactions { right: auto; left: 10px; }
+  .highlight { background-color: rgba(255, 235, 59, 0.5) !important; border-radius: 4px; }
   
   /* Reply & Forward Bubbles */
   .msg-reply-quote { 
@@ -194,6 +198,11 @@
   .attach-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: transparent; color: var(--accent); font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .action-btn { width:46px; height:46px; border-radius:50%; border:none; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; font-size:19px; cursor:pointer; flex-shrink:0; box-shadow:0 4px 16px rgba(90,169,255,0.4); transition:0.15s; display: flex; align-items: center; justify-content: center; }
   .action-btn:active { transform:scale(0.92); }
+
+  .blocked-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 5; flex-direction: column; align-items: center; justify-content: center; color: #fff; backdrop-filter: blur(5px); }
+  .blocked-overlay.show { display: flex; }
+  .blocked-overlay h2 { font-size: 20px; margin-bottom: 10px; }
+  .blocked-overlay p { font-size: 14px; opacity: 0.8; }
 
   /* BOTTOM NAV */
   .bottom-nav-container { position: fixed; bottom: 16px; left: 16px; right: 16px; z-index: 50; display: flex; justify-content: center; }
@@ -292,6 +301,10 @@
   .btn-subscribe:active { transform: scale(0.95); }
   .btn-subscribe.subscribed { background: rgba(128,128,128,0.1); border-color: transparent; color: var(--text-color); opacity: 0.6; }
   .btn-subscribe.feed-btn { padding: 4px 10px; font-size: 11px; border-radius: 8px; }
+  
+  /* Group avatars */
+  .group-avatars { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; width: 100%; height: 100%; }
+  .group-avatars img, .group-avatars div { width: 100%; height: 100%; object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 12px; background: var(--accent); }
 </style>
 </head>
 <body class="light-theme">
@@ -361,6 +374,7 @@
   <div class="topbar">
     <h1 id="pageTitle">Чаты</h1>
     <div class="topbar-actions">
+      <div class="topbar-icon" onclick="openCreateGroupModal()" id="createGroupBtn">➕</div>
       <div class="topbar-icon" onclick="toggleTheme()">🌙</div>
       <div class="topbar-icon" onclick="openCreatePostModal()" id="createPostBtn" style="display: none;">📝</div>
     </div>
@@ -395,6 +409,10 @@
         <div class="info-row" style="padding: 10px 0; border:none;"><span class="lbl">Запрет пересылки</span><input type="checkbox" id="setNoForward"></div>
         <div class="info-row" style="padding: 10px 0; border:none;"><span class="lbl">Скрыть "в сети"</span><input type="checkbox" id="setHideOnline"></div>
         <div class="info-row" style="padding: 10px 0; border:none;"><span class="lbl">Скрыть подарки</span><input type="checkbox" id="setHideGifts"></div>
+      </div>
+      <div class="card" style="padding: 20px;">
+        <div style="font-size: 16px; font-weight: 600; color: var(--accent);">Черный список (ЧС)</div>
+        <div id="blacklistContainer" style="margin-top: 10px;"></div>
       </div>
     </div>
   </div>
@@ -450,7 +468,7 @@
       <div class="chat-avatar" id="chatHeaderAvatar">👤</div>
       <div class="chat-header-info"><h3 id="chatHeaderName">Имя</h3><span id="chatHeaderStatus">в сети</span></div>
     </div>
-    <button class="chat-header-btn" onclick="event.stopPropagation(); openChatHeaderMenu()">⋮</button>
+    <button class="chat-header-btn" onclick="event.stopPropagation(); openChatMenu()">⋮</button>
   </div>
   
   <div class="pinned-banner" id="pinnedBanner" onclick="scrollToPinned()">
@@ -465,7 +483,12 @@
     </div>
   </div>
 
-  <div class="messages" id="messages"></div>
+  <div class="messages" id="messages" style="position: relative;">
+     <div class="blocked-overlay" id="blockedOverlay">
+       <h2 id="blockedOverlayTitle">Заблокировано</h2>
+       <p id="blockedOverlayText"></p>
+     </div>
+  </div>
   
   <div class="input-row">
     <button class="attach-btn" onclick="openAttachMenu()">📎</button>
@@ -473,6 +496,51 @@
     <button class="action-btn gift-btn" id="giftBtn" onclick="openGiftPicker()" style="background: transparent; color: #fbbf24;">🎁</button>
     <button class="action-btn" id="sendBtn" onclick="sendMessage()" style="display:none;">➤</button>
     <button class="action-btn" id="micBtn" style="background: transparent; color: var(--accent);" onclick="startVoiceRecord()">🎤</button>
+  </div>
+</div>
+
+<!-- CHAT SETTINGS MENU (Three dots) -->
+<div class="modal-overlay" id="chatMenuModal">
+  <div class="modal-card">
+    <div class="modal-title">Действия с чатом</div>
+    <div class="action-list">
+      <div class="action-item" onclick="promptSearchMessage()">🔍 Поиск по сообщениям</div>
+      <div class="action-item" id="pinChatMenuItem" onclick="togglePinChat()">📌 Закрепить чат</div>
+      <div class="action-item danger" onclick="clearChatHistory()">🗑 Очистить чат</div>
+      <div class="action-item danger" id="blockMenuItem" onclick="toggleBlockUser()">🚫 Заблокировать</div>
+    </div>
+    <div class="action-cancel" onclick="document.getElementById('chatMenuModal').classList.remove('show')">Отмена</div>
+  </div>
+</div>
+
+<!-- SEARCH IN CHAT MODAL -->
+<div class="modal-overlay" id="searchInChatModal">
+  <div class="modal-card">
+    <div class="modal-title">Поиск сообщений</div>
+    <input type="text" id="searchInChatInput" class="input-large" placeholder="Введите слово или фразу..." oninput="performChatSearch()">
+    <div id="searchResultsList" style="max-height: 200px; overflow-y: auto; margin-top: 10px;"></div>
+    <div class="action-cancel" onclick="closeSearchModal()">Закрыть</div>
+  </div>
+</div>
+
+<!-- CREATE GROUP MODAL -->
+<div class="modal-overlay" id="createGroupModal">
+  <div class="modal-card">
+    <div class="modal-title">Новая группа</div>
+    <div class="avatar-upload" id="groupAvatarPreview" onclick="document.getElementById('groupAvatarInput').click()" style="width: 80px; height: 80px; margin: 0 auto 15px;">
+      <span>📷</span>
+    </div>
+    <input type="file" id="groupAvatarInput" accept="image/*" hidden onchange="previewGroupAvatar(event)">
+    
+    <input type="text" id="groupNameInput" class="input-large" placeholder="Название группы (без @)" maxlength="30">
+    
+    <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--accent);">Пригласить участников:</div>
+    <div id="groupMemberList" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px;">
+      <!-- Сюда рендерятся контакты -->
+    </div>
+    
+    <button class="btn-main" onclick="createGroup()">Создать</button>
+    <div class="action-cancel" onclick="document.getElementById('createGroupModal').classList.remove('show')">Отмена</div>
   </div>
 </div>
 
@@ -705,7 +773,7 @@
     verified_dev: false, verified_tester: false, verified_owner: false, premium: false,
     settings: { noForward: false, hideOnline: false, hideGifts: false },
     currentChatId: null, unread: {}, pinnedChats: {}, contacts: {}, pinnedMessages: {},
-    followers: {}, following: {}, viewedProfileId: null
+    followers: {}, following: {}, viewedProfileId: null, blockedUsers: {}
   };
   let currentMessagesListener = null;
   let typingTimeout = null;
@@ -713,6 +781,10 @@
   let activeCtxChatId = null;
   let activeCtxMsgKey = null;
   let currentPostIdForComments = null;
+  
+  // Group vars
+  let groupAvatarBase64 = null;
+  let selectedGroupMembers = [];
 
   // 1. АВТОРИЗАЦИЯ
   auth.onAuthStateChanged(user => {
@@ -737,18 +809,20 @@
         state.pinnedChats = data.pinnedChats || {};
         state.followers = data.followers || {};
         state.following = data.following || {};
+        state.blockedUsers = data.blockedUsers || {};
         
         updateProfileUI();
+        renderBlacklist();
         if (document.getElementById('setNoForward')) document.getElementById('setNoForward').checked = state.settings.noForward;
         if (document.getElementById('setHideOnline')) document.getElementById('setHideOnline').checked = state.settings.hideOnline;
         if (document.getElementById('setHideGifts')) document.getElementById('setHideGifts').checked = state.settings.hideGifts;
       });
 
-      // Слушатель всех юзеров для обновления ав
       db.ref('users').on('value', snapshot => {
         ALL_USERS = snapshot.val() || {};
         if (state.currentChatId) {
           updateChatHeader(state.currentChatId);
+          checkBlockStatus(); // Обновляем оверлей блокировки
           if (state.pinnedMessages[state.currentChatId]) {
             const pMsg = state.pinnedMessages[state.currentChatId];
             if (pMsg) {
@@ -761,7 +835,6 @@
         }
         renderChatList();
         
-        // Обновляем модалку, если она открыта
         if (state.viewedProfileId && ALL_USERS[state.viewedProfileId]) {
            fillUserProfile(state.viewedProfileId, ALL_USERS[state.viewedProfileId]);
         }
@@ -850,6 +923,13 @@
   function sendMessage() {
     const text = document.getElementById('msgInput').value.trim();
     if (!text || !state.currentChatId) return;
+    
+    // Проверка на блокировку
+    if (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId)) {
+      alert('Невозможно отправить сообщение из-за блокировки.');
+      return;
+    }
+
     const chatId = [state.uid, state.currentChatId].sort().join('_');
     
     let msg = { senderId: state.uid, text: text, timestamp: Date.now(), type: 'text' };
@@ -883,6 +963,12 @@
   function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file || !state.currentChatId) return;
+    
+    if (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId)) {
+      alert('Действие недоступно из-за блокировки.');
+      return;
+    }
+    
     const reader = new FileReader();
     reader.onload = ev => {
       const isVideo = file.type.startsWith('video');
@@ -901,6 +987,10 @@
 
   function shareLocation() {
     if (!state.currentChatId) return;
+    if (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId)) {
+      alert('Действие недоступно из-за блокировки.');
+      return;
+    }
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(position => {
         const lat = position.coords.latitude;
@@ -930,6 +1020,10 @@
 
   async function startVoiceRecord() {
     if (!state.currentChatId) return;
+    if (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId)) {
+      alert('Действие недоступно из-за блокировки.');
+      return;
+    }
     if (isRecording) {
       mediaRecorder.stop();
       isRecording = false;
@@ -992,6 +1086,9 @@
     // Аватарка и шапка
     document.getElementById('chatHeaderAvatar').innerHTML = ALL_USERS[chatId].avatar ? `<img src="${ALL_USERS[chatId].avatar}">` : '👤';
     updateChatHeader(chatId);
+    
+    // Проверка блокировки
+    checkBlockStatus();
 
     // Pinned logic
     db.ref('users/' + state.uid + '/pinned/' + chatId).once('value').then(snap => {
@@ -1013,7 +1110,11 @@
     currentMessagesListener.on('value', snapshot => {
       const msgs = snapshot.val() || {};
       const container = document.getElementById('messages');
+      
+      // Очищаем всё, кроме оверлея блокировки
+      const overlay = document.getElementById('blockedOverlay');
       container.innerHTML = '';
+      container.appendChild(overlay);
       
       Object.keys(msgs).forEach(key => {
         const m = msgs[key];
@@ -1057,10 +1158,10 @@
         
         let time = new Date(m.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
         
-        container.innerHTML += `
-          <div class="msg-wrapper ${isMe ? 'me' : 'dev'}">
-            <div class="msg" onclick="openMsgCtx('${chatIdKey}', '${key}')">${forwardHtml}${replyHtml}${content}<span class="time">${time}</span>${reactionHtml}</div>
-          </div>`;
+        const wrapper = document.createElement('div');
+        wrapper.className = `msg-wrapper ${isMe ? 'me' : 'dev'}`;
+        wrapper.innerHTML = `<div class="msg" id="msg-${key}" onclick="openMsgCtx('${chatIdKey}', '${key}')">${forwardHtml}${replyHtml}${content}<span class="time">${time}</span>${reactionHtml}</div>`;
+        container.appendChild(wrapper);
       });
       container.scrollTop = container.scrollHeight;
     });
@@ -1101,7 +1202,39 @@
     let status = 'был(а) недавно';
     if (u.online && !(u.settings && u.settings.hideOnline)) status = 'в сети';
     if (u.typing) status = 'печатает...';
+    
+    if (isUserBlocked(chatId)) status = 'Заблокирован';
+    if (amIBlocked(chatId)) status = 'Пользователь вас заблокировал';
+    
     document.getElementById('chatHeaderStatus').innerText = status;
+  }
+
+  // Проверки на блокировку
+  function isUserBlocked(uid) {
+    return state.blockedUsers && state.blockedUsers[uid];
+  }
+  function amIBlocked(uid) {
+    const other = ALL_USERS[uid];
+    return other && other.blockedUsers && other.blockedUsers[state.uid];
+  }
+
+  function checkBlockStatus() {
+    const overlay = document.getElementById('blockedOverlay');
+    const title = document.getElementById('blockedOverlayTitle');
+    const text = document.getElementById('blockedOverlayText');
+    
+    if (isUserBlocked(state.currentChatId)) {
+      overlay.classList.add('show');
+      title.innerText = "Вы заблокировали этого пользователя";
+      text.innerText = "Разблокируйте его в настройках (ЧС), чтобы продолжить общение.";
+    } else if (amIBlocked(state.currentChatId)) {
+      overlay.classList.add('show');
+      title.innerText = "Пользователь вас заблокировал";
+      text.innerText = "Вы не можете отправлять сообщения.";
+    } else {
+      overlay.classList.remove('show');
+    }
+    updateChatHeader(state.currentChatId);
   }
 
   // 4. СПИСКИ И ПОИСК
@@ -1135,8 +1268,13 @@
     list.innerHTML = '';
     if (MY_CHATS.length === 0) { list.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">Найдите друга через поиск!</div>'; return; }
     
-    // Сортировка по времени последнего сообщения
+    // Сортировка: закрепленные сверху, потом по времени
     const sortedChats = [...MY_CHATS].sort((a, b) => {
+      const isPinnedA = state.pinnedChats && state.pinnedChats[a];
+      const isPinnedB = state.pinnedChats && state.pinnedChats[b];
+      if (isPinnedA && !isPinnedB) return -1;
+      if (!isPinnedA && isPinnedB) return 1;
+      
       const timeA = (chatMeta[a] && chatMeta[a].timestamp) || 0;
       const timeB = (chatMeta[b] && chatMeta[b].timestamp) || 0;
       return timeB - timeA;
@@ -1147,6 +1285,7 @@
       const u = ALL_USERS[cid];
       if (!u) return;
       const unread = state.unread[cid] || 0;
+      const isPinned = state.pinnedChats && state.pinnedChats[cid];
       
       let badges = '';
       if (u.verified_dev) badges += '<span class="verified-badge-dev">✓</span>';
@@ -1156,7 +1295,6 @@
 
       let displayName = (state.contacts && state.contacts[cid]) ? state.contacts[cid] : u.nick;
       
-      // Форматируем превью
       let previewText = u.username;
       const meta = chatMeta[cid];
       if (meta && meta.text) {
@@ -1177,7 +1315,7 @@
             ${u.avatar ? `<img src="${u.avatar}">` : '👤'}
           </div>
           <div class="chat-info" onclick="openChatView('${cid}')">
-            <div class="chat-name">${displayName} ${badges}</div>
+            <div class="chat-name">${displayName} ${badges} ${isPinned ? '<span class="chat-pin-icon">📌</span>' : ''}</div>
             <div class="chat-preview ${unread > 0 ? 'unread' : ''}">${previewText}</div>
           </div>
           ${unread > 0 ? `<div class="chat-unread-badge" onclick="event.stopPropagation(); openChatView('${cid}')">${unread}</div>` : ''}
@@ -1254,13 +1392,11 @@
     
     document.getElementById('upStatus').innerText = (u.online && !(u.settings && u.settings.hideOnline)) ? 'в сети' : 'был(а) недавно';
     
-    // Stats
     const followersCount = u.followers ? Object.keys(u.followers).length : 0;
     const followingCount = u.following ? Object.keys(u.following).length : 0;
     document.getElementById('upFollowers').innerText = followersCount;
     document.getElementById('upFollowing').innerText = followingCount;
     
-    // Subscribe button state
     const btn = document.getElementById('upSubscribeBtn');
     if (uid === state.uid) {
       btn.style.display = 'none';
@@ -1275,7 +1411,6 @@
       }
     }
 
-    // Загрузка подарков с интерактивом
     const upGiftsSection = document.getElementById('upGiftsSection');
     const upGiftsList = document.getElementById('upGiftsList');
     upGiftsList.innerHTML = '';
@@ -1325,7 +1460,6 @@
       myRef.set(true);
     }
     
-    // Небольшая задержка, чтобы БД обновилась, и перерисовываем
     setTimeout(() => {
       if (state.viewedProfileId === targetUid) {
         fillUserProfile(targetUid, ALL_USERS[targetUid]);
@@ -1372,7 +1506,6 @@
     document.getElementById('infoBio').innerText = state.bio || '—';
     document.getElementById('profileBio').innerText = state.bio || 'Описание профиля';
     
-    // Устанавливаем свою аву (не затирая кнопку смены)
     const profileAva = document.getElementById('profileAvatar');
     if (state.avatar) {
       profileAva.innerHTML = `<img src="${state.avatar}"><div class="change-avatar-btn" onclick="document.getElementById('myAvatarInput').click()">📷</div>`;
@@ -1429,6 +1562,10 @@
 
   // 6. ПОДАРКИ
   function openGiftPicker() {
+    if (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId)) {
+      alert('Действие недоступно из-за блокировки.');
+      return;
+    }
     document.getElementById('giftBalance').innerText = state.glass;
     const grid = document.getElementById('giftGrid');
     grid.innerHTML = '';
@@ -1479,6 +1616,8 @@
 
   // 7. КОНТЕКСТНОЕ МЕНЮ (РЕАКЦИИ)
   function openMsgCtx(chatIdKey, msgKey) {
+    if (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId)) return; 
+    
     activeCtxChatId = chatIdKey;
     activeCtxMsgKey = msgKey;
     document.getElementById('ctxList').innerHTML = `
@@ -1554,7 +1693,6 @@
       const m = snap.val();
       const newChatId = [state.uid, targetUid].sort().join('_');
       
-      // Получаем имя автора оригинального сообщения
       let authorName = 'Пользователь';
       if (m.senderId === state.uid) {
         authorName = state.nick;
@@ -1656,7 +1794,6 @@
       const likesCount = p.likes ? Object.keys(p.likes).length : 0;
       const commentsCount = p.comments ? Object.keys(p.comments).length : 0;
       
-      // Получаем актуальные данные автора из кэша (чтобы ава была самой новой)
       const author = ALL_USERS[p.authorUid] || {};
       const actualAvatar = author.avatar || p.authorAvatar; 
       const actualName = author.nick || p.authorName;
@@ -1740,6 +1877,261 @@
     document.getElementById('postCommentInput').value = '';
   }
 
+  // 8.5 ГРУППЫ И НОВЫЕ ФИЧИ (МЕНЮ)
+  
+  function openChatMenu() {
+    if (!state.currentChatId) return;
+    
+    const isPinned = state.pinnedChats && state.pinnedChats[state.currentChatId];
+    document.getElementById('pinChatMenuItem').innerText = isPinned ? "📌 Открепить чат" : "📌 Закрепить чат";
+    
+    const isBlocked = isUserBlocked(state.currentChatId);
+    const blockBtn = document.getElementById('blockMenuItem');
+    blockBtn.innerText = isBlocked ? "✅ Разблокировать" : "🚫 Заблокировать";
+    
+    document.getElementById('chatMenuModal').classList.add('show');
+  }
+
+  // 1. Поиск по сообщениям
+  function promptSearchMessage() {
+    document.getElementById('chatMenuModal').classList.remove('show');
+    document.getElementById('searchInChatModal').classList.add('show');
+    document.getElementById('searchInChatInput').value = '';
+    document.getElementById('searchResultsList').innerHTML = '';
+  }
+
+  function closeSearchModal() {
+    document.getElementById('searchInChatModal').classList.remove('show');
+    // Убираем подсветку
+    document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+  }
+
+  function performChatSearch() {
+    const query = document.getElementById('searchInChatInput').value.toLowerCase().trim();
+    const resultsList = document.getElementById('searchResultsList');
+    resultsList.innerHTML = '';
+    
+    // Убираем старую подсветку
+    document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+
+    if (query.length < 2) return;
+
+    const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
+    db.ref('messages/' + chatIdKey).once('value').then(snap => {
+      const msgs = snap.val() || {};
+      let foundCount = 0;
+      
+      Object.keys(msgs).forEach(key => {
+        const m = msgs[key];
+        if (m.type === 'text' && m.text.toLowerCase().includes(query)) {
+          foundCount++;
+          // Добавляем в список результатов
+          const resDiv = document.createElement('div');
+          resDiv.style.cssText = "padding: 8px; border-bottom: 1px solid var(--glass-border); cursor: pointer; font-size: 14px;";
+          resDiv.innerText = m.text;
+          resDiv.onclick = () => {
+            closeSearchModal();
+            const msgEl = document.getElementById('msg-' + key);
+            if (msgEl) {
+              msgEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              msgEl.classList.add('highlight');
+              setTimeout(() => msgEl.classList.remove('highlight'), 2000);
+            }
+          };
+          resultsList.appendChild(resDiv);
+        }
+      });
+      
+      if (foundCount === 0) {
+        resultsList.innerHTML = '<div style="text-align:center; opacity:0.5; font-size:14px; margin-top:10px;">Ничего не найдено</div>';
+      }
+    });
+  }
+
+  // 2. Очистка чата
+  function clearChatHistory() {
+    document.getElementById('chatMenuModal').classList.remove('show');
+    if (!confirm('Вы уверены, что хотите очистить историю сообщений? У собеседника они останутся.')) return;
+    
+    const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
+    
+    // Логика: мы не можем удалить сообщения из общей базы только для себя, 
+    // поэтому мы просто удаляем этот чат из user_chats (скрываем его).
+    // Или, если нужно реально очистить визуально - удаляем сообщения из базы (у всех).
+    // Сделаем как в ТГ - удаляем у себя (скрываем чат).
+    
+    db.ref('user_chats/' + state.uid + '/' + state.currentChatId).remove().then(() => {
+      closeChatView();
+      alert('Чат очищен (удален из списка).');
+    });
+  }
+
+  // 3. Блокировка
+  function toggleBlockUser() {
+    document.getElementById('chatMenuModal').classList.remove('show');
+    if (!state.currentChatId) return;
+    
+    const targetUid = state.currentChatId;
+    const isBlocked = isUserBlocked(targetUid);
+    
+    if (isBlocked) {
+      // Разблокируем
+      db.ref('users/' + state.uid + '/blockedUsers/' + targetUid).remove();
+      alert('Пользователь разблокирован.');
+    } else {
+      // Блокируем
+      if (confirm('Заблокировать пользователя? Он не сможет вам писать.')) {
+        db.ref('users/' + state.uid + '/blockedUsers/' + targetUid).set(true);
+        alert('Пользователь заблокирован.');
+      }
+    }
+  }
+
+  function renderBlacklist() {
+    const container = document.getElementById('blacklistContainer');
+    if (!container) return;
+    
+    const blockedUids = Object.keys(state.blockedUsers || {});
+    if (blockedUids.length === 0) {
+      container.innerHTML = '<div style="text-align:center; opacity:0.5; font-size:13px;">Список пуст</div>';
+      return;
+    }
+    
+    container.innerHTML = '';
+    blockedUids.forEach(uid => {
+      const u = ALL_USERS[uid];
+      if (!u) return;
+      
+      container.innerHTML += `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(128,128,128,0.1);">
+          <div style="font-size:14px;">${u.nick} <span style="opacity:0.5;">${u.username}</span></div>
+          <button class="edit-btn" style="background:var(--danger); color:#fff;" onclick="unblockFromSettings('${uid}')">Разблокировать</button>
+        </div>
+      `;
+    });
+  }
+
+  function unblockFromSettings(uid) {
+    db.ref('users/' + state.uid + '/blockedUsers/' + uid).remove().then(() => {
+      alert('Пользователь разблокирован');
+    });
+  }
+
+  // 4. Закрепление чатов
+  function togglePinChat() {
+    document.getElementById('chatMenuModal').classList.remove('show');
+    if (!state.currentChatId) return;
+    
+    const isPinned = state.pinnedChats && state.pinnedChats[state.currentChatId];
+    if (isPinned) {
+      db.ref('users/' + state.uid + '/pinnedChats/' + state.currentChatId).remove();
+      alert('Чат откреплен');
+    } else {
+      db.ref('users/' + state.uid + '/pinnedChats/' + state.currentChatId).set(true);
+      alert('Чат закреплен');
+    }
+  }
+
+  // 5. Группы
+  function openCreateGroupModal() {
+    document.getElementById('createGroupModal').classList.add('show');
+    groupAvatarBase64 = null;
+    selectedGroupMembers = [];
+    document.getElementById('groupNameInput').value = '';
+    document.getElementById('groupAvatarPreview').innerHTML = '<span>📷</span>';
+    
+    // Рендерим контакты
+    const list = document.getElementById('groupMemberList');
+    list.innerHTML = '';
+    
+    // Берем всех, с кем есть чат, как потенциальных участников
+    MY_CHATS.forEach(cid => {
+      if (cid === state.uid) return;
+      const u = ALL_USERS[cid];
+      if (!u) return;
+      
+      list.innerHTML += `
+        <div style="display:flex; align-items:center; gap:10px; padding:5px; border-radius:8px; cursor:pointer;" onclick="toggleGroupMember('${cid}', this)">
+          <input type="checkbox" style="pointer-events:none;">
+          <div class="chat-avatar" style="width:30px; height:30px; font-size:12px;">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
+          <div style="font-size:14px;">${u.nick}</div>
+        </div>
+      `;
+    });
+    
+    if (MY_CHATS.length <= 1) {
+       list.innerHTML = '<div style="text-align:center; opacity:0.5; font-size:13px;">Нет контактов для приглашения</div>';
+    }
+  }
+
+  function previewGroupAvatar(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = ev => { 
+      groupAvatarBase64 = ev.target.result; 
+      document.getElementById('groupAvatarPreview').innerHTML = `<img src="${groupAvatarBase64}">`; 
+    };
+    r.readAsDataURL(file);
+  }
+
+  function toggleGroupMember(uid, el) {
+    const checkbox = el.querySelector('input[type="checkbox"]');
+    checkbox.checked = !checkbox.checked;
+    
+    if (checkbox.checked) {
+      if (!selectedGroupMembers.includes(uid)) selectedGroupMembers.push(uid);
+      el.style.background = 'rgba(90,169,255,0.2)';
+    } else {
+      selectedGroupMembers = selectedGroupMembers.filter(id => id !== uid);
+      el.style.background = 'transparent';
+    }
+  }
+
+  function createGroup() {
+    const name = document.getElementById('groupNameInput').value.trim();
+    if (!name) { alert('Введите название группы'); return; }
+    if (name.startsWith('@')) { alert('Название группы не должно начинаться с @'); return; }
+    
+    const groupId = 'group_' + Date.now();
+    const groupData = {
+      isGroup: true,
+      name: name,
+      avatar: groupAvatarBase64,
+      owner: state.uid,
+      members: {
+        [state.uid]: true
+      },
+      timestamp: Date.now()
+    };
+    
+    // Добавляем участников
+    selectedGroupMembers.forEach(uid => {
+      groupData.members[uid] = true;
+    });
+    
+    db.ref('groups/' + groupId).set(groupData).then(() => {
+      // Подключаем всех участников к чату (user_chats)
+      let updates = {};
+      Object.keys(groupData.members).forEach(uid => {
+        updates['user_chats/' + uid + '/' + groupId] = true;
+      });
+      return db.ref().update(updates);
+    }).then(() => {
+      document.getElementById('createGroupModal').classList.remove('show');
+      alert('Группа создана!');
+      // Открываем чат группы сразу
+      openGroupChat(groupId);
+    });
+  }
+
+  function openGroupChat(groupId) {
+    // Заглушка, так как сложная логика групп требует переписывания всей структуры чатов
+    // Для простоты мы будем хранить группы в отдельном узле, но это потребует адаптации
+    alert("Функция чата группы в разработке. Группа создана в базе.");
+    // В реальности здесь нужно рендерить сообщения из messages/groupId и добавлять имя отправителя к каждому сообщению
+  }
+
   // 9. УТИЛИТЫ
   function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
   
@@ -1749,12 +2141,15 @@
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); 
     if (btn) btn.classList.add('active'); 
     
-    // Меняем заголовок страницы
     const titles = { chats: 'Чаты', feed: 'Лента', settings: 'Настройки', profile: 'Профиль' };
     document.getElementById('pageTitle').innerText = titles[page] || 'Чаты';
 
     document.getElementById('createPostBtn').style.display = page === 'feed' ? 'block' : 'none';
+    // Показываем кнопку создания группы только на странице чатов
+    document.getElementById('createGroupBtn').style.display = page === 'chats' ? 'block' : 'none';
+
     if (page === 'profile') updateProfileUI();
+    if (page === 'settings') renderBlacklist();
   }
   
   function toggleTheme() { document.body.classList.toggle('dark-theme'); }
@@ -1771,19 +2166,17 @@
     db.ref('users/' + state.uid + '/settings/hideGifts').set(this.checked);
   });
 
-  // 10. АДМИНКА И КОМАНДА /ИВАНПАНЕЛЬ
+  // 10. АДМИНКА
   const SECRET = [47, 112, 97, 110, 101, 108, 61, 49, 117, 105, 100].map(c => String.fromCharCode(c)).join('');
   document.getElementById('chatSearch').addEventListener('input', function() {
     const val = this.value.trim().toLowerCase();
     
-    // Вызов админки
     if (val === SECRET) { 
       this.value = ''; 
       document.getElementById('adminAuthModal').classList.add('show'); 
       return; 
     }
     
-    // Вызов панели Ивана
     if (val === '/иванпанель') {
       this.value = '';
       document.getElementById('ivanPanelModal').classList.add('show');
@@ -1826,7 +2219,6 @@
     if (type === 'glass') un = document.getElementById('ivanGlassUser').value.trim();
     if (type === 'premium') un = document.getElementById('ivanPremiumUser').value.trim();
     
-    // Добавляем @, если нет
     if (un && !un.startsWith('@')) un = '@' + un;
 
     let targetUid = Object.keys(ALL_USERS).find(k => ALL_USERS[k].username.toLowerCase() === un.toLowerCase());
