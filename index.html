@@ -538,10 +538,15 @@
     state.nick = nick;
     showScreen('regUsernameScreen');
   }
-  function regNextUsername() {
+  async function regNextUsername() {
     let un = document.getElementById('regUsername').value.trim().toLowerCase();
     if (!un.startsWith('@')) un = '@' + un;
     if (un.length < 4) { alert('Минимум 4 символа'); return; }
+    
+    // Проверка на занятость
+    const taken = Object.values(ALL_USERS).some(u => u.username.toLowerCase() === un);
+    if (taken) { alert('Этот username уже занят!'); return; }
+    
     state.username = un;
     showScreen('regAvatarScreen');
   }
