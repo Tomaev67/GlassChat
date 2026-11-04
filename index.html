@@ -70,7 +70,7 @@
   .screen { position:fixed; inset:0; z-index:10; display:none; flex-direction:column; }
   .screen.active { display:flex; animation: fadeInUp 0.4s ease; }
 
-  /* WELCOME / REG */
+  /* WELCOME */
   #welcomeScreen { align-items:center; justify-content:center; padding:30px; text-align:center; }
   .welcome-logo { width:110px; height:110px; border-radius:32px; background: linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:52px; margin-bottom:26px; box-shadow:0 16px 50px rgba(90,169,255,0.5); animation: floaty 3s ease-in-out infinite; }
   .welcome-title { font-size:32px; font-weight:700; margin-bottom:12px; letter-spacing:-0.5px; }
@@ -80,6 +80,7 @@
   .btn-secondary { padding:16px 48px; border:1px solid var(--glass-border); border-radius:20px; background: transparent; color:var(--text-color); font-size:16px; font-weight:600; cursor:pointer; transition:0.25s; width: 100%; max-width: 320px; }
   .btn-secondary:active { transform:scale(0.96); }
 
+  /* REGISTRATION */
   .reg-step { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; height: 100%; margin: 0 auto; overflow-y: auto; }
   .step-title { font-size:24px; font-weight:700; margin-bottom:8px; }
   .step-sub { font-size:14px; opacity:0.6; margin-bottom:20px; }
@@ -101,7 +102,7 @@
   .page.active { display:flex; animation: fadeInUp 0.3s ease; }
   
   .search-wrap { padding:0 16px 12px; flex-shrink:0; }
-  .search { width: 100%; padding:12px 18px; background:var(--panel-bg); border:1px solid var(--glass-border); border-radius:16px; color:var(--text-color); font-size:15px; outline:none; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); }
+  .search { width: 100%; padding:12px 18px; background:var(--panel-bg); border:1px solid var(--glass-border); border-radius:16px; color:var(--text-color); font-size:15px; outline:none; backdrop-filter:blur(20px); }
   .search::placeholder { color:rgba(128,128,128,0.7); }
 
   /* Chat List */
@@ -116,7 +117,6 @@
   .chat-preview.unread { color: var(--unread-text); font-weight: 600; opacity: 1; }
   .chat-meta { font-size:12px; opacity:0.5; flex-shrink:0; align-self:flex-start; margin-top:3px; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
   .chat-unread-badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
-  .pin-indicator { font-size: 14px; opacity: 0.5; transform: rotate(45deg); display: inline-block; }
   
   /* Badges */
   .verified-badge-dev { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:#5aa9ff; color:#fff; font-size:10px; flex-shrink:0; }
@@ -834,7 +834,7 @@
           document.getElementById('micBtn').style.color = 'var(--accent)';
           document.getElementById('micBtn').innerText = '🎤';
         }
-      }, 10000); // максимум 10 сек
+      }, 10000);
 
     } catch (err) {
       alert('Нет доступа к микрофону!');
@@ -944,7 +944,6 @@
       if (u.verified_owner) badges += '<span class="verified-badge-owner">👑</span>';
       if (u.premium) badges += '<span class="premium-star">⭐</span>';
 
-      // Если записан в контакты, показываем это имя
       let displayName = (state.contacts && state.contacts[cid]) ? state.contacts[cid] : u.nick;
 
       list.innerHTML += `
@@ -1122,7 +1121,7 @@
     });
   }
 
-  // 7. КОНТЕКСТНОЕ МЕНЮ (РЕАКЦИИ, УДАЛЕНИЕ, ПЕРЕСЫЛКА)
+  // 7. КОНТЕКСТНОЕ МЕНЮ
   function openMsgCtx(chatIdKey, msgKey) {
     activeCtxChatId = chatIdKey;
     activeCtxMsgKey = msgKey;
@@ -1194,7 +1193,7 @@
     }
   }
 
-  // 8. ЛЕНТА (FEED) - ИСПРАВЛЕНО
+  // 8. ЛЕНТА (FEED)
   function openCreatePostModal() { document.getElementById('createPostModal').classList.add('show'); }
 
   function publishPost() {
