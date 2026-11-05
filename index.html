@@ -154,11 +154,11 @@
   .pinned-icons { display: flex; gap: 10px; color: var(--text-color); opacity: 0.5; font-size: 16px; }
 
   .messages { flex:1; overflow-y:auto; padding:10px 16px 18px; display:flex; flex-direction:column; gap:10px; position:relative; z-index:1; overscroll-behavior-y: none; }
-  .msg-wrapper { display: flex; width: 100%; position: relative; }
-  .msg-wrapper.me { justify-content: flex-end; }
-  .msg-wrapper.dev { justify-content: flex-start; }
-  .msg-container { position: relative; max-width: 80%; transition: transform 0.2s ease; touch-action: pan-y; }
-  .msg { padding:12px 16px; border-radius:22px; font-size:var(--text-size); line-height:1.4; word-wrap:break-word; backdrop-filter:blur(10px); color: var(--text-color); position: relative; cursor: pointer; }
+  .msg-wrapper { display: flex; flex-direction: column; width: 100%; position: relative; margin-bottom: 5px; }
+  .msg-wrapper.me { align-items: flex-end; }
+  .msg-wrapper.dev { align-items: flex-start; }
+  .msg-sender-name { font-size: 11px; color: var(--accent); margin-bottom: 3px; margin-left: 10px; font-weight: 600; }
+  .msg { padding:12px 16px; border-radius:22px; font-size:var(--text-size); line-height:1.4; word-wrap:break-word; backdrop-filter:blur(10px); color: var(--text-color); position: relative; cursor: pointer; max-width: 80%; }
   .msg-wrapper.dev .msg { background:var(--bubble-dev); border-bottom-left-radius:6px; }
   .msg-wrapper.me .msg { background:var(--bubble-me); border-bottom-right-radius:6px; color: #fff; }
   .msg .time { display:block; font-size:11px; opacity:0.7; margin-top:5px; text-align:right; color: var(--msg-time); }
@@ -472,7 +472,7 @@
   <div class="chat-view-bg" id="chatViewBg"></div>
   <div class="chat-header">
     <button class="chat-header-btn" onclick="closeChatView()">←</button>
-    <div class="chat-header-pill" onclick="openUserProfile(state.currentChatId)">
+    <div class="chat-header-pill" id="chatHeaderPill" onclick="openCurrentProfile()">
       <div class="chat-avatar" id="chatHeaderAvatar">👤</div>
       <div class="chat-header-info"><h3 id="chatHeaderName">Имя</h3><span id="chatHeaderStatus">в сети</span></div>
     </div>
@@ -510,12 +510,9 @@
 <!-- CHAT SETTINGS MENU (Three dots) -->
 <div class="modal-overlay" id="chatMenuModal">
   <div class="modal-card">
-    <div class="modal-title">Действия с чатом</div>
-    <div class="action-list">
-      <div class="action-item" onclick="promptSearchMessage()">🔍 Поиск по сообщениям</div>
-      <div class="action-item" id="pinChatMenuItem" onclick="togglePinChat()">📌 Закрепить чат</div>
-      <div class="action-item danger" onclick="clearChatHistory()">🗑 Очистить чат</div>
-      <div class="action-item danger" id="blockMenuItem" onclick="toggleBlockUser()">🚫 Заблокировать</div>
+    <div class="modal-title" id="chatMenuTitle">Действия с чатом</div>
+    <div class="action-list" id="chatMenuActionList">
+      <!-- Заполняется динамически -->
     </div>
     <div class="action-cancel" onclick="document.getElementById('chatMenuModal').classList.remove('show')">Отмена</div>
   </div>
@@ -549,6 +546,30 @@
     
     <button class="btn-main" onclick="createGroup()">Создать</button>
     <div class="action-cancel" onclick="document.getElementById('createGroupModal').classList.remove('show')">Отмена</div>
+  </div>
+</div>
+
+<!-- GROUP PROFILE MODAL -->
+<div class="modal-overlay" id="groupProfileModal">
+  <div class="modal-card">
+    <div style="display:flex; flex-direction:column; align-items:center; margin-bottom: 20px;">
+      <div class="profile-avatar" id="grpAvatar" style="background: var(--accent);"><span>👥</span></div>
+      <div class="profile-name" id="grpName">Название</div>
+      <div class="profile-username" id="grpOwner">Создатель: @owner</div>
+    </div>
+    <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--accent);">Участники:</div>
+    <div id="grpMembersList" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
+    <div class="action-cancel" style="margin-top:20px;" onclick="document.getElementById('groupProfileModal').classList.remove('show')">Закрыть</div>
+  </div>
+</div>
+
+<!-- MANAGE GROUP MEMBERS MODAL -->
+<div class="modal-overlay" id="manageGroupModal">
+  <div class="modal-card">
+    <div class="modal-title" id="manageGroupTitle">Добавить участников</div>
+    <div id="manageGroupList" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
+    <button class="btn-main" id="manageGroupSaveBtn" onclick="saveGroupMembers()" style="margin-top: 15px;">Сохранить</button>
+    <div class="action-cancel" onclick="document.getElementById('manageGroupModal').classList.remove('show')">Отмена</div>
   </div>
 </div>
 
@@ -780,7 +801,6 @@
     document.body.classList.toggle('dark-theme');
     localStorage.setItem('glasschat_theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
   }
-  // Применяем настройки ДО инициализации Firebase
   loadSettings();
 
   const firebaseConfig = {
@@ -798,6 +818,7 @@
   const db = firebase.database();
 
   let ALL_USERS = {};
+  let ALL_GROUPS = {};
   let MY_CHATS = [];
   let chatMeta = {}; 
   let state = { 
@@ -814,7 +835,6 @@
   let activeCtxMsgKey = null;
   let currentPostIdForComments = null;
   
-  // Group vars
   let groupAvatarBase64 = null;
   let selectedGroupMembers = [];
 
@@ -855,15 +875,6 @@
         if (state.currentChatId) {
           updateChatHeader(state.currentChatId);
           checkBlockStatus();
-          if (state.pinnedMessages[state.currentChatId]) {
-            const pMsg = state.pinnedMessages[state.currentChatId];
-            if (pMsg) {
-              document.getElementById('pinnedText').innerText = pMsg.text;
-              document.getElementById('pinnedBanner').classList.add('show');
-            } else {
-              document.getElementById('pinnedBanner').classList.remove('show');
-            }
-          }
         }
         renderChatList();
         
@@ -874,8 +885,10 @@
       
       // Слушатель Групп
       db.ref('groups').on('value', snapshot => {
-        const groups = snapshot.val() || {};
-        ALL_GROUPS = groups;
+        ALL_GROUPS = snapshot.val() || {};
+        if (state.currentChatId && state.currentChatId.startsWith('group_')) {
+          updateChatHeader(state.currentChatId);
+        }
         renderChatList();
       });
 
@@ -887,7 +900,6 @@
         loadUnreadCounts();
       });
 
-      // Скрываем лоадер, показываем приложение
       showScreen('mainScreen');
       
       if (!state.settings.hideOnline) {
@@ -964,12 +976,12 @@
     const text = document.getElementById('msgInput').value.trim();
     if (!text || !state.currentChatId) return;
     
-    if (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId)) {
+    if (!state.currentChatId.startsWith('group_') && (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId))) {
       alert('Невозможно отправить сообщение из-за блокировки.');
       return;
     }
 
-    const chatId = [state.uid, state.currentChatId].sort().join('_');
+    const chatId = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
     
     let msg = { senderId: state.uid, text: text, timestamp: Date.now(), type: 'text' };
     if (replyTo) { msg.replyTo = replyTo; replyTo = null; }
@@ -978,9 +990,11 @@
     newMsgRef.set(msg);
     
     let updates = {};
-    updates['user_chats/' + state.uid + '/' + state.currentChatId] = true;
-    updates['user_chats/' + state.currentChatId + '/' + state.uid] = true;
-    updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+    if (!state.currentChatId.startsWith('group_')) {
+      updates['user_chats/' + state.uid + '/' + state.currentChatId] = true;
+      updates['user_chats/' + state.currentChatId + '/' + state.uid] = true;
+      updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+    }
     
     db.ref().update(updates);
 
@@ -1003,7 +1017,7 @@
     const file = event.target.files[0];
     if (!file || !state.currentChatId) return;
     
-    if (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId)) {
+    if (!state.currentChatId.startsWith('group_') && (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId))) {
       alert('Действие недоступно из-за блокировки.');
       return;
     }
@@ -1011,13 +1025,15 @@
     const reader = new FileReader();
     reader.onload = ev => {
       const isVideo = file.type.startsWith('video');
-      const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
+      const chatIdKey = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
       
       const newMsgRef = db.ref('messages/' + chatIdKey).push();
       newMsgRef.set({ senderId: state.uid, text: ev.target.result, type: isVideo ? 'video' : 'image', timestamp: Date.now() });
       
       let updates = {};
-      updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+      if (!state.currentChatId.startsWith('group_')) {
+        updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+      }
       db.ref().update(updates);
     };
     reader.readAsDataURL(file);
@@ -1026,7 +1042,7 @@
 
   function shareLocation() {
     if (!state.currentChatId) return;
-    if (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId)) {
+    if (!state.currentChatId.startsWith('group_') && (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId))) {
       alert('Действие недоступно из-за блокировки.');
       return;
     }
@@ -1034,13 +1050,15 @@
       navigator.geolocation.getCurrentPosition(position => {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
-        const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
+        const chatIdKey = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
         
         const newMsgRef = db.ref('messages/' + chatIdKey).push();
         newMsgRef.set({ senderId: state.uid, text: `Геопозиция: ${lat.toFixed(4)}, ${lon.toFixed(4)}`, type: 'location', timestamp: Date.now() });
         
         let updates = {};
-        updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+        if (!state.currentChatId.startsWith('group_')) {
+          updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+        }
         db.ref().update(updates);
         
       }, () => {
@@ -1059,7 +1077,7 @@
 
   async function startVoiceRecord() {
     if (!state.currentChatId) return;
-    if (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId)) {
+    if (!state.currentChatId.startsWith('group_') && (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId))) {
       alert('Действие недоступно из-за блокировки.');
       return;
     }
@@ -1086,13 +1104,15 @@
         reader.readAsDataURL(audioBlob);
         reader.onloadend = () => {
           const base64data = reader.result;
-          const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
+          const chatIdKey = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
           
           const newMsgRef = db.ref('messages/' + chatIdKey).push();
           newMsgRef.set({ senderId: state.uid, text: base64data, type: 'voice', timestamp: Date.now() });
           
           let updates = {};
-          updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+          if (!state.currentChatId.startsWith('group_')) {
+            updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+          }
           db.ref().update(updates);
         };
         stream.getTracks().forEach(track => track.stop());
@@ -1118,35 +1138,33 @@
   }
 
   function openChatView(chatId) {
-    // Если это группа, обрабатываем отдельно (в текущей реализации группы не доработаны до конца,
-    // но мы разрешаем их открывать, если они есть)
-    if (chatId.startsWith('group_')) {
-      openGroupChat(chatId);
-      return;
-    }
-
-    if (!ALL_USERS[chatId]) { alert('Профиль ещё загружается...'); return; }
     state.currentChatId = chatId;
     document.getElementById('chatView').classList.add('active');
     
-    document.getElementById('chatHeaderAvatar').innerHTML = ALL_USERS[chatId].avatar ? `<img src="${ALL_USERS[chatId].avatar}">` : '👤';
+    // Очищаем прошлое состояние
+    document.getElementById('messages').innerHTML = '<div class="blocked-overlay" id="blockedOverlay"><h2 id="blockedOverlayTitle">Заблокировано</h2><p id="blockedOverlayText"></p></div>';
+    document.getElementById('pinnedBanner').classList.remove('show');
+    
     updateChatHeader(chatId);
     checkBlockStatus();
 
-    db.ref('users/' + state.uid + '/pinned/' + chatId).once('value').then(snap => {
-      const pinnedMsg = snap.val();
-      if (pinnedMsg) {
-        document.getElementById('pinnedText').innerText = pinnedMsg.senderName + ': ' + pinnedMsg.text;
-        document.getElementById('pinnedBanner').classList.add('show');
-        state.pinnedMessages[chatId] = pinnedMsg;
-      } else {
-        document.getElementById('pinnedBanner').classList.remove('show');
-        state.pinnedMessages[chatId] = null;
-      }
-    });
-    
     if (currentMessagesListener) currentMessagesListener.off();
-    const chatIdKey = [state.uid, chatId].sort().join('_');
+    
+    const chatIdKey = chatId.startsWith('group_') ? chatId : [state.uid, chatId].sort().join('_');
+    
+    if (!chatId.startsWith('group_')) {
+      db.ref('users/' + state.uid + '/pinned/' + chatId).once('value').then(snap => {
+        const pinnedMsg = snap.val();
+        if (pinnedMsg) {
+          document.getElementById('pinnedText').innerText = pinnedMsg.senderName + ': ' + pinnedMsg.text;
+          document.getElementById('pinnedBanner').classList.add('show');
+          state.pinnedMessages[chatId] = pinnedMsg;
+        } else {
+          document.getElementById('pinnedBanner').classList.remove('show');
+          state.pinnedMessages[chatId] = null;
+        }
+      });
+    }
     
     currentMessagesListener = db.ref('messages/' + chatIdKey);
     currentMessagesListener.on('value', snapshot => {
@@ -1156,6 +1174,8 @@
       const overlay = document.getElementById('blockedOverlay');
       container.innerHTML = '';
       container.appendChild(overlay);
+      
+      const isGroup = chatId.startsWith('group_');
       
       Object.keys(msgs).forEach(key => {
         const m = msgs[key];
@@ -1197,11 +1217,17 @@
         let reactionHtml = '';
         if (m.reaction) reactionHtml = `<div class="msg-reactions">${m.reaction}</div>`;
         
+        let senderNameHtml = '';
+        if (isGroup && !isMe) {
+          const sender = ALL_USERS[m.senderId];
+          if (sender) senderNameHtml = `<div class="msg-sender-name">${sender.nick}</div>`;
+        }
+        
         let time = new Date(m.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
         
         const wrapper = document.createElement('div');
         wrapper.className = `msg-wrapper ${isMe ? 'me' : 'dev'}`;
-        wrapper.innerHTML = `<div class="msg" id="msg-${key}" onclick="openMsgCtx('${chatIdKey}', '${key}')">${forwardHtml}${replyHtml}${content}<span class="time">${time}</span>${reactionHtml}</div>`;
+        wrapper.innerHTML = `${senderNameHtml}<div class="msg" id="msg-${key}" onclick="openMsgCtx('${chatIdKey}', '${key}')">${forwardHtml}${replyHtml}${content}<span class="time">${time}</span>${reactionHtml}</div>`;
         container.appendChild(wrapper);
       });
       container.scrollTop = container.scrollHeight;
@@ -1209,32 +1235,6 @@
 
     db.ref('unread/' + state.uid + '/' + chatId).remove();
     renderChatList();
-  }
-
-  // ЗАГЛУШКА ДЛЯ ГРУПП (Просто чтобы открывалось и не вылетало)
-  function openGroupChat(groupId) {
-    db.ref('groups/' + groupId).once('value').then(snap => {
-      const group = snap.val();
-      if (!group) { alert('Группа не найдена'); return; }
-      
-      state.currentChatId = groupId;
-      document.getElementById('chatView').classList.add('active');
-      
-      document.getElementById('chatHeaderAvatar').innerHTML = group.avatar ? `<img src="${group.avatar}">` : '👥';
-      document.getElementById('chatHeaderName').innerText = group.name;
-      document.getElementById('chatHeaderStatus').innerText = 'Групповой чат';
-      
-      // Поскольку логика групп требует переписывания структуры сообщений, 
-      // показываем заглушку.
-      document.getElementById('messages').innerHTML = `
-        <div style="text-align:center; padding: 40px; opacity: 0.5;">
-          <div style="font-size: 40px; margin-bottom: 10px;">👥</div>
-          <div>Это групповой чат "${group.name}".</div>
-          <div style="font-size: 12px; margin-top: 5px;">Полноценная отправка сообщений в группы в разработке.</div>
-        </div>
-      `;
-      document.getElementById('unread/' + state.uid + '/' + groupId).remove();
-    });
   }
 
   let currentAudio = null;
@@ -1254,7 +1254,21 @@
   }
 
   function updateChatHeader(chatId) {
-    if (chatId.startsWith('group_')) return; // Для групп шапка обновляется в openGroupChat
+    if (!chatId) return;
+    
+    if (chatId.startsWith('group_')) {
+      const group = ALL_GROUPS[chatId];
+      if (!group) return;
+      document.getElementById('chatHeaderAvatar').innerHTML = group.avatar ? `<img src="${group.avatar}">` : '👥';
+      document.getElementById('chatHeaderName').innerText = group.name;
+      document.getElementById('chatHeaderStatus').innerText = 'Групповой чат';
+      
+      // Показываем статус группы
+      const overlay = document.getElementById('blockedOverlay');
+      if (overlay) overlay.classList.remove('show');
+      return;
+    }
+
     const u = ALL_USERS[chatId];
     if (!u) return;
     let badges = '';
@@ -1291,6 +1305,11 @@
     const title = document.getElementById('blockedOverlayTitle');
     const text = document.getElementById('blockedOverlayText');
     
+    if (!state.currentChatId || state.currentChatId.startsWith('group_')) {
+      overlay.classList.remove('show');
+      return;
+    }
+
     if (isUserBlocked(state.currentChatId)) {
       overlay.classList.add('show');
       title.innerText = "Вы заблокировали этого пользователя";
@@ -1305,6 +1324,15 @@
     updateChatHeader(state.currentChatId);
   }
 
+  function openCurrentProfile() {
+    if (!state.currentChatId) return;
+    if (state.currentChatId.startsWith('group_')) {
+      openGroupProfileModal(state.currentChatId);
+    } else {
+      openUserProfile(state.currentChatId);
+    }
+  }
+
   // 4. СПИСКИ И ПОИСК
   function loadUnreadCounts() {
     db.ref('unread/' + state.uid).on('value', snapshot => {
@@ -1316,7 +1344,7 @@
   function loadChatMetas() {
     MY_CHATS.forEach(cid => {
       if (cid === state.uid) return;
-      const chatIdKey = [state.uid, cid].sort().join('_');
+      const chatIdKey = cid.startsWith('group_') ? cid : [state.uid, cid].sort().join('_');
       db.ref('messages/' + chatIdKey).limitToLast(1).on('value', snap => {
         const msgs = snap.val();
         if (msgs) {
@@ -1360,7 +1388,7 @@
         
         list.innerHTML += `
           <div class="chat-item">
-            <div class="chat-avatar" onclick="event.stopPropagation();">
+            <div class="chat-avatar" onclick="event.stopPropagation(); openGroupProfileModal('${cid}')">
               ${group.avatar ? `<img src="${group.avatar}">` : '👥'}
             </div>
             <div class="chat-info" onclick="openChatView('${cid}')">
@@ -1526,6 +1554,415 @@
     document.getElementById('userProfileModal').classList.add('show');
   }
 
+  // ---- НОВАЯ ЛОГИКА ДЛЯ ГРУПП ----
+  function openGroupProfileModal(groupId) {
+    const group = ALL_GROUPS[groupId];
+    if (!group) return;
+
+    document.getElementById('grpAvatar').innerHTML = group.avatar ? `<img src="${group.avatar}">` : '👥';
+    document.getElementById('grpName').innerText = group.name;
+    
+    const owner = ALL_USERS[group.owner];
+    document.getElementById('grpOwner').innerText = 'Создатель: ' + (owner ? owner.nick : 'Неизвестен');
+
+    const list = document.getElementById('grpMembersList');
+    list.innerHTML = '';
+    const members = Object.keys(group.members || {});
+    
+    members.forEach(uid => {
+      const u = ALL_USERS[uid];
+      if (!u) return;
+      const isOwner = uid === group.owner;
+      list.innerHTML += `
+        <div style="display:flex; align-items:center; gap:10px; padding:5px; border-radius:8px;">
+          <div class="chat-avatar" style="width:36px; height:36px;">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
+          <div style="flex:1;">
+            <div style="font-size:14px; font-weight:600;">${u.nick} ${isOwner ? '👑' : ''}</div>
+            <div style="font-size:12px; opacity:0.6;">${u.username}</div>
+          </div>
+        </div>
+      `;
+    });
+
+    document.getElementById('groupProfileModal').classList.add('show');
+  }
+
+  function openManageGroupModal(action) {
+    const group = ALL_GROUPS[state.currentChatId];
+    if (!group || group.owner !== state.uid) {
+      alert('Только создатель может управлять участниками.');
+      return;
+    }
+
+    document.getElementById('chatMenuModal').classList.remove('show');
+    const modal = document.getElementById('manageGroupModal');
+    const list = document.getElementById('manageGroupList');
+    const title = document.getElementById('manageGroupTitle');
+    list.innerHTML = '';
+
+    if (action === 'add') {
+      title.innerText = 'Добавить участников';
+      document.getElementById('manageGroupSaveBtn').onclick = () => saveGroupMembers('add');
+      
+      // Показываем тех, кого нет в группе
+      for (let uid in ALL_USERS) {
+        if (uid === state.uid || group.members[uid]) continue;
+        const u = ALL_USERS[uid];
+        list.innerHTML += `
+          <label style="display:flex; align-items:center; gap:10px; padding:8px; background:rgba(128,128,128,0.05); border-radius:8px; cursor:pointer;">
+            <input type="checkbox" value="${uid}" class="add-member-checkbox">
+            <div class="chat-avatar" style="width:30px; height:30px; font-size:12px;">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
+            <div style="font-size:14px;">${u.nick}</div>
+          </label>
+        `;
+      }
+      if (list.innerHTML === '') list.innerHTML = '<div style="text-align:center; opacity:0.5;">Некого добавлять</div>';
+    } 
+    else if (action === 'kick') {
+      title.innerText = 'Исключить участников';
+      document.getElementById('manageGroupSaveBtn').onclick = () => saveGroupMembers('kick');
+      
+      Object.keys(group.members).forEach(uid => {
+        if (uid === state.uid) return; // Себя выгнать нельзя через эту кнопку
+        const u = ALL_USERS[uid];
+        if (!u) return;
+        list.innerHTML += `
+          <label style="display:flex; align-items:center; gap:10px; padding:8px; background:rgba(128,128,128,0.05); border-radius:8px; cursor:pointer;">
+            <input type="checkbox" value="${uid}" class="kick-member-checkbox">
+            <div class="chat-avatar" style="width:30px; height:30px; font-size:12px;">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
+            <div style="font-size:14px;">${u.nick}</div>
+          </label>
+        `;
+      });
+      if (list.innerHTML === '') list.innerHTML = '<div style="text-align:center; opacity:0.5;">В группе больше никого нет</div>';
+    }
+
+    modal.classList.add('show');
+  }
+
+  function saveGroupMembers(action) {
+    const group = ALL_GROUPS[state.currentChatId];
+    if (!group) return;
+
+    const updates = {};
+    if (action === 'add') {
+      const checked = document.querySelectorAll('.add-member-checkbox:checked');
+      checked.forEach(chk => {
+        const uid = chk.value;
+        updates['groups/' + state.currentChatId + '/members/' + uid] = true;
+        updates['user_chats/' + uid + '/' + state.currentChatId] = true;
+      });
+    } 
+    else if (action === 'kick') {
+      const checked = document.querySelectorAll('.kick-member-checkbox:checked');
+      checked.forEach(chk => {
+        const uid = chk.value;
+        updates['groups/' + state.currentChatId + '/members/' + uid] = null;
+        updates['user_chats/' + uid + '/' + state.currentChatId] = null;
+      });
+    }
+
+    if (Object.keys(updates).length > 0) {
+      db.ref().update(updates).then(() => {
+        document.getElementById('manageGroupModal').classList.remove('show');
+        alert(action === 'add' ? 'Участники добавлены!' : 'Участники исключены!');
+      });
+    } else {
+      document.getElementById('manageGroupModal').classList.remove('show');
+    }
+  }
+
+  function deleteGroup(action) {
+    document.getElementById('chatMenuModal').classList.remove('show');
+    const group = ALL_GROUPS[state.currentChatId];
+    if (!group) return;
+
+    if (action === 'me') {
+      if (!confirm('Выйти из группы? Для вас она исчезнет.')) return;
+      db.ref('user_chats/' + state.uid + '/' + state.currentChatId).remove().then(() => {
+        closeChatView();
+        alert('Вы вышли из группы');
+      });
+    } else if (action === 'all') {
+      if (group.owner !== state.uid) { alert('Удалить группу для всех может только создатель'); return; }
+      if (!confirm('Удалить группу для ВСЕХ? Это действие необратимо.')) return;
+      
+      const updates = {};
+      updates['groups/' + state.currentChatId] = null;
+      updates['messages/' + state.currentChatId] = null;
+      
+      Object.keys(group.members).forEach(uid => {
+        updates['user_chats/' + uid + '/' + state.currentChatId] = null;
+      });
+
+      db.ref().update(updates).then(() => {
+        closeChatView();
+        alert('Группа удалена для всех');
+      });
+    }
+  }
+
+  // ---- МЕНЮ ЧАТА (ТРИ ТОЧКИ) ----
+  function openChatMenu() {
+    if (!state.currentChatId) return;
+    const isGroup = state.currentChatId.startsWith('group_');
+    const list = document.getElementById('chatMenuActionList');
+    const title = document.getElementById('chatMenuTitle');
+    
+    list.innerHTML = '';
+    
+    if (isGroup) {
+      const group = ALL_GROUPS[state.currentChatId];
+      title.innerText = 'Действия с группой';
+      
+      const isOwner = group && group.owner === state.uid;
+      
+      if (isOwner) {
+        list.innerHTML += `<div class="action-item" onclick="openManageGroupModal('add')">➕ Добавить участников</div>`;
+        list.innerHTML += `<div class="action-item danger" onclick="openManageGroupModal('kick')">🚪 Исключить участников</div>`;
+      }
+      
+      list.innerHTML += `<div class="action-item" onclick="promptSearchMessage()">🔍 Поиск по сообщениям</div>`;
+      list.innerHTML += `<div class="action-item" onclick="togglePinChat()">📌 ${state.pinnedChats && state.pinnedChats[state.currentChatId] ? 'Открепить' : 'Закрепить'} чат</div>`;
+      list.innerHTML += `<div class="action-item danger" onclick="deleteGroup('me')">🚪 Удалить группу (выйти)</div>`;
+      
+      if (isOwner) {
+         list.innerHTML += `<div class="action-item danger" onclick="deleteGroup('all')">🗑 Удалить группу (для всех)</div>`;
+      }
+      
+    } else {
+      title.innerText = 'Действия с чатом';
+      const isPinned = state.pinnedChats && state.pinnedChats[state.currentChatId];
+      const isBlocked = isUserBlocked(state.currentChatId);
+      
+      list.innerHTML += `<div class="action-item" onclick="promptSearchMessage()">🔍 Поиск по сообщениям</div>`;
+      list.innerHTML += `<div class="action-item" onclick="togglePinChat()">📌 ${isPinned ? 'Открепить' : 'Закрепить'} чат</div>`;
+      list.innerHTML += `<div class="action-item danger" onclick="clearChatHistory()">🗑 Очистить чат</div>`;
+      list.innerHTML += `<div class="action-item danger" onclick="toggleBlockUser()">🚫 ${isBlocked ? 'Разблокировать' : 'Заблокировать'}</div>`;
+    }
+    
+    document.getElementById('chatMenuModal').classList.add('show');
+  }
+
+  // 1. Поиск по сообщениям
+  function promptSearchMessage() {
+    document.getElementById('chatMenuModal').classList.remove('show');
+    document.getElementById('searchInChatModal').classList.add('show');
+    document.getElementById('searchInChatInput').value = '';
+    document.getElementById('searchResultsList').innerHTML = '';
+  }
+
+  function closeSearchModal() {
+    document.getElementById('searchInChatModal').classList.remove('show');
+    document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+  }
+
+  function performChatSearch() {
+    const query = document.getElementById('searchInChatInput').value.toLowerCase().trim();
+    const resultsList = document.getElementById('searchResultsList');
+    resultsList.innerHTML = '';
+    
+    document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+
+    if (query.length < 2) return;
+
+    const chatIdKey = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
+    db.ref('messages/' + chatIdKey).once('value').then(snap => {
+      const msgs = snap.val() || {};
+      let foundCount = 0;
+      
+      Object.keys(msgs).forEach(key => {
+        const m = msgs[key];
+        if (m.type === 'text' && m.text.toLowerCase().includes(query)) {
+          foundCount++;
+          const resDiv = document.createElement('div');
+          resDiv.style.cssText = "padding: 8px; border-bottom: 1px solid var(--glass-border); cursor: pointer; font-size: 14px;";
+          resDiv.innerText = m.text;
+          resDiv.onclick = () => {
+            closeSearchModal();
+            const msgEl = document.getElementById('msg-' + key);
+            if (msgEl) {
+              msgEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              msgEl.classList.add('highlight');
+              setTimeout(() => msgEl.classList.remove('highlight'), 2000);
+            }
+          };
+          resultsList.appendChild(resDiv);
+        }
+      });
+      
+      if (foundCount === 0) {
+        resultsList.innerHTML = '<div style="text-align:center; opacity:0.5; font-size:14px; margin-top:10px;">Ничего не найдено</div>';
+      }
+    });
+  }
+
+  // 2. Очистка чата
+  function clearChatHistory() {
+    document.getElementById('chatMenuModal').classList.remove('show');
+    if (!confirm('Вы уверены, что хотите очистить историю сообщений? У собеседника они останутся.')) return;
+    
+    db.ref('user_chats/' + state.uid + '/' + state.currentChatId).remove().then(() => {
+      closeChatView();
+      alert('Чат очищен (удален из списка).');
+    });
+  }
+
+  // 3. Блокировка
+  function toggleBlockUser() {
+    document.getElementById('chatMenuModal').classList.remove('show');
+    if (!state.currentChatId || state.currentChatId.startsWith('group_')) return;
+    
+    const targetUid = state.currentChatId;
+    const isBlocked = isUserBlocked(targetUid);
+    
+    if (isBlocked) {
+      db.ref('users/' + state.uid + '/blockedUsers/' + targetUid).remove();
+      alert('Пользователь разблокирован.');
+    } else {
+      if (confirm('Заблокировать пользователя? Он не сможет вам писать.')) {
+        db.ref('users/' + state.uid + '/blockedUsers/' + targetUid).set(true);
+        alert('Пользователь заблокирован.');
+      }
+    }
+  }
+
+  function renderBlacklist() {
+    const container = document.getElementById('blacklistContainer');
+    if (!container) return;
+    
+    const blockedUids = Object.keys(state.blockedUsers || {});
+    if (blockedUids.length === 0) {
+      container.innerHTML = '<div style="text-align:center; opacity:0.5; font-size:13px;">Список пуст</div>';
+      return;
+    }
+    
+    container.innerHTML = '';
+    blockedUids.forEach(uid => {
+      const u = ALL_USERS[uid];
+      if (!u) return;
+      
+      container.innerHTML += `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(128,128,128,0.1);">
+          <div style="font-size:14px;">${u.nick} <span style="opacity:0.5;">${u.username}</span></div>
+          <button class="edit-btn" style="background:var(--danger); color:#fff;" onclick="unblockFromSettings('${uid}')">Разблокировать</button>
+        </div>
+      `;
+    });
+  }
+
+  function unblockFromSettings(uid) {
+    db.ref('users/' + state.uid + '/blockedUsers/' + uid).remove().then(() => {
+      alert('Пользователь разблокирован');
+    });
+  }
+
+  // 4. Закрепление чатов
+  function togglePinChat() {
+    document.getElementById('chatMenuModal').classList.remove('show');
+    if (!state.currentChatId) return;
+    
+    const isPinned = state.pinnedChats && state.pinnedChats[state.currentChatId];
+    if (isPinned) {
+      db.ref('users/' + state.uid + '/pinnedChats/' + state.currentChatId).remove();
+      alert('Чат откреплен');
+    } else {
+      db.ref('users/' + state.uid + '/pinnedChats/' + state.currentChatId).set(true);
+      alert('Чат закреплен');
+    }
+  }
+
+  // 5. Создание Группы
+  function openCreateGroupModal() {
+    document.getElementById('createGroupModal').classList.add('show');
+    groupAvatarBase64 = null;
+    selectedGroupMembers = [];
+    document.getElementById('groupNameInput').value = '';
+    document.getElementById('groupAvatarPreview').innerHTML = '<span>📷</span>';
+    
+    const list = document.getElementById('groupMemberList');
+    list.innerHTML = '';
+    
+    MY_CHATS.forEach(cid => {
+      if (cid === state.uid || cid.startsWith('group_')) return;
+      const u = ALL_USERS[cid];
+      if (!u) return;
+      
+      list.innerHTML += `
+        <div style="display:flex; align-items:center; gap:10px; padding:5px; border-radius:8px; cursor:pointer;" onclick="toggleGroupMember('${cid}', this)">
+          <input type="checkbox" style="pointer-events:none;">
+          <div class="chat-avatar" style="width:30px; height:30px; font-size:12px;">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
+          <div style="font-size:14px;">${u.nick}</div>
+        </div>
+      `;
+    });
+    
+    if (MY_CHATS.length <= 1) {
+       list.innerHTML = '<div style="text-align:center; opacity:0.5; font-size:13px;">Нет контактов для приглашения</div>';
+    }
+  }
+
+  function previewGroupAvatar(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = ev => { 
+      groupAvatarBase64 = ev.target.result; 
+      document.getElementById('groupAvatarPreview').innerHTML = `<img src="${groupAvatarBase64}">`; 
+    };
+    r.readAsDataURL(file);
+  }
+
+  function toggleGroupMember(uid, el) {
+    const checkbox = el.querySelector('input[type="checkbox"]');
+    checkbox.checked = !checkbox.checked;
+    
+    if (checkbox.checked) {
+      if (!selectedGroupMembers.includes(uid)) selectedGroupMembers.push(uid);
+      el.style.background = 'rgba(90,169,255,0.2)';
+    } else {
+      selectedGroupMembers = selectedGroupMembers.filter(id => id !== uid);
+      el.style.background = 'transparent';
+    }
+  }
+
+  function createGroup() {
+    const name = document.getElementById('groupNameInput').value.trim();
+    if (!name) { alert('Введите название группы'); return; }
+    if (name.startsWith('@')) { alert('Название группы не должно начинаться с @'); return; }
+    
+    const groupId = 'group_' + Date.now();
+    const groupData = {
+      isGroup: true,
+      name: name,
+      avatar: groupAvatarBase64,
+      owner: state.uid,
+      members: {
+        [state.uid]: true
+      },
+      timestamp: Date.now()
+    };
+    
+    selectedGroupMembers.forEach(uid => {
+      groupData.members[uid] = true;
+    });
+    
+    db.ref('groups/' + groupId).set(groupData).then(() => {
+      let updates = {};
+      Object.keys(groupData.members).forEach(uid => {
+        updates['user_chats/' + uid + '/' + groupId] = true;
+      });
+      return db.ref().update(updates);
+    }).then(() => {
+      document.getElementById('createGroupModal').classList.remove('show');
+      alert('Группа создана!');
+      openChatView(groupId);
+    }).catch(err => {
+      alert('Ошибка создания группы: ' + err.message);
+    });
+  }
+
+  // ... остальные функции
   function showGiftDetails(gift) {
     document.getElementById('giftDetailEmoji').innerText = gift.emoji;
     document.getElementById('giftDetailFrom').innerText = gift.from;
@@ -1649,9 +2086,8 @@
     document.getElementById('editProfileModal').classList.remove('show');
   }
 
-  // 6. ПОДАРКИ
   function openGiftPicker() {
-    if (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId)) {
+    if (state.currentChatId && !state.currentChatId.startsWith('group_') && (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId))) {
       alert('Действие недоступно из-за блокировки.');
       return;
     }
@@ -1669,13 +2105,18 @@
     db.ref('users/' + state.uid + '/glass').transaction(g => (g || 0) - price);
     
     const giftData = { from: state.username, emoji: emoji, price: price, date: Date.now() };
-    db.ref('users/' + state.currentChatId + '/gifts').push(giftData);
+    
+    if (!state.currentChatId.startsWith('group_')) {
+      db.ref('users/' + state.currentChatId + '/gifts').push(giftData);
+    }
 
-    const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
+    const chatIdKey = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
     db.ref('messages/' + chatIdKey).push({ senderId: state.uid, text: emoji, type: 'gift', timestamp: Date.now() });
     
     let updates = {};
-    updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+    if (!state.currentChatId.startsWith('group_')) {
+      updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+    }
     db.ref().update(updates);
     
     document.getElementById('giftPickerModal').classList.remove('show');
@@ -1703,9 +2144,8 @@
     });
   }
 
-  // 7. КОНТЕКСТНОЕ МЕНЮ (РЕАКЦИИ)
   function openMsgCtx(chatIdKey, msgKey) {
-    if (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId)) return; 
+    if (!state.currentChatId.startsWith('group_') && (isUserBlocked(state.currentChatId) || amIBlocked(state.currentChatId))) return; 
     
     activeCtxChatId = chatIdKey;
     activeCtxMsgKey = msgKey;
@@ -1964,242 +2404,6 @@
       timestamp: Date.now()
     });
     document.getElementById('postCommentInput').value = '';
-  }
-
-  // 8.5 ГРУППЫ И НОВЫЕ ФИЧИ (МЕНЮ)
-  
-  function openChatMenu() {
-    if (!state.currentChatId) return;
-    
-    const isPinned = state.pinnedChats && state.pinnedChats[state.currentChatId];
-    document.getElementById('pinChatMenuItem').innerText = isPinned ? "📌 Открепить чат" : "📌 Закрепить чат";
-    
-    const isBlocked = isUserBlocked(state.currentChatId);
-    const blockBtn = document.getElementById('blockMenuItem');
-    blockBtn.innerText = isBlocked ? "✅ Разблокировать" : "🚫 Заблокировать";
-    
-    document.getElementById('chatMenuModal').classList.add('show');
-  }
-
-  // 1. Поиск по сообщениям
-  function promptSearchMessage() {
-    document.getElementById('chatMenuModal').classList.remove('show');
-    document.getElementById('searchInChatModal').classList.add('show');
-    document.getElementById('searchInChatInput').value = '';
-    document.getElementById('searchResultsList').innerHTML = '';
-  }
-
-  function closeSearchModal() {
-    document.getElementById('searchInChatModal').classList.remove('show');
-    document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
-  }
-
-  function performChatSearch() {
-    const query = document.getElementById('searchInChatInput').value.toLowerCase().trim();
-    const resultsList = document.getElementById('searchResultsList');
-    resultsList.innerHTML = '';
-    
-    document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
-
-    if (query.length < 2) return;
-
-    const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
-    db.ref('messages/' + chatIdKey).once('value').then(snap => {
-      const msgs = snap.val() || {};
-      let foundCount = 0;
-      
-      Object.keys(msgs).forEach(key => {
-        const m = msgs[key];
-        if (m.type === 'text' && m.text.toLowerCase().includes(query)) {
-          foundCount++;
-          const resDiv = document.createElement('div');
-          resDiv.style.cssText = "padding: 8px; border-bottom: 1px solid var(--glass-border); cursor: pointer; font-size: 14px;";
-          resDiv.innerText = m.text;
-          resDiv.onclick = () => {
-            closeSearchModal();
-            const msgEl = document.getElementById('msg-' + key);
-            if (msgEl) {
-              msgEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              msgEl.classList.add('highlight');
-              setTimeout(() => msgEl.classList.remove('highlight'), 2000);
-            }
-          };
-          resultsList.appendChild(resDiv);
-        }
-      });
-      
-      if (foundCount === 0) {
-        resultsList.innerHTML = '<div style="text-align:center; opacity:0.5; font-size:14px; margin-top:10px;">Ничего не найдено</div>';
-      }
-    });
-  }
-
-  // 2. Очистка чата
-  function clearChatHistory() {
-    document.getElementById('chatMenuModal').classList.remove('show');
-    if (!confirm('Вы уверены, что хотите очистить историю сообщений? У собеседника они останутся.')) return;
-    
-    const chatIdKey = [state.uid, state.currentChatId].sort().join('_');
-    
-    db.ref('user_chats/' + state.uid + '/' + state.currentChatId).remove().then(() => {
-      closeChatView();
-      alert('Чат очищен (удален из списка).');
-    });
-  }
-
-  // 3. Блокировка
-  function toggleBlockUser() {
-    document.getElementById('chatMenuModal').classList.remove('show');
-    if (!state.currentChatId) return;
-    
-    const targetUid = state.currentChatId;
-    const isBlocked = isUserBlocked(targetUid);
-    
-    if (isBlocked) {
-      db.ref('users/' + state.uid + '/blockedUsers/' + targetUid).remove();
-      alert('Пользователь разблокирован.');
-    } else {
-      if (confirm('Заблокировать пользователя? Он не сможет вам писать.')) {
-        db.ref('users/' + state.uid + '/blockedUsers/' + targetUid).set(true);
-        alert('Пользователь заблокирован.');
-      }
-    }
-  }
-
-  function renderBlacklist() {
-    const container = document.getElementById('blacklistContainer');
-    if (!container) return;
-    
-    const blockedUids = Object.keys(state.blockedUsers || {});
-    if (blockedUids.length === 0) {
-      container.innerHTML = '<div style="text-align:center; opacity:0.5; font-size:13px;">Список пуст</div>';
-      return;
-    }
-    
-    container.innerHTML = '';
-    blockedUids.forEach(uid => {
-      const u = ALL_USERS[uid];
-      if (!u) return;
-      
-      container.innerHTML += `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(128,128,128,0.1);">
-          <div style="font-size:14px;">${u.nick} <span style="opacity:0.5;">${u.username}</span></div>
-          <button class="edit-btn" style="background:var(--danger); color:#fff;" onclick="unblockFromSettings('${uid}')">Разблокировать</button>
-        </div>
-      `;
-    });
-  }
-
-  function unblockFromSettings(uid) {
-    db.ref('users/' + state.uid + '/blockedUsers/' + uid).remove().then(() => {
-      alert('Пользователь разблокирован');
-    });
-  }
-
-  // 4. Закрепление чатов
-  function togglePinChat() {
-    document.getElementById('chatMenuModal').classList.remove('show');
-    if (!state.currentChatId) return;
-    
-    const isPinned = state.pinnedChats && state.pinnedChats[state.currentChatId];
-    if (isPinned) {
-      db.ref('users/' + state.uid + '/pinnedChats/' + state.currentChatId).remove();
-      alert('Чат откреплен');
-    } else {
-      db.ref('users/' + state.uid + '/pinnedChats/' + state.currentChatId).set(true);
-      alert('Чат закреплен');
-    }
-  }
-
-  // 5. Группы
-  function openCreateGroupModal() {
-    document.getElementById('createGroupModal').classList.add('show');
-    groupAvatarBase64 = null;
-    selectedGroupMembers = [];
-    document.getElementById('groupNameInput').value = '';
-    document.getElementById('groupAvatarPreview').innerHTML = '<span>📷</span>';
-    
-    const list = document.getElementById('groupMemberList');
-    list.innerHTML = '';
-    
-    // Берем всех, с кем есть чат, как потенциальных участников
-    MY_CHATS.forEach(cid => {
-      if (cid === state.uid || cid.startsWith('group_')) return;
-      const u = ALL_USERS[cid];
-      if (!u) return;
-      
-      list.innerHTML += `
-        <div style="display:flex; align-items:center; gap:10px; padding:5px; border-radius:8px; cursor:pointer;" onclick="toggleGroupMember('${cid}', this)">
-          <input type="checkbox" style="pointer-events:none;">
-          <div class="chat-avatar" style="width:30px; height:30px; font-size:12px;">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
-          <div style="font-size:14px;">${u.nick}</div>
-        </div>
-      `;
-    });
-    
-    if (MY_CHATS.length <= 1) {
-       list.innerHTML = '<div style="text-align:center; opacity:0.5; font-size:13px;">Нет контактов для приглашения</div>';
-    }
-  }
-
-  function previewGroupAvatar(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const r = new FileReader();
-    r.onload = ev => { 
-      groupAvatarBase64 = ev.target.result; 
-      document.getElementById('groupAvatarPreview').innerHTML = `<img src="${groupAvatarBase64}">`; 
-    };
-    r.readAsDataURL(file);
-  }
-
-  function toggleGroupMember(uid, el) {
-    const checkbox = el.querySelector('input[type="checkbox"]');
-    checkbox.checked = !checkbox.checked;
-    
-    if (checkbox.checked) {
-      if (!selectedGroupMembers.includes(uid)) selectedGroupMembers.push(uid);
-      el.style.background = 'rgba(90,169,255,0.2)';
-    } else {
-      selectedGroupMembers = selectedGroupMembers.filter(id => id !== uid);
-      el.style.background = 'transparent';
-    }
-  }
-
-  function createGroup() {
-    const name = document.getElementById('groupNameInput').value.trim();
-    if (!name) { alert('Введите название группы'); return; }
-    if (name.startsWith('@')) { alert('Название группы не должно начинаться с @'); return; }
-    
-    const groupId = 'group_' + Date.now();
-    const groupData = {
-      isGroup: true,
-      name: name,
-      avatar: groupAvatarBase64,
-      owner: state.uid,
-      members: {
-        [state.uid]: true
-      },
-      timestamp: Date.now()
-    };
-    
-    selectedGroupMembers.forEach(uid => {
-      groupData.members[uid] = true;
-    });
-    
-    db.ref('groups/' + groupId).set(groupData).then(() => {
-      let updates = {};
-      Object.keys(groupData.members).forEach(uid => {
-        updates['user_chats/' + uid + '/' + groupId] = true;
-      });
-      return db.ref().update(updates);
-    }).then(() => {
-      document.getElementById('createGroupModal').classList.remove('show');
-      alert('Группа создана!');
-      openGroupChat(groupId);
-    }).catch(err => {
-      alert('Ошибка создания группы: ' + err.message);
-    });
   }
 
   // 9. УТИЛИТЫ
