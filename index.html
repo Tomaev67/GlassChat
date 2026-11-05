@@ -244,7 +244,11 @@
   .nav-btn.active .nav-icon-wrap { background: rgba(90,169,255,0.15); }
   .nav-icon { font-size:22px; line-height:1; transition: 0.2s; }
 
-  /* PROFILE PAGE (FULL SCREEN) */
+  /* PROFILE / SETTINGS */
+  .page-inner { padding:0 16px 24px; }
+  .card { background:var(--card-bg); backdrop-filter:blur(20px); border:1px solid var(--glass-border); border-radius:24px; padding:8px 18px; margin-bottom:16px; animation: fadeInUp 0.4s ease; }
+  
+  /* PROFILE VIEW (FULL SCREEN) */
   #profileView { position:fixed; inset:0; z-index:35; display:none; flex-direction:column; background:var(--bg-body); overflow-y:auto; }
   #profileView.active { display:flex; animation: fadeInUp 0.3s ease; }
   
@@ -528,7 +532,6 @@
   <div class="profile-content" style="position: relative;">
     <div class="profile-avatar-large" id="pvAvatar">
       <span>👤</span>
-      <div class="change-avatar-btn" onclick="document.getElementById('myAvatarInput').click()">📷</div>
     </div>
     <input type="file" id="myAvatarInput" accept="image/*" hidden onchange="changeMyAvatar(event)">
     
@@ -2226,6 +2229,7 @@
     document.getElementById('ctxList').innerHTML = `
       <div class="action-item" onclick="showReactionPanel()">😀 Реакция</div>
       <div class="action-item" onclick="replyToMessage()">↪️ Ответить</div>
+      <div class="action-item" onclick="forwardMessage()">➡️ Переслать</div>
       <div class="action-item" onclick="pinMessage()">📌 Закрепить</div>
       <div class="action-item danger" onclick="deleteMsgPrompt()">🗑 Удалить</div>
     `;
@@ -2281,6 +2285,41 @@
 
   function scrollToPinned() {
     // Опционально
+  }
+
+  function forwardMessage() {
+    document.getElementById('ctxOverlay').classList.remove('show');
+    const targetUsername = prompt('Введите @username получателя:');
+    if (!targetUsername) return;
+    
+    let targetUid = Object.keys(ALL_USERS).find(k => ALL_USERS[k].username.toLowerCase() === targetUsername.toLowerCase());
+    if (!targetUid) { alert('Пользователь не найден'); return; }
+
+    db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey).once('value').then(snap => {
+      const m = snap.val();
+      const newChatId = [state.uid, targetUid].sort().join('_');
+      
+      let authorName = 'Пользователь';
+      if (m.senderId === state.uid) {
+        authorName = state.nick;
+      } else if (ALL_USERS[m.senderId]) {
+        authorName = ALL_USERS[m.senderId].nick;
+      }
+
+      db.ref('messages/' + newChatId).push({ 
+        senderId: state.uid, 
+        text: m.text, 
+        type: m.type, 
+        timestamp: Date.now(),
+        forwardedFrom: authorName
+      });
+      
+      let updates = {};
+      updates['unread/' + targetUid + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+      db.ref().update(updates);
+      
+      alert('Сообщение переслано!');
+    });
   }
 
   function deleteMsgPrompt() {
