@@ -60,6 +60,7 @@
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
   @keyframes slideInRight { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes pulseBtn { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
   .orb { position:fixed; border-radius:50%; filter:blur(80px); opacity:0.4; z-index:0; pointer-events:none; transition: 0.5s; }
   .orb1 { width:380px; height:380px; background:#6d28d9; top:-100px; left:-100px; animation: floaty 10s infinite alternate; }
@@ -113,7 +114,7 @@
   .chat-list { padding:0 10px 16px; }
   .chat-item { display:flex; align-items:center; gap:14px; padding:14px 12px; border-radius:24px; cursor:pointer; transition:0.2s; border:1px solid transparent; margin-bottom:4px; position: relative; overflow: hidden; animation: slideInRight 0.3s ease; }
   .chat-item:active { background:rgba(128,128,128,0.1); transform:scale(0.98); }
-  .chat-avatar { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; overflow:hidden; color: #fff; position: relative; background: var(--glass-bg); }
+  .chat-avatar { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; overflow:hidden; color: #fff; position: relative; }
   .chat-avatar img { width:100%; height:100%; object-fit:cover; }
   .chat-info { flex:1; min-width:0; }
   .chat-name { font-size:16px; font-weight:600; display:flex; align-items:center; gap:5px; flex-wrap: wrap; }
@@ -154,7 +155,7 @@
   .pinned-icons { display: flex; gap: 10px; color: var(--text-color); opacity: 0.5; font-size: 16px; }
 
   .messages { flex:1; overflow-y:auto; padding:10px 16px 18px; display:flex; flex-direction:column; gap:10px; position:relative; z-index:1; overscroll-behavior-y: none; }
-  .msg-wrapper { display: flex; flex-direction: column; width: 100%; position: relative; margin-bottom: 5px; transition: background 0.2s; border-radius: 16px; }
+  .msg-wrapper { display: flex; flex-direction: column; width: 100%; position: relative; margin-bottom: 5px; }
   .msg-wrapper.me { align-items: flex-end; }
   .msg-wrapper.dev { align-items: flex-start; }
   .msg-sender-name { font-size: 11px; color: var(--accent); margin-bottom: 3px; margin-left: 10px; font-weight: 600; }
@@ -166,18 +167,12 @@
   .msg-wrapper.me .msg-reactions { right: auto; left: 10px; }
   .highlight { background-color: rgba(255, 235, 59, 0.5) !important; border-radius: 4px; }
   
-  /* Выделение */
-  .msg-wrapper.selected {
-    background: rgba(90,169,255,0.15);
-  }
-  .msg-wrapper.selected .msg {
+  .msg.selected .msg {
     background: rgba(90,169,255,0.4) !important;
     border: 1px solid var(--accent);
-    color: var(--text-color) !important;
     transform: scale(0.98);
   }
-  .msg-wrapper.selected .msg .time { color: var(--text-color); }
-
+  
   /* Reply & Forward Bubbles */
   .msg-reply-quote { 
     background: rgba(0,0,0,0.15); 
@@ -248,44 +243,35 @@
   .page-inner { padding:0 16px 24px; }
   .card { background:var(--card-bg); backdrop-filter:blur(20px); border:1px solid var(--glass-border); border-radius:24px; padding:8px 18px; margin-bottom:16px; animation: fadeInUp 0.4s ease; }
   
-  /* PROFILE VIEW (FULL SCREEN) */
-  #profileView { position:fixed; inset:0; z-index:35; display:none; flex-direction:column; background:var(--bg-body); overflow-y:auto; }
-  #profileView.active { display:flex; animation: fadeInUp 0.3s ease; }
-  
-  .profile-topbar { padding: 16px; display: flex; justify-content: space-between; align-items: center; position: absolute; top: 0; left: 0; right: 0; z-index: 10; }
-  .profile-topbar-btn { width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; cursor: pointer; border: none; }
-  
-  .profile-content { padding: 60px 20px 40px; display: flex; flex-direction: column; align-items: center; min-height: 100%; }
-  
-  .profile-avatar-large { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 50px; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin-bottom: 20px; position: relative; border: 3px solid rgba(255,255,255,0.2); }
-  .profile-avatar-large img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-  
-  .profile-name-large { font-size: 26px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-  .profile-username-large { font-size: 16px; color: var(--accent); font-weight: 600; margin-bottom: 15px; }
-  .profile-status-large { font-size: 15px; opacity: 0.7; margin-bottom: 25px; display: flex; align-items: center; gap: 5px; }
-  
-  /* Кнопки действий */
-  .profile-action-row { display: flex; gap: 10px; width: 100%; max-width: 400px; margin-bottom: 30px; }
-  .profile-action-btn { flex: 1; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: 0.2s; color: var(--text-color); }
-  .profile-action-btn:active { transform: scale(0.95); background: var(--panel-bg); }
-  .profile-action-btn span { font-size: 22px; }
-  .profile-action-btn div { font-size: 12px; font-weight: 500; }
+  .profile-head { display:flex; flex-direction:column; align-items:center; padding:0 0 24px; }
+  .profile-banner { width: 100%; height: 120px; background: var(--accent2); position: relative; border-radius: 24px 24px 0 0; margin-bottom: -60px; overflow: hidden; }
+  .profile-banner img { width: 100%; height: 100%; object-fit: cover; }
+  .change-banner-btn { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; cursor: pointer; backdrop-filter: blur(5px); z-index: 10; }
 
-  .profile-stats-large { display: flex; gap: 30px; margin-bottom: 30px; }
-  .profile-stat-large { display: flex; flex-direction: column; align-items: center; }
-  .profile-stat-large b { font-size: 20px; font-weight: 700; }
-  .profile-stat-large span { font-size: 13px; opacity: 0.6; }
+  .profile-avatar { position: relative; width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg,#8b5cf6,#0ea5e9); display:flex; align-items: center; justify-content: center; font-size:44px; overflow:hidden; border:4px solid var(--card-bg); margin-bottom:16px; color: #fff; transition: 0.3s; z-index: 2; }
+  .profile-avatar img { width:100%; height:100%; object-fit:cover; }
+  
+  .change-avatar-btn { position: absolute; bottom: 0; right: 0; width: 36px; height: 36px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; cursor: pointer; border: 2px solid var(--panel-bg); box-shadow: 0 2px 10px rgba(0,0,0,0.3); z-index: 5; }
 
-  .profile-info-card { background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 20px; width: 100%; max-width: 400px; padding: 15px; margin-bottom: 20px; }
-  .profile-info-item { padding: 12px 0; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; font-size: 15px; }
-  .profile-info-item:last-child { border-bottom: none; }
-  .profile-info-item span:first-child { opacity: 0.6; }
-  .profile-info-item span:last-child { font-weight: 500; }
+  .profile-name { font-size:24px; font-weight:700; display:flex; align-items:center; gap:8px; justify-content:center; flex-wrap: wrap; z-index: 2;}
+  .profile-username { font-size:15px; opacity:0.6; margin-top:4px; z-index: 2;}
+  .profile-bio { margin-top:10px; font-size: 14px; opacity: 0.8; text-align: center; max-width: 300px; }
+  .profile-stats { display: flex; gap: 20px; margin-top: 15px; font-size: 14px; }
+  .profile-stat-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+  .profile-stat-val { font-weight: 700; font-size: 18px; }
+  .profile-stat-lbl { opacity: 0.6; font-size: 12px; }
+  
+  .balance-card { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; padding: 15px 20px; border-radius: 20px; font-weight: 700; font-size: 18px; margin-top: 15px; box-shadow: 0 4px 15px rgba(245,158,11,0.4); cursor: pointer; transition: 0.2s; }
+  .balance-card:active { transform: scale(0.97); }
+  .glass-icon { font-size: 24px; }
+  .info-row { display:flex; justify-content:space-between; align-items:center; padding:16px 6px; border-bottom:1px solid rgba(128,128,128,0.1); font-size:15px; }
+  .info-row:last-child { border-bottom:none; }
+  .edit-btn { background: rgba(90,169,255,0.15); border: none; color: var(--accent); font-size: 12px; padding: 4px 10px; border-radius: 8px; cursor: pointer; margin-left: 10px; }
 
   /* FEED */
   .feed-post { background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 24px; margin-bottom: 16px; overflow: hidden; animation: fadeInUp 0.4s ease; }
   .feed-header { padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
-  .feed-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: var(--glass-bg); }
+  .feed-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; }
   .feed-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .feed-info { flex: 1; }
   .feed-name { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 5px; }
@@ -297,13 +283,6 @@
   .feed-action-btn:active { transform: scale(0.9); }
   .feed-action-btn.liked { color: #ef4444; opacity: 1; }
   
-  /* NEW POST UI */
-  .new-post-textarea { width: 100%; padding: 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; color: var(--text-color); font-size: 16px; outline: none; resize: none; min-height: 120px; margin-bottom: 15px; font-family: inherit; }
-  .new-post-textarea:focus { border-color: var(--accent); }
-  .new-post-attach-row { display: flex; gap: 10px; margin-bottom: 15px; }
-  .new-post-attach-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; cursor: pointer; color: var(--text-color); font-size: 14px; flex: 1; transition: 0.2s; }
-  .new-post-attach-btn:active { background: var(--panel-bg); transform: scale(0.98); }
-
   /* MODALS */
   .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; padding:20px; }
   .modal-overlay.show { display:flex; animation:fadeIn 0.2s ease; }
@@ -469,6 +448,43 @@
     </div>
   </div>
 
+  <!-- PROFILE -->
+  <div class="page" id="page-profile">
+    <div class="page-inner" style="padding-top: 10px;">
+      <div class="profile-head">
+        <div class="profile-banner" id="profileBanner" style="background: var(--accent2);">
+          <div class="change-banner-btn" onclick="document.getElementById('myBannerInput').click()">📷</div>
+        </div>
+        <input type="file" id="myBannerInput" accept="image/*" hidden onchange="changeMyBanner(event)">
+        
+        <div class="profile-avatar" id="profileAvatar">
+          <span>👤</span>
+          <div class="change-avatar-btn" onclick="document.getElementById('myAvatarInput').click()">📷</div>
+        </div>
+        <input type="file" id="myAvatarInput" accept="image/*" hidden onchange="changeMyAvatar(event)">
+        <div class="profile-name" id="profileName">Ник <span class="verified-badge-dev" id="profileBadgeDev" style="display:none;">✓</span> <span class="verified-badge-tester" id="profileBadgeTester" style="display:none;">T</span> <span class="verified-badge-owner" id="profileBadgeOwner" style="display:none;">👑</span> <span class="premium-star" id="profileBadgePremium" style="display:none;">⭐</span></div>
+        <div class="profile-username" id="profileUsername">@username</div>
+        <div class="profile-bio" id="profileBio">Описание профиля</div>
+        
+        <div class="profile-stats">
+          <div class="profile-stat-item"><span class="profile-stat-val" id="profFollowers">0</span><span class="profile-stat-lbl">подписчиков</span></div>
+          <div class="profile-stat-item"><span class="profile-stat-val" id="profFollowing">0</span><span class="profile-stat-lbl">подписок</span></div>
+        </div>
+
+        <div class="balance-card" onclick="openGiftHistory()">
+          <span>Мой баланс:</span>
+          <div style="display: flex; align-items: center; gap: 5px;"><span class="glass-icon">💎</span><span id="profileGlassBalance">0</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="info-row"><span class="lbl">Ник</span><span class="val" id="infoNick">—</span><button class="edit-btn" onclick="editProfile('nick')">✎</button></div>
+        <div class="info-row"><span class="lbl">Username</span><span class="val" id="infoUsername">—</span><button class="edit-btn" onclick="editProfile('username')">✎</button></div>
+        <div class="info-row"><span class="lbl">О себе</span><span class="val" id="infoBio">—</span><button class="edit-btn" onclick="editProfile('bio')">✎</button></div>
+      </div>
+      <button class="btn-main" onclick="doLogout()" style="background: #f87171; color: #fff; max-width: 100%;">Выйти из аккаунта</button>
+    </div>
+  </div>
+
   <div class="bottom-nav-container">
     <div class="bottom-nav">
       <button class="nav-btn active" onclick="switchPage('chats', this)"><span class="nav-icon">💬</span><span>Чаты</span></button>
@@ -519,42 +535,7 @@
   </div>
 </div>
 
-<!-- PROFILE VIEW (FULL SCREEN) -->
-<div id="profileView">
-  <div class="profile-topbar">
-    <button class="profile-topbar-btn" onclick="closeProfileView()">←</button>
-    <button class="profile-topbar-btn" onclick="openChatWithViewedUser()">💬</button>
-  </div>
-  
-  <!-- Баннер (если есть) -->
-  <div class="profile-banner" id="pvBanner" style="height: 160px; border-radius: 0; margin: 0; display: none;"></div>
-
-  <div class="profile-content" style="position: relative;">
-    <div class="profile-avatar-large" id="pvAvatar">
-      <span>👤</span>
-    </div>
-    <input type="file" id="myAvatarInput" accept="image/*" hidden onchange="changeMyAvatar(event)">
-    
-    <div class="profile-name-large" id="pvName">Имя <span class="verified-badge-dev" id="pvBadgeDev" style="display:none;">✓</span> <span class="verified-badge-tester" id="pvBadgeTester" style="display:none;">T</span> <span class="verified-badge-owner" id="pvBadgeOwner" style="display:none;">👑</span> <span class="premium-star" id="pvBadgePremium" style="display:none;">⭐</span></div>
-    <div class="profile-username-large" id="pvUsername">@username</div>
-    <div class="profile-status-large" id="pvStatus">в сети</div>
-    
-    <div class="profile-action-row" id="pvActionRow">
-      <!-- Кнопки подставятся динамически через JS -->
-    </div>
-    
-    <div class="profile-stats-large">
-      <div class="profile-stat-large"><b id="pvFollowers">0</b><span>подписчиков</span></div>
-      <div class="profile-stat-large"><b id="pvFollowing">0</b><span>подписок</span></div>
-    </div>
-    
-    <div class="profile-info-card" id="pvInfoCard">
-      <!-- Инфо (подарки, баланс и т.д.) -->
-    </div>
-  </div>
-</div>
-
-<!-- SELECTION MENU -->
+<!-- SELECTION MENU (Для пересылки сообщений) -->
 <div id="selectionMenu">
   <div class="btn-close-sel" onclick="clearSelection()">✕</div>
   <div class="sel-count" id="selCount">Выбрано: 0</div>
@@ -621,6 +602,36 @@
     <div id="manageGroupList" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
     <button class="btn-main" id="manageGroupSaveBtn" onclick="saveGroupMembers()" style="margin-top: 15px;">Сохранить</button>
     <div class="action-cancel" onclick="document.getElementById('manageGroupModal').classList.remove('show')">Отмена</div>
+  </div>
+</div>
+
+<!-- USER PROFILE MODAL -->
+<div class="modal-overlay" id="userProfileModal">
+  <div class="modal-card" style="padding-top: 0; overflow: hidden;">
+    <div class="profile-banner" id="upBanner" style="height: 100px; border-radius: 0; margin: 0 -24px 0 -24px;"></div>
+    <div style="display:flex; flex-direction:column; align-items:center; margin-top: -50px; position: relative; z-index: 2;">
+      <div class="profile-avatar" id="upAvatar" style="border-color: var(--modal-bg);"><span>👤</span></div>
+      <div class="profile-name" id="upName">Имя <span class="verified-badge-dev" id="upBadgeDev" style="display:none;">✓</span> <span class="verified-badge-tester" id="upBadgeTester" style="display:none;">T</span> <span class="verified-badge-owner" id="upBadgeOwner" style="display:none;">👑</span> <span class="premium-star" id="upBadgePremium" style="display:none;">⭐</span></div>
+      <div class="profile-username" id="upUsername">@username</div>
+      <div style="margin-top:10px; color:#43e97b; font-size:14px;" id="upStatus">в сети</div>
+      
+      <div class="profile-stats" style="margin-bottom: 10px;">
+        <div class="profile-stat-item"><span class="profile-stat-val" id="upFollowers">0</span><span class="profile-stat-lbl">подписчиков</span></div>
+        <div class="profile-stat-item"><span class="profile-stat-val" id="upFollowing">0</span><span class="profile-stat-lbl">подписок</span></div>
+      </div>
+      
+      <button class="btn-subscribe" id="upSubscribeBtn" onclick="toggleSubscribe(state.viewedProfileId)">Подписаться</button>
+    </div>
+    
+    <div id="upGiftsSection" style="margin-top: 15px; display: none;">
+      <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--accent);">Подарки:</div>
+      <div id="upGiftsList" style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow-y: auto; align-content: flex-start;"></div>
+    </div>
+
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <button class="btn-main" onclick="saveContact()" style="flex: 1;">📝 Записать в контакты</button>
+    </div>
+    <div class="action-cancel" style="margin-top:10px;" onclick="document.getElementById('userProfileModal').classList.remove('show')">Закрыть</div>
   </div>
 </div>
 
@@ -691,26 +702,11 @@
 <!-- CREATE POST -->
 <div class="modal-overlay" id="createPostModal">
   <div class="modal-card">
-    <div class="modal-title" style="display:flex; justify-content:space-between; align-items:center;">
-      <span>Новый пост</span>
-      <span style="font-size: 20px; cursor: pointer; opacity: 0.5;" onclick="document.getElementById('createPostModal').classList.remove('show')">✕</span>
-    </div>
-    <textarea id="postText" class="new-post-textarea" placeholder="Поделитесь чем-нибудь..."></textarea>
-    
-    <div id="postImagePreviewContainer" style="display: none; margin-bottom: 15px; position: relative;">
-      <img id="postImagePreview" style="width: 100%; border-radius: 16px; max-height: 200px; object-fit: cover;">
-      <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.5); color: #fff; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px;" onclick="clearPostImage()">✕</div>
-    </div>
-
-    <div class="new-post-attach-row">
-      <div class="new-post-attach-btn" onclick="document.getElementById('postImage').click()">
-        📷 Добавить фото
-      </div>
-    </div>
-    
-    <input type="file" id="postImage" accept="image/*" hidden onchange="previewPostImage(event)">
-    
+    <div class="modal-title">Новый пост</div>
+    <input type="text" id="postText" class="input-large" placeholder="Что нового?">
+    <input type="file" id="postImage" accept="image/*" class="input-large" style="padding: 10px;">
     <button class="btn-main" onclick="publishPost()">Опубликовать</button>
+    <div class="action-cancel" onclick="document.getElementById('createPostModal').classList.remove('show')">Отмена</div>
   </div>
 </div>
 
@@ -826,10 +822,12 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-  // ---- ЛОКАЛЬНЫЕ НАСТРОЙКИ ----
+  // ---- ЛОКАЛЬНЫЕ НАСТРОЙКИ (Тема и Размер текста) ----
   function loadSettings() {
     const savedTheme = localStorage.getItem('glasschat_theme');
-    if (savedTheme === 'dark') document.body.classList.add('dark-theme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-theme');
+    }
     const savedSize = localStorage.getItem('glasschat_textsize');
     if (savedSize) {
       document.documentElement.style.setProperty('--text-size', savedSize + 'px');
@@ -882,11 +880,9 @@
   let groupAvatarBase64 = null;
   let selectedGroupMembers = [];
 
+  // Для выделения сообщений
   let selectedMessages = [];
   let isSelectionMode = false;
-  let postImageBase64 = null;
-  
-  let currentViewingProfileUid = null;
 
   // 1. АВТОРИЗАЦИЯ
   auth.onAuthStateChanged(user => {
@@ -914,11 +910,7 @@
         state.following = data.following || {};
         state.blockedUsers = data.blockedUsers || {};
         
-        // Обновляем, если открыт свой профиль
-        if (currentViewingProfileUid === state.uid) {
-          renderFullProfile(state.uid);
-        }
-        
+        updateProfileUI();
         renderBlacklist();
         if (document.getElementById('setNoForward')) document.getElementById('setNoForward').checked = state.settings.noForward;
         if (document.getElementById('setHideOnline')) document.getElementById('setHideOnline').checked = state.settings.hideOnline;
@@ -934,11 +926,12 @@
         renderChatList();
         renderFeed();
         
-        if (currentViewingProfileUid) {
-           renderFullProfile(currentViewingProfileUid);
+        if (state.viewedProfileId && ALL_USERS[state.viewedProfileId]) {
+           fillUserProfile(state.viewedProfileId, ALL_USERS[state.viewedProfileId]);
         }
       });
       
+      // Слушатель Групп
       db.ref('groups').on('value', snapshot => {
         ALL_GROUPS = snapshot.val() || {};
         if (state.currentChatId && state.currentChatId.startsWith('group_')) {
@@ -1125,6 +1118,7 @@
     document.getElementById('attachModal').classList.remove('show');
   }
 
+  // РЕАЛЬНАЯ ЗАПИСЬ ГОЛОСА
   let mediaRecorder = null;
   let audioChunks = [];
   let isRecording = false;
@@ -1283,6 +1277,7 @@
         wrapper.id = `wrapper-${key}`;
         wrapper.innerHTML = `${senderNameHtml}<div class="msg" id="msg-${key}">${forwardHtml}${replyHtml}${content}<span class="time">${time}</span>${reactionHtml}</div>`;
         
+        // Добавляем обработчик зажатия (mousedown / touchstart)
         const msgEl = wrapper.querySelector('.msg');
         let pressTimer;
         
@@ -1297,6 +1292,7 @@
         msgEl.addEventListener('touchend', () => clearTimeout(pressTimer));
         msgEl.addEventListener('mouseleave', () => clearTimeout(pressTimer));
         
+        // Клик (если не в режиме выделения)
         msgEl.addEventListener('click', (e) => {
           if (isSelectionMode) {
             e.preventDefault();
@@ -1484,8 +1480,6 @@
     
     document.getElementById('chatHeaderName').innerHTML = `${displayName} ${badges}`;
     
-    document.getElementById('chatHeaderAvatar').innerHTML = u.avatar ? `<img src="${u.avatar}">` : '👤';
-
     let status = 'был(а) недавно';
     if (u.online && !(u.settings && u.settings.hideOnline)) status = 'в сети';
     if (u.typing) status = 'печатает...';
@@ -1526,7 +1520,6 @@
     updateChatHeader(state.currentChatId);
   }
 
-  // --- ПРОСМОТР ПРОФИЛЯ (НОВЫЙ ДИЗАЙН) ---
   function openCurrentProfile() {
     if (!state.currentChatId) return;
     if (state.currentChatId.startsWith('group_')) {
@@ -1536,128 +1529,231 @@
     }
   }
 
+  // 4. СПИСКИ И ПОИСК
+  function loadUnreadCounts() {
+    db.ref('unread/' + state.uid).on('value', snapshot => {
+      state.unread = snapshot.val() || {};
+      renderChatList();
+    });
+  }
+
+  function loadChatMetas() {
+    MY_CHATS.forEach(cid => {
+      if (cid === state.uid) return;
+      const chatIdKey = cid.startsWith('group_') ? cid : [state.uid, cid].sort().join('_');
+      db.ref('messages/' + chatIdKey).limitToLast(1).on('value', snap => {
+        const msgs = snap.val();
+        if (msgs) {
+          const lastMsg = Object.values(msgs)[0];
+          chatMeta[cid] = lastMsg;
+        } else {
+          chatMeta[cid] = { timestamp: 0, text: '' };
+        }
+        renderChatList();
+      });
+    });
+  }
+
+  function renderChatList() {
+    const list = document.getElementById('chatList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (MY_CHATS.length === 0) { list.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">Найдите друга через поиск!</div>'; return; }
+    
+    const sortedChats = [...MY_CHATS].sort((a, b) => {
+      const isPinnedA = state.pinnedChats && state.pinnedChats[a];
+      const isPinnedB = state.pinnedChats && state.pinnedChats[b];
+      if (isPinnedA && !isPinnedB) return -1;
+      if (!isPinnedA && isPinnedB) return 1;
+      
+      const timeA = (chatMeta[a] && chatMeta[a].timestamp) || 0;
+      const timeB = (chatMeta[b] && chatMeta[b].timestamp) || 0;
+      return timeB - timeA;
+    });
+    
+    sortedChats.forEach(cid => {
+      if (cid === state.uid) return;
+      
+      if (cid.startsWith('group_')) {
+        const group = ALL_GROUPS[cid];
+        if (!group) return;
+        const unread = state.unread[cid] || 0;
+        const isPinned = state.pinnedChats && state.pinnedChats[cid];
+        
+        list.innerHTML += `
+          <div class="chat-item">
+            <div class="chat-avatar" onclick="event.stopPropagation(); openGroupProfileModal('${cid}')">
+              ${group.avatar ? `<img src="${group.avatar}">` : '👥'}
+            </div>
+            <div class="chat-info" onclick="openChatView('${cid}')">
+              <div class="chat-name">${group.name} ${isPinned ? '<span class="chat-pin-icon">📌</span>' : ''}</div>
+              <div class="chat-preview ${unread > 0 ? 'unread' : ''}">Группа</div>
+            </div>
+            ${unread > 0 ? `<div class="chat-unread-badge" onclick="event.stopPropagation(); openChatView('${cid}')">${unread}</div>` : ''}
+          </div>`;
+        return;
+      }
+
+      const u = ALL_USERS[cid];
+      if (!u) return;
+      const unread = state.unread[cid] || 0;
+      const isPinned = state.pinnedChats && state.pinnedChats[cid];
+      
+      let badges = '';
+      if (u.verified_dev) badges += '<span class="verified-badge-dev">✓</span>';
+      if (u.verified_tester) badges += '<span class="verified-badge-tester">T</span>';
+      if (u.verified_owner) badges += '<span class="verified-badge-owner">👑</span>';
+      if (u.premium) badges += '<span class="premium-star">⭐</span>';
+
+      let displayName = (state.contacts && state.contacts[cid]) ? state.contacts[cid] : u.nick;
+      
+      let previewText = u.username;
+      const meta = chatMeta[cid];
+      if (meta && meta.text) {
+        if (meta.type === 'image') previewText = '📷 Фото';
+        else if (meta.type === 'video') previewText = '🎥 Видео';
+        else if (meta.type === 'voice') previewText = '🎤 Голосовое';
+        else if (meta.type === 'gift') previewText = '🎁 Подарок';
+        else if (meta.type === 'location') previewText = '📍 Геопозиция';
+        else previewText = meta.text;
+        
+        if (meta.senderId === state.uid) previewText = 'Вы: ' + previewText;
+      }
+
+      list.innerHTML += `
+        <div class="chat-item">
+          <div class="chat-avatar" style="${u.premium ? 'border: 2px solid #fbbf24;' : ''}"
+               onclick="event.stopPropagation(); openUserProfile('${cid}')">
+            ${u.avatar ? `<img src="${u.avatar}">` : '👤'}
+          </div>
+          <div class="chat-info" onclick="openChatView('${cid}')">
+            <div class="chat-name">${displayName} ${badges} ${isPinned ? '<span class="chat-pin-icon">📌</span>' : ''}</div>
+            <div class="chat-preview ${unread > 0 ? 'unread' : ''}">${previewText}</div>
+          </div>
+          ${unread > 0 ? `<div class="chat-unread-badge" onclick="event.stopPropagation(); openChatView('${cid}')">${unread}</div>` : ''}
+        </div>`;
+    });
+  }
+
+  function handleSearch(val) {
+    val = val.trim().toLowerCase();
+    if (!val) { renderChatList(); return; }
+    const list = document.getElementById('chatList');
+    list.innerHTML = '';
+    
+    if (!val.startsWith('@')) val = '@' + val;
+    let found = false;
+    
+    for (let uid in ALL_USERS) {
+      if (uid === state.uid) continue;
+      const u = ALL_USERS[uid];
+      if (u.username.toLowerCase() === val) {
+        found = true;
+        list.innerHTML += `
+          <div class="chat-item">
+            <div class="chat-avatar" onclick="event.stopPropagation(); openUserProfile('${uid}')">
+              ${u.avatar ? `<img src="${u.avatar}">` : '👤'}
+            </div>
+            <div class="chat-info" onclick="startChatWith('${uid}')">
+              <div class="chat-name">${u.nick}</div>
+              <div class="chat-preview">${u.username}</div>
+            </div>
+          </div>`;
+      }
+    }
+    if (!found) list.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">Пользователь не найден</div>';
+  }
+
+  function startChatWith(uid) {
+    let updates = {};
+    updates['user_chats/' + state.uid + '/' + uid] = true;
+    updates['user_chats/' + uid + '/' + state.uid] = true;
+    db.ref().update(updates);
+
+    document.getElementById('chatSearch').value = '';
+    openChatView(uid);
+    setTimeout(renderChatList, 500); 
+  }
+
+  // 5. ПРОФИЛЬ И КОНТАКТЫ
   function openUserProfile(uid) {
     if (!uid) return;
-    currentViewingProfileUid = uid;
-    document.getElementById('profileView').classList.add('active');
-    renderFullProfile(uid);
-  }
-
-  function closeProfileView() {
-    document.getElementById('profileView').classList.remove('active');
-    currentViewingProfileUid = null;
-  }
-
-  function renderFullProfile(uid) {
+    state.viewedProfileId = uid;
     const u = ALL_USERS[uid];
-    if (!u) return;
+    if (u) { fillUserProfile(uid, u); return; }
+    db.ref('users/' + uid).once('value').then(snap => {
+      const data = snap.val();
+      if (!data) { alert('Профиль не найден'); return; }
+      ALL_USERS[uid] = data;
+      fillUserProfile(uid, data);
+    });
+  }
 
-    const isMe = (uid === state.uid);
-    
-    // Баннер
-    const pvBanner = document.getElementById('pvBanner');
+  function fillUserProfile(uid, u) {
+    const upBanner = document.getElementById('upBanner');
     if (u.banner) {
-      pvBanner.style.display = 'block';
-      pvBanner.innerHTML = `<img src="${u.banner}">`;
+      upBanner.innerHTML = `<img src="${u.banner}">`;
     } else {
-      pvBanner.style.display = 'none';
-      pvBanner.innerHTML = '';
-    }
-
-    // Аватар и ник
-    document.getElementById('pvAvatar').innerHTML = u.avatar ? `<img src="${u.avatar}">` : '👤';
-    if (isMe) {
-      document.getElementById('pvAvatar').innerHTML += `<div class="change-avatar-btn" onclick="document.getElementById('myAvatarInput').click()">📷</div>`;
+      upBanner.innerHTML = '';
+      upBanner.style.background = 'var(--accent2)';
     }
     
-    document.getElementById('pvName').childNodes[0].textContent = u.nick + ' ';
-    document.getElementById('pvUsername').innerText = u.username;
-    document.getElementById('pvStatus').innerText = (u.online && !(u.settings && u.settings.hideOnline)) ? 'в сети' : 'был(а) недавно';
-
-    document.getElementById('pvBadgeDev').style.display = u.verified_dev ? 'inline' : 'none';
-    document.getElementById('pvBadgeTester').style.display = u.verified_tester ? 'inline' : 'none';
-    document.getElementById('pvBadgeOwner').style.display = u.verified_owner ? 'inline' : 'none';
-    document.getElementById('pvBadgePremium').style.display = u.premium ? 'inline' : 'none';
-
-    // Статистика
+    document.getElementById('upAvatar').innerHTML = u.avatar ? `<img src="${u.avatar}">` : '👤';
+    document.getElementById('upAvatar').style.border = u.premium ? '3px solid #fbbf24' : '3px solid var(--modal-bg)';
+    
+    let displayName = (state.contacts && state.contacts[uid]) ? state.contacts[uid] : u.nick;
+    document.getElementById('upName').childNodes[0].textContent = displayName + ' ';
+    document.getElementById('upUsername').innerText = u.username;
+    
+    document.getElementById('upBadgeDev').style.display = u.verified_dev ? 'inline' : 'none';
+    document.getElementById('upBadgeTester').style.display = u.verified_tester ? 'inline' : 'none';
+    document.getElementById('upBadgeOwner').style.display = u.verified_owner ? 'inline' : 'none';
+    document.getElementById('upBadgePremium').style.display = u.premium ? 'inline' : 'none';
+    
+    document.getElementById('upStatus').innerText = (u.online && !(u.settings && u.settings.hideOnline)) ? 'в сети' : 'был(а) недавно';
+    
     const followersCount = u.followers ? Object.keys(u.followers).length : 0;
     const followingCount = u.following ? Object.keys(u.following).length : 0;
-    document.getElementById('pvFollowers').innerText = followersCount;
-    document.getElementById('pvFollowing').innerText = followingCount;
-
-    // Кнопки действий (как на фото)
-    const actionRow = document.getElementById('pvActionRow');
-    actionRow.innerHTML = '';
+    document.getElementById('upFollowers').innerText = followersCount;
+    document.getElementById('upFollowing').innerText = followingCount;
     
-    if (isMe) {
-      actionRow.innerHTML = `
-        <div class="profile-action-btn" onclick="document.getElementById('myAvatarInput').click()">
-          <span>📷</span><div>Выбрать фото</div>
-        </div>
-        <div class="profile-action-btn" onclick="editProfile('nick')">
-          <span>✏️</span><div>Изменить</div>
-        </div>
-        <div class="profile-action-btn" onclick="switchPage('settings', document.querySelector('.nav-btn[onclick*=\\'settings\\']')); closeProfileView();">
-          <span>⚙️</span><div>Настройки</div>
-        </div>
-      `;
+    const btn = document.getElementById('upSubscribeBtn');
+    if (uid === state.uid) {
+      btn.style.display = 'none';
     } else {
-      const isSub = u.followers && u.followers[state.uid];
-      actionRow.innerHTML = `
-        <div class="profile-action-btn" onclick="openChatFromProfile('${uid}')">
-          <span>💬</span><div>Написать</div>
-        </div>
-        <div class="profile-action-btn" style="${isSub ? 'opacity:0.6' : ''}" onclick="toggleSubscribe('${uid}')">
-          <span>${isSub ? '✅' : '➕'}</span><div>${isSub ? 'Вы подписаны' : 'Подписаться'}</div>
-        </div>
-      `;
+      btn.style.display = 'block';
+      if (u.followers && u.followers[state.uid]) {
+        btn.innerText = 'Вы подписаны';
+        btn.classList.add('subscribed');
+      } else {
+        btn.innerText = 'Подписаться';
+        btn.classList.remove('subscribed');
+      }
     }
 
-    // Дополнительная инфа (Баланс, подарки)
-    const infoCard = document.getElementById('pvInfoCard');
-    infoCard.innerHTML = '';
-
-    if (isMe) {
-      infoCard.innerHTML += `
-        <div class="profile-info-item">
-          <span>Мой баланс:</span>
-          <span style="color:#fbbf24; font-weight:bold;">💎 ${state.glass}</span>
-        </div>
-      `;
-    }
-
-    // Подарки
+    const upGiftsSection = document.getElementById('upGiftsSection');
+    const upGiftsList = document.getElementById('upGiftsList');
+    upGiftsList.innerHTML = '';
+    
     db.ref('users/' + uid + '/gifts').once('value').then(snap => {
       const gifts = snap.val();
       if (gifts) {
         const arr = Object.keys(gifts).map(k => ({ id: k, ...gifts[k] })).sort((a,b) => b.date - a.date);
-        let giftsHtml = `<div style="padding: 12px 0;"><div style="font-size:13px; opacity:0.6; margin-bottom:8px;">Подарки:</div><div style="display:flex; flex-wrap:wrap; gap:8px;">`;
         arr.forEach(g => {
-          giftsHtml += `
+          upGiftsList.innerHTML += `
             <div class="gift-pill" onclick='showGiftDetails(${JSON.stringify(g).replace(/'/g, "&#39;")})'>
                <span style="font-size:18px; margin-right:4px;">${g.emoji}</span>
                <span style="opacity:0.7;">${g.price}💎</span>
             </div>
           `;
         });
-        giftsHtml += `</div></div>`;
-        infoCard.innerHTML += giftsHtml;
+        upGiftsSection.style.display = 'block';
+      } else {
+        upGiftsSection.style.display = 'none';
       }
     });
 
-    // Кнопка выйти из аккаунта для себя
-    if (isMe) {
-      infoCard.innerHTML += `
-        <div style="padding-top: 15px; margin-top: 15px; border-top: 1px solid var(--glass-border);">
-          <button class="btn-main" onclick="doLogout()" style="background: #f87171; color: #fff; max-width: 100%; border-radius: 12px; padding: 12px;">Выйти из аккаунта</button>
-        </div>
-      `;
-    }
-  }
-
-  function openChatFromProfile(uid) {
-    closeProfileView();
-    startChatWith(uid);
+    document.getElementById('userProfileModal').classList.add('show');
   }
 
   // ---- НОВАЯ ЛОГИКА ДЛЯ ГРУПП ----
@@ -1849,6 +1945,7 @@
     document.getElementById('chatMenuModal').classList.add('show');
   }
 
+  // 1. Поиск по сообщениям
   function promptSearchMessage() {
     document.getElementById('chatMenuModal').classList.remove('show');
     document.getElementById('searchInChatModal').classList.add('show');
@@ -1901,6 +1998,7 @@
     });
   }
 
+  // 2. Очистка чата
   function clearChatHistory() {
     document.getElementById('chatMenuModal').classList.remove('show');
     if (!confirm('Вы уверены, что хотите очистить историю сообщений? У собеседника они останутся.')) return;
@@ -1911,6 +2009,7 @@
     });
   }
 
+  // 3. Блокировка
   function toggleBlockUser() {
     document.getElementById('chatMenuModal').classList.remove('show');
     if (!state.currentChatId || state.currentChatId.startsWith('group_')) return;
@@ -1959,6 +2058,7 @@
     });
   }
 
+  // 4. Закрепление чатов
   function togglePinChat() {
     document.getElementById('chatMenuModal').classList.remove('show');
     if (!state.currentChatId) return;
@@ -1973,6 +2073,7 @@
     }
   }
 
+  // 5. Создание Группы
   function openCreateGroupModal() {
     document.getElementById('createGroupModal').classList.add('show');
     groupAvatarBase64 = null;
@@ -2062,6 +2163,7 @@
     });
   }
 
+  // ... остальные функции
   function showGiftDetails(gift) {
     document.getElementById('giftDetailEmoji').innerText = gift.emoji;
     document.getElementById('giftDetailFrom').innerText = gift.from;
@@ -2087,8 +2189,8 @@
     }
     
     setTimeout(() => {
-      if (currentViewingProfileUid === targetUid) {
-        renderFullProfile(targetUid);
+      if (state.viewedProfileId === targetUid) {
+        fillUserProfile(targetUid, ALL_USERS[targetUid]);
       }
     }, 300);
   }
@@ -2119,15 +2221,58 @@
     reader.readAsDataURL(file);
   }
 
-  function startChatWith(uid) {
-    let updates = {};
-    updates['user_chats/' + state.uid + '/' + uid] = true;
-    updates['user_chats/' + uid + '/' + state.uid] = true;
-    db.ref().update(updates);
+  function saveContact() {
+    if (!state.currentChatId || state.currentChatId.startsWith('group_')) return;
+    const target = ALL_USERS[state.currentChatId];
+    if (!target) return;
+    const newName = prompt('Введите имя для этого контакта:', (state.contacts && state.contacts[state.currentChatId]) ? state.contacts[state.currentChatId] : target.nick);
+    if (newName) {
+      db.ref('users/' + state.uid + '/contacts/' + state.currentChatId).set(newName).then(() => {
+        state.contacts[state.currentChatId] = newName;
+        alert('Контакт сохранен!');
+        document.getElementById('userProfileModal').classList.remove('show');
+        renderChatList();
+        updateChatHeader(state.currentChatId);
+      });
+    }
+  }
 
-    document.getElementById('chatSearch').value = '';
-    openChatView(uid);
-    setTimeout(renderChatList, 500); 
+  function updateProfileUI() {
+    if (!document.getElementById('profileName')) return;
+    document.getElementById('profileName').childNodes[0].textContent = state.nick + ' ';
+    document.getElementById('profileUsername').innerText = state.username;
+    document.getElementById('infoNick').innerText = state.nick;
+    document.getElementById('infoUsername').innerText = state.username;
+    document.getElementById('infoBio').innerText = state.bio || '—';
+    document.getElementById('profileBio').innerText = state.bio || 'Описание профиля';
+    
+    const banner = document.getElementById('profileBanner');
+    if (state.banner) {
+      banner.innerHTML = `<div class="change-banner-btn" onclick="document.getElementById('myBannerInput').click()">📷</div><img src="${state.banner}">`;
+    } else {
+      banner.innerHTML = `<div class="change-banner-btn" onclick="document.getElementById('myBannerInput').click()">📷</div>`;
+      banner.style.background = 'var(--accent2)';
+    }
+
+    const profileAva = document.getElementById('profileAvatar');
+    if (state.avatar) {
+      profileAva.innerHTML = `<img src="${state.avatar}"><div class="change-avatar-btn" onclick="document.getElementById('myAvatarInput').click()">📷</div>`;
+    } else {
+      profileAva.innerHTML = `<span>👤</span><div class="change-avatar-btn" onclick="document.getElementById('myAvatarInput').click()">📷</div>`;
+    }
+    profileAva.style.border = state.premium ? '3px solid #fbbf24' : '3px solid var(--card-bg)';
+    
+    document.getElementById('profileBadgeDev').style.display = state.verified_dev ? 'inline' : 'none';
+    document.getElementById('profileBadgeTester').style.display = state.verified_tester ? 'inline' : 'none';
+    document.getElementById('profileBadgeOwner').style.display = state.verified_owner ? 'inline' : 'none';
+    document.getElementById('profileBadgePremium').style.display = state.premium ? 'inline' : 'none';
+    
+    document.getElementById('profileGlassBalance').innerText = state.glass;
+    
+    const followersCount = state.followers ? Object.keys(state.followers).length : 0;
+    const followingCount = state.following ? Object.keys(state.following).length : 0;
+    document.getElementById('profFollowers').innerText = followersCount;
+    document.getElementById('profFollowing').innerText = followingCount;
   }
 
   let currentEditField = '';
@@ -2360,12 +2505,10 @@
         const likesCount = p.likes ? Object.keys(p.likes).length : 0;
         const commentsCount = p.comments ? Object.keys(p.comments).length : 0;
         
-        // ФИКС АВЫ: берем самую актуальную из ALL_USERS
         const author = ALL_USERS[p.authorUid] || {};
         const actualAvatar = author.avatar || p.authorAvatar; 
         const actualName = author.nick || p.authorName;
 
-        // ФИКС ПОДПИСКИ: Берем актуальный список подписчиков
         const isSubscribed = author.followers && author.followers[state.uid];
         const subBtnText = isSubscribed ? 'Вы подписаны' : 'Подписаться';
         const subBtnClass = isSubscribed ? 'btn-subscribe subscribed feed-btn' : 'btn-subscribe feed-btn';
@@ -2396,49 +2539,43 @@
 
   function openCreatePostModal() {
     if (!state.uid) { alert('Сначала войдите в аккаунт'); return; }
-    document.getElementById('postText').value = '';
-    clearPostImage();
     document.getElementById('createPostModal').classList.add('show');
-  }
-
-  function previewPostImage(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      postImageBase64 = ev.target.result;
-      document.getElementById('postImagePreview').src = postImageBase64;
-      document.getElementById('postImagePreviewContainer').style.display = 'block';
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function clearPostImage() {
-    postImageBase64 = null;
-    document.getElementById('postImage').value = '';
-    document.getElementById('postImagePreviewContainer').style.display = 'none';
   }
 
   function publishPost() {
     if (!state.uid) { alert('Сначала войдите в аккаунт'); return; }
     const text = document.getElementById('postText').value.trim();
+    const fileInput = document.getElementById('postImage');
+    const file = fileInput.files[0];
 
-    if (!text && !postImageBase64) { alert('Напишите текст или добавьте фото'); return; }
+    if (!text && !file) { alert('Напишите текст или добавьте фото'); return; }
 
-    const newPostRef = db.ref('posts').push();
-    newPostRef.set({
-      authorUid: state.uid,
-      authorName: state.nick || 'Без имени',
-      authorAvatar: state.avatar || null,
-      text: text,
-      image: postImageBase64 || null,
-      timestamp: Date.now(),
-      likes: {},
-      comments: {}
-    }).then(() => {
-      document.getElementById('createPostModal').classList.remove('show');
-      switchPage('feed', document.querySelector('.nav-btn[onclick*="feed"]'));
-    }).catch(e => alert('Ошибка публикации: ' + e.message));
+    const publish = (imgData) => {
+      const newPostRef = db.ref('posts').push();
+      newPostRef.set({
+        authorUid: state.uid,
+        authorName: state.nick || 'Без имени',
+        authorAvatar: state.avatar || null,
+        text: text,
+        image: imgData || null,
+        timestamp: Date.now(),
+        likes: {},
+        comments: {}
+      }).then(() => {
+        document.getElementById('postText').value = '';
+        fileInput.value = '';
+        document.getElementById('createPostModal').classList.remove('show');
+        switchPage('feed', document.querySelector('.nav-btn[onclick*="feed"]'));
+      }).catch(e => alert('Ошибка публикации: ' + e.message));
+    };
+
+    if (file) {
+      const r = new FileReader();
+      r.onload = ev => publish(ev.target.result);
+      r.readAsDataURL(file);
+    } else {
+      publish(null);
+    }
   }
 
   function toggleLike(postKey) {
@@ -2511,9 +2648,7 @@
     document.getElementById('createPostBtn').style.display = page === 'feed' ? 'block' : 'none';
     document.getElementById('createGroupBtn').style.display = page === 'chats' ? 'block' : 'none';
 
-    if (page === 'profile') {
-      openUserProfile(state.uid);
-    }
+    if (page === 'profile') updateProfileUI();
     if (page === 'settings') renderBlacklist();
   }
 
