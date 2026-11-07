@@ -207,54 +207,56 @@
   .gift-card-id { position: absolute; top: 5px; right: 5px; font-size: 10px; color: rgba(255,255,255,0.8); font-weight: bold; text-shadow: 1px 1px 2px black; }
   .gift-card-price { font-size: 12px; color: var(--gold); display: flex; align-items: center; gap: 3px; position: absolute; bottom: 5px; text-shadow: 1px 1px 2px black; }
 
-  /* --- АНИМИРОВАННЫЕ МОДЕЛЬКИ (CSS-АРТ) --- */
-  .gift-model { width: 50px; height: 50px; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
+  /* --- МОДЕЛЬКИ (CSS-АРТ) --- */
+  .gift-model { width: 60px; height: 60px; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
   
-  /* Мишка */
-  .model-bear { background: #8B4513; border-radius: 50%; width: 40px; height: 40px; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3); }
-  .model-bear::before { content: ''; position: absolute; top: -5px; left: 5px; width: 12px; height: 12px; background: #8B4513; border-radius: 50%; }
-  .model-bear::after { content: ''; position: absolute; top: -5px; right: 5px; width: 12px; height: 12px; background: #8B4513; border-radius: 50%; }
+  /* Обычные */
+  .model-bear { background: #8B4513; border-radius: 50%; width: 50px; height: 50px; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.3); }
+  .model-bear::before { content: ''; position: absolute; top: -6px; left: 6px; width: 15px; height: 15px; background: #8B4513; border-radius: 50%; }
+  .model-bear::after { content: ''; position: absolute; top: -6px; right: 6px; width: 15px; height: 15px; background: #8B4513; border-radius: 50%; }
   
-  /* Подарок */
-  .model-present { width: 40px; height: 35px; background: #ff4081; border-radius: 4px; position: relative; box-shadow: 0 4px 10px rgba(255,64,129,0.5); }
-  .model-present::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 6px; height: 100%; background: #ffeb3b; }
-  .model-present::after { content: ''; position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 100%; height: 6px; background: #ffeb3b; }
+  .model-present { width: 50px; height: 45px; background: #ff4081; border-radius: 4px; position: relative; box-shadow: 0 6px 15px rgba(255,64,129,0.4); }
+  .model-present::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 8px; height: 100%; background: #ffeb3b; }
+  .model-present::after { content: ''; position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 100%; height: 8px; background: #ffeb3b; }
   
-  /* Сердце */
-  .model-heart { width: 35px; height: 35px; background: #e91e63; transform: rotate(-45deg); position: relative; box-shadow: 0 0 15px rgba(233,30,99,0.6); }
-  .model-heart::before { content: ''; position: absolute; top: -17px; left: 0; width: 35px; height: 35px; background: #e91e63; border-radius: 50%; }
-  .model-heart::after { content: ''; position: absolute; top: 0; left: 17px; width: 35px; height: 35px; background: #e91e63; border-radius: 50%; }
+  .model-heart { width: 45px; height: 45px; background: #e91e63; transform: rotate(-45deg); position: relative; box-shadow: 0 0 20px rgba(233,30,99,0.6); }
+  .model-heart::before { content: ''; position: absolute; top: -22px; left: 0; width: 45px; height: 45px; background: #e91e63; border-radius: 50%; }
+  .model-heart::after { content: ''; position: absolute; top: 0; left: 22px; width: 45px; height: 45px; background: #e91e63; border-radius: 50%; }
   
-  /* Алмаз */
-  .model-diamond { width: 30px; height: 30px; background: #00bcd4; transform: rotate(45deg); box-shadow: 0 0 15px rgba(0,188,212,0.6); }
-  .model-diamond::before { content: ''; position: absolute; inset: 5px; background: #fff; opacity: 0.3; }
+  .model-diamond { width: 40px; height: 40px; background: #00bcd4; transform: rotate(45deg); box-shadow: 0 0 20px rgba(0,188,212,0.6); }
+  .model-diamond::before { content: ''; position: absolute; inset: 6px; background: #fff; opacity: 0.3; }
 
-  /* --- NFT MODELS (Детализированные) --- */
+  /* --- NFT MODELS (Улучшенные) --- */
   
-  /* Сигара (С дымом) */
-  .model-cigar { width: 50px; height: 16px; background: linear-gradient(90deg, #4e342e, #795548); border-radius: 10px; transform: rotate(-15deg); position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
-  .model-cigar::before { content: ''; position: absolute; right: -8px; top: 2px; width: 12px; height: 12px; background: #ff5722; border-radius: 50%; box-shadow: 0 0 10px #ff5722; }
-  .model-cigar::after { content: ''; position: absolute; left: 5px; top: 2px; width: 40px; height: 12px; background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.1) 4px, rgba(255,255,255,0.1) 8px); border-radius: 5px; }
-  
-  /* Собака (Snoop Dogg style) */
-  .model-dog { width: 40px; height: 40px; background: #e67e22; border-radius: 40% 40% 50% 50%; position: relative; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.2); }
-  .model-dog::before { content: ''; position: absolute; top: -8px; left: 5px; width: 15px; height: 15px; background: #d35400; border-radius: 50%; }
-  .model-dog::after { content: '🕶️'; position: absolute; top: 10px; left: 10px; font-size: 20px; transform: rotate(-10deg); }
-  
-  /* Маска (Myth Mask style) */
-  .model-mask { width: 40px; height: 50px; background: linear-gradient(135deg, #d32f2f, #b71c1c); border-radius: 50% 50% 30% 30%; position: relative; box-shadow: 0 5px 15px rgba(211,47,47,0.5); }
-  .model-mask::before { content: ''; position: absolute; top: 10px; left: 5px; width: 10px; height: 15px; background: #fff; border-radius: 50%; box-shadow: 20px 0 0 #fff; opacity: 0.8; }
-  .model-mask::after { content: ''; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); width: 20px; height: 5px; background: #fff; border-radius: 5px; }
-  
-  /* Кепка (Durov's Cap style) */
-  .model-cap { width: 45px; height: 25px; background: linear-gradient(135deg, #2196f3, #1976d2); border-radius: 20px 20px 5px 5px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-  .model-cap::before { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); width: 35px; height: 8px; background: #1565c0; border-radius: 10px 10px 0 0; }
-  .model-cap::after { content: '▲'; position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-  
-  /* Лягушка (Plush Pepe style) */
-  .model-frog { width: 45px; height: 35px; background: #4caf50; border-radius: 50% 50% 40% 40%; position: relative; box-shadow: inset -3px -3px 8px rgba(0,0,0,0.2); }
-  .model-frog::before { content: ''; position: absolute; top: -10px; left: 2px; width: 15px; height: 15px; background: #4caf50; border-radius: 50%; box-shadow: 21px 0 0 #4caf50; }
-  .model-frog::after { content: '❤️'; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 16px; }
+  /* 1. Собака (Snoop Dogg style) */
+  .model-dog { width: 45px; height: 45px; background: #e67e22; border-radius: 40% 40% 50% 50%; position: relative; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.3); }
+  .model-dog::before { content: ''; position: absolute; top: -8px; left: 6px; width: 18px; height: 18px; background: #d35400; border-radius: 50%; box-shadow: 10px 0 0 #d35400; }
+  .model-dog::after { content: '🕶️'; position: absolute; top: 12px; left: 12px; font-size: 22px; transform: rotate(-10deg); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); }
+
+  /* 2. Сигара */
+  .model-cigar { width: 60px; height: 18px; background: linear-gradient(90deg, #4e342e, #795548); border-radius: 10px; transform: rotate(-15deg); position: relative; box-shadow: 0 6px 10px rgba(0,0,0,0.5); }
+  .model-cigar::before { content: ''; position: absolute; right: -8px; top: 3px; width: 12px; height: 12px; background: #ff5722; border-radius: 50%; box-shadow: 0 0 15px #ff5722; }
+  .model-cigar::after { content: ''; position: absolute; left: 5px; top: 2px; width: 50px; height: 14px; background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px); border-radius: 5px; }
+
+  /* 3. Кепка */
+  .model-cap { width: 55px; height: 30px; background: linear-gradient(135deg, #2196f3, #1976d2); border-radius: 25px 25px 5px 5px; position: relative; box-shadow: 0 5px 10px rgba(0,0,0,0.3); }
+  .model-cap::before { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 45px; height: 10px; background: #1565c0; border-radius: 10px 10px 0 0; }
+  .model-cap::after { content: '▲'; position: absolute; top: 6px; left: 50%; transform: translateX(-50%); font-size: 14px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+
+  /* 4. Маска */
+  .model-mask { width: 50px; height: 60px; background: linear-gradient(135deg, #d32f2f, #b71c1c); border-radius: 50% 50% 30% 30%; position: relative; box-shadow: 0 6px 20px rgba(211,47,47,0.5); }
+  .model-mask::before { content: ''; position: absolute; top: 15px; left: 8px; width: 12px; height: 18px; background: #fff; border-radius: 50%; box-shadow: 22px 0 0 #fff; opacity: 0.8; }
+  .model-mask::after { content: ''; position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 25px; height: 6px; background: #fff; border-radius: 5px; }
+
+  /* 5. Лягушка */
+  .model-frog { width: 55px; height: 45px; background: #4caf50; border-radius: 50% 50% 40% 40%; position: relative; box-shadow: inset -4px -4px 10px rgba(0,0,0,0.2); }
+  .model-frog::before { content: ''; position: absolute; top: -12px; left: 4px; width: 18px; height: 18px; background: #4caf50; border-radius: 50%; box-shadow: 27px 0 0 #4caf50; }
+  .model-frog::after { content: '❤️'; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 20px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
+
+  /* 6. Часы */
+  .model-watch { width: 45px; height: 45px; background: #b0bec5; border-radius: 50%; border: 5px solid #607d8b; position: relative; box-shadow: 0 0 15px rgba(96,125,139,0.5); }
+  .model-watch::before { content: ''; position: absolute; top: 50%; left: 50%; width: 3px; height: 15px; background: #000; transform-origin: bottom; transform: translate(-50%, -100%) rotate(45deg); }
+  .model-watch::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: #607d8b; border-radius: 50%; }
 
   /* --- BOTTOM NAV (Liquid Glass) --- */
   .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 450px; height: var(--nav-h); background: rgba(20, 20, 20, 0.4); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); border-radius: 35px; display: flex; align-items: center; justify-content: space-around; z-index: 50; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2); padding: 0 10px; }
@@ -595,7 +597,7 @@
 <div class="modal-overlay" id="nftDetailsModal">
   <div class="modal-card" style="text-align: center;">
     <div class="modal-title">Детали NFT</div>
-    <div id="nftDetailCard" style="margin: 0 auto 20px; width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; border-radius: 20px; position: relative;">
+    <div id="nftDetailCard" style="margin: 0 auto 20px; width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; border-radius: 20px; position: relative; overflow: hidden;">
       <!-- Card content injected by JS -->
     </div>
     <div style="font-size: 16px; font-weight: 700; margin-bottom: 10px;" id="nftDetailName">Название</div>
