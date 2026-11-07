@@ -84,7 +84,6 @@
   .chat-info { flex: 1; min-width: 0; }
   .chat-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 5px; }
   
-  /* Custom Verified Checkmark (SVG) */
   .verified-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; color: var(--accent); }
   .verified-icon svg { width: 100%; height: 100%; fill: currentColor; }
 
@@ -136,6 +135,12 @@
 
   .messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
   
+  /* Pinned Message Banner */
+  .pinned-banner { background: rgba(29, 155, 240, 0.1); border-left: 4px solid var(--accent); padding: 10px 15px; margin: 0 15px 10px 15px; border-radius: 8px; display: none; cursor: pointer; }
+  .pinned-banner.show { display: block; }
+  .pinned-label { font-size: 12px; color: var(--accent); font-weight: 700; margin-bottom: 3px; }
+  .pinned-text { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
   /* Channel-style Message */
   .msg-channel { display: flex; flex-direction: column; gap: 5px; }
   .msg-channel .msg-head { display: flex; align-items: center; gap: 10px; }
@@ -147,9 +152,17 @@
   /* DM Bubbles */
   .msg-dm { display: flex; flex-direction: column; width: 100%; align-items: flex-start; }
   .msg-dm.me { align-items: flex-end; }
-  .msg-bubble { padding: 10px 14px; border-radius: 18px; font-size: 15px; line-height: 1.4; max-width: 80%; word-wrap: break-word; background: var(--panel); backdrop-filter: var(--glass-blur); border: var(--glass-border); }
+  .msg-bubble { padding: 10px 14px; border-radius: 18px; font-size: 15px; line-height: 1.4; max-width: 80%; word-wrap: break-word; background: var(--panel); backdrop-filter: var(--glass-blur); border: var(--glass-border); position: relative; }
   .msg-dm.me .msg-bubble { background: var(--accent); color: #fff; border-color: transparent; }
   
+  /* Reply & Forward */
+  .msg-reply-quote { background: rgba(0,0,0,0.2); border-left: 3px solid var(--accent); padding: 5px 8px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; display: flex; flex-direction: column; }
+  .msg-reply-quote .r-name { font-weight: 700; color: var(--accent); font-size: 12px; margin-bottom: 2px; }
+  .msg-wrapper.me .msg-reply-quote { background: rgba(0,0,0,0.1); border-left-color: #fff; }
+  .msg-wrapper.me .msg-reply-quote .r-name { color: #fff; }
+  .msg-forwarded { font-size: 12px; font-weight: 600; opacity: 0.8; margin-bottom: 4px; font-style: italic; color: var(--accent); }
+  .msg-wrapper.me .msg-forwarded { color: #fff; }
+
   /* Reactions */
   .msg-reactions { display: flex; gap: 6px; padding-left: 46px; margin-top: 5px; flex-wrap: wrap; }
   .reaction-pill { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 12px; font-size: 12px; cursor: pointer; border: var(--glass-border); transition: 0.2s; }
@@ -179,6 +192,15 @@
   .stat-item { display: flex; flex-direction: column; cursor: pointer; }
   .stat-val { font-weight: 800; font-size: 16px; }
   .stat-lbl { font-size: 13px; color: var(--text-muted); }
+
+  /* Gifts Grid (Screen 6 style) */
+  .gifts-section { width: 100%; padding: 15px; }
+  .gifts-title { font-size: 16px; font-weight: 700; margin-bottom: 15px; text-align: center; }
+  .gifts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .gift-card { background: #1a1a2e; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+  .gift-card-id { position: absolute; top: 5px; right: 5px; font-size: 10px; color: rgba(255,255,255,0.5); font-weight: bold; }
+  .gift-card-img { font-size: 40px; margin: 15px 0; }
+  .gift-card-price { font-size: 12px; color: var(--gold); display: flex; align-items: center; gap: 3px; }
 
   /* --- BOTTOM NAV (Liquid Glass) --- */
   .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 450px; height: var(--nav-h); background: rgba(20, 20, 20, 0.4); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); border-radius: 35px; display: flex; align-items: center; justify-content: space-around; z-index: 50; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2); padding: 0 10px; }
@@ -316,8 +338,7 @@
   <!-- FEED PAGE -->
   <div class="page" id="page-feed">
     <div class="feed-tabs">
-      <div class="feed-tab active" onclick="switchFeedTab('foryou', this)">Для вас</div>
-      <div class="feed-tab" onclick="switchFeedTab('following', this)">Подписки</div>
+      <div class="feed-tab active">Для вас</div>
     </div>
     <div id="feedContainer"></div>
   </div>
@@ -362,8 +383,6 @@
         <div class="stat-item"><span class="stat-val" id="profFollowers">0</span><span class="stat-lbl">Подписчики</span></div>
         <div class="stat-item"><span class="stat-val" id="profFollowing">0</span><span class="stat-lbl">Подписки</span></div>
       </div>
-      
-      <!-- Убрал блок со значками -->
     </div>
   </div>
 
@@ -387,6 +406,11 @@
     <button class="icon-btn" onclick="openChatMenu()">⋮</button>
   </div>
   
+  <div class="pinned-banner" id="pinnedBanner" onclick="scrollToPinned()">
+    <div class="pinned-label">Закреплённое сообщение</div>
+    <div class="pinned-text" id="pinnedText">Текст</div>
+  </div>
+
   <div class="messages" id="messages">
      <div class="blocked-overlay" id="blockedOverlay">
        <h2 id="blockedOverlayTitle">Заблокировано</h2>
@@ -415,7 +439,7 @@
     <div class="profile-header" style="padding-top: 0; border: none;">
       <div class="profile-avatar" id="upAvatar"><span>👤</span></div>
       <div class="profile-name" id="upName">Имя</div>
-      <div class="profile-online">в сети</div>
+      <div class="profile-online" id="upStatus">в сети</div>
       <div class="profile-username" id="upUsername">@username</div>
       
       <div class="profile-stats">
@@ -425,6 +449,12 @@
       
       <button class="btn-main" id="upSubscribeBtn" onclick="toggleSubscribe(state.viewedProfileId)">Подписаться</button>
     </div>
+    <!-- Gifts List for other profile (Screen 6 style) -->
+    <div id="upGiftsSection" style="margin-top: 15px; display: none;">
+      <div class="gifts-title">Подарки</div>
+      <div class="gifts-grid" id="upGiftsList"></div>
+    </div>
+    
     <button class="modal-btn cancel" onclick="document.getElementById('userProfileModal').classList.remove('show')">Закрыть</button>
   </div>
 </div>
@@ -433,7 +463,7 @@
   <div class="modal-card">
     <div class="modal-title">Отправить подарок</div>
     <div style="text-align: center; margin-bottom: 15px; color: var(--gold); font-weight: bold;">Баланс: <span id="giftBalance">0</span> 💎</div>
-    <div class="gifts-grid" id="giftGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;"></div>
+    <div class="gifts-grid" id="giftGrid"></div>
     <button class="modal-btn cancel" style="margin-top:15px;" onclick="document.getElementById('giftPickerModal').classList.remove('show')">Отмена</button>
   </div>
 </div>
@@ -455,7 +485,26 @@
   </div>
 </div>
 
-<!-- ADMIN MODALS (Восстановлены) -->
+<!-- CREATE GROUP/CHANNEL MODAL -->
+<div class="modal-overlay" id="createGroupModal">
+  <div class="modal-card">
+    <div class="modal-title">Создать чат/канал</div>
+    <div class="avatar-upload" id="groupAvatarPreview" onclick="document.getElementById('groupAvatarInput').click()" style="width: 80px; height: 80px; margin: 0 auto 15px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden;">
+      <span>📷</span>
+    </div>
+    <input type="file" id="groupAvatarInput" accept="image/*" hidden onchange="previewGroupAvatar(event)">
+    
+    <input type="text" id="groupNameInput" class="modal-input" placeholder="Название (без @)" maxlength="30">
+    
+    <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--accent);">Пригласить участников:</div>
+    <div id="groupMemberList" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px;"></div>
+    
+    <button class="modal-btn" onclick="createGroup()">Создать</button>
+    <button class="modal-btn cancel" onclick="document.getElementById('createGroupModal').classList.remove('show')">Отмена</button>
+  </div>
+</div>
+
+<!-- ADMIN MODALS -->
 <div class="modal-overlay" id="adminAuthModal">
   <div class="modal-card admin-panel">
     <div class="admin-header"><h2>ROOT ACCESS</h2></div>
@@ -520,7 +569,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-  // FIREBASE CONFIG (Ваш оригинальный)
+  // FIREBASE CONFIG
   const firebaseConfig = {
     apiKey: "AIzaSyCK_KNBBriDJ4i99dWJ3CIV9AY3PowqaBo",
     authDomain: "glasschatweb.firebaseapp.com",
@@ -536,20 +585,25 @@
   const db = firebase.database();
 
   let ALL_USERS = {};
+  let ALL_GROUPS = {};
   let MY_CHATS = [];
-  let chatMeta = {};
+  let chatMeta = {}; 
   let state = { 
     uid: null, nick: '', username: '', avatar: null, glass: 0, 
     verified_dev: false, verified_tester: false, verified_owner: false, premium: false,
     settings: { hideOnline: false },
     currentChatId: null, unread: {}, pinnedChats: {}, contacts: {}, followers: {}, following: {}, 
-    viewedProfileId: null, blockedUsers: {}
+    viewedProfileId: null, blockedUsers: {}, pinnedMessages: {}
   };
   let currentMessagesListener = null;
   let activeCtxChatId = null;
   let activeCtxMsgKey = null;
+  let replyTo = null;
 
-  // --- AUTH ---
+  let groupAvatarBase64 = null;
+  let selectedGroupMembers = [];
+
+  // 1. АВТОРИЗАЦИЯ
   auth.onAuthStateChanged(user => {
     if (user) {
       state.uid = user.uid;
@@ -582,6 +636,20 @@
         ALL_USERS = snapshot.val() || {};
         if (state.currentChatId) updateChatHeader(state.currentChatId);
         renderChatList();
+        renderFeed();
+        
+        if (state.viewedProfileId && ALL_USERS[state.viewedProfileId]) {
+           fillUserProfile(state.viewedProfileId, ALL_USERS[state.viewedProfileId]);
+        }
+      });
+
+      // Слушатель Групп
+      db.ref('groups').on('value', snapshot => {
+        ALL_GROUPS = snapshot.val() || {};
+        if (state.currentChatId && state.currentChatId.startsWith('group_')) {
+          updateChatHeader(state.currentChatId);
+        }
+        renderChatList();
       });
 
       db.ref('user_chats/' + user.uid).on('value', snapshot => {
@@ -598,19 +666,21 @@
         db.ref('users/' + user.uid + '/online').set(true);
         db.ref('users/' + user.uid + '/online').onDisconnect().set(false);
       }
+
     } else {
       showScreen('welcomeScreen');
     }
   });
 
-  // --- REG / LOGIN ---
+  // 2. РЕГИСТРАЦИЯ И ВХОД
   let tempEmail, tempPass;
   function startReg() { showScreen('regEmailScreen'); }
   function startLogin() { showScreen('loginScreen'); }
+  
   function regNextEmail() {
     tempEmail = document.getElementById('regEmail').value.trim();
     tempPass = document.getElementById('regPassword').value;
-    if (!tempEmail || tempPass.length < 6) { alert('Ошибка'); return; }
+    if (!tempEmail || !tempEmail.includes('@') || tempPass.length < 6) { alert('Проверьте данные'); return; }
     showScreen('regNickScreen');
   }
   function regNextNick() {
@@ -619,12 +689,14 @@
     state.nick = nick;
     showScreen('regUsernameScreen');
   }
-  function regNextUsername() {
+  async function regNextUsername() {
     let un = document.getElementById('regUsername').value.trim().toLowerCase();
     if (!un.startsWith('@')) un = '@' + un;
     if (un.length < 4) { alert('Минимум 4 символа'); return; }
+    
     const taken = Object.values(ALL_USERS).some(u => u.username.toLowerCase() === un);
-    if (taken) { alert('Занято!'); return; }
+    if (taken) { alert('Этот username уже занят!'); return; }
+    
     state.username = un;
     showScreen('regAvatarScreen');
   }
@@ -639,27 +711,38 @@
       const cred = await auth.createUserWithEmailAndPassword(tempEmail, tempPass);
       await db.ref('users/' + cred.user.uid).set({
         email: tempEmail, nick: state.nick, username: state.username, avatar: state.avatar || null,
-        glass: 0, online: true, deleted: false, verified_dev: false, verified_tester: false, verified_owner: false, premium: false,
-        settings: { hideOnline: false }, followers: {}, following: {}, joinDate: Date.now()
+        bio: '', glass: 0, online: true, deleted: false,
+        verified_dev: false, verified_tester: false, verified_owner: false, premium: false,
+        settings: { hideOnline: false },
+        followers: {}, following: {}, joinDate: Date.now()
       });
     } catch(e) { alert('Ошибка: ' + e.message); }
   }
+
   function doLogin() {
     const email = document.getElementById('loginEmail').value.trim();
     const pass = document.getElementById('loginPassword').value;
+    if (!email || !pass) { alert('Введите данные!'); return; }
     auth.signInWithEmailAndPassword(email, pass).catch(e => alert('Неверные данные!'));
   }
-  function doLogout() { auth.signOut().then(() => window.location.reload()); }
 
-  // --- CHAT LOGIC ---
+  function doLogout() { 
+    if(state.uid && !state.settings.hideOnline) db.ref('users/' + state.uid + '/online').set(false);
+    auth.signOut().then(() => window.location.reload());
+  }
+
+  // 3. ОТПРАВКА И ЧАТЫ
   function sendMessage() {
     const text = document.getElementById('msgInput').value.trim();
     if (!text || !state.currentChatId) return;
     
     const chatId = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
     
+    let msg = { senderId: state.uid, text: text, timestamp: Date.now(), type: 'text' };
+    if (replyTo) { msg.replyTo = replyTo; replyTo = null; }
+
     const newMsgRef = db.ref('messages/' + chatId).push();
-    newMsgRef.set({ senderId: state.uid, text: text, timestamp: Date.now(), type: 'text' });
+    newMsgRef.set(msg);
     
     let updates = {};
     if (!state.currentChatId.startsWith('group_')) {
@@ -667,6 +750,7 @@
       updates['user_chats/' + state.currentChatId + '/' + state.uid] = true;
       updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
     }
+    
     db.ref().update(updates);
 
     document.getElementById('msgInput').value = '';
@@ -675,17 +759,35 @@
   function openChatView(chatId) {
     state.currentChatId = chatId;
     document.getElementById('chatView').classList.add('active');
+    
     document.getElementById('messages').innerHTML = '<div class="blocked-overlay" id="blockedOverlay"><h2 id="blockedOverlayTitle">Заблокировано</h2><p id="blockedOverlayText"></p></div>';
+    document.getElementById('pinnedBanner').classList.remove('show');
     
     updateChatHeader(chatId);
 
     if (currentMessagesListener) currentMessagesListener.off();
+    
     const chatIdKey = chatId.startsWith('group_') ? chatId : [state.uid, chatId].sort().join('_');
+    
+    if (!chatId.startsWith('group_')) {
+      db.ref('users/' + state.uid + '/pinned/' + chatId).once('value').then(snap => {
+        const pinnedMsg = snap.val();
+        if (pinnedMsg) {
+          document.getElementById('pinnedText').innerText = pinnedMsg.senderName + ': ' + pinnedMsg.text;
+          document.getElementById('pinnedBanner').classList.add('show');
+          state.pinnedMessages[chatId] = pinnedMsg;
+        } else {
+          document.getElementById('pinnedBanner').classList.remove('show');
+          state.pinnedMessages[chatId] = null;
+        }
+      });
+    }
     
     currentMessagesListener = db.ref('messages/' + chatIdKey);
     currentMessagesListener.on('value', snapshot => {
       const msgs = snapshot.val() || {};
       const container = document.getElementById('messages');
+      
       const overlay = document.getElementById('blockedOverlay');
       container.innerHTML = '';
       container.appendChild(overlay);
@@ -703,8 +805,24 @@
         if (m.type === 'image') content = `<img src="${m.text}" style="max-width:100%; border-radius:10px; margin-top:5px;">`;
         if (m.type === 'gift') content = `<span style="font-size:30px;">${m.text}</span>`;
         
+        let replyHtml = '';
+        if (m.replyTo) {
+           let replyText = m.replyTo.text;
+           if(m.replyTo.type === 'image') replyText = '[Фото]';
+           else if(m.replyTo.type === 'gift') replyText = '[Подарок]';
+           
+           replyHtml = `<div class="msg-reply-quote"><span class="r-name">${m.replyTo.name}</span><span>${replyText}</span></div>`;
+        }
+        
+        let forwardHtml = '';
+        if (m.forwardedFrom) {
+           forwardHtml = `<div class="msg-forwarded">Переслано от ${m.forwardedFrom}</div>`;
+        }
+        
+        let reactionHtml = '';
+        if (m.reaction) reactionHtml = `<div class="msg-reactions">${m.reaction}</div>`;
+        
         if (isGroup) {
-          // Канальный стиль
           const sender = ALL_USERS[m.senderId] || { nick: 'Пользователь', avatar: null };
           let avatarHtml = sender.avatar ? `<img src="${sender.avatar}">` : '👤';
           
@@ -715,7 +833,7 @@
               <div class="msg-avatar">${avatarHtml}</div>
               <div class="msg-name">${sender.nick} <span style="color:var(--text-muted); font-size:12px; font-weight:normal;">${new Date(m.timestamp).toLocaleTimeString()}</span></div>
             </div>
-            <div class="msg-text">${content}</div>
+            <div class="msg-text">${forwardHtml}${replyHtml}${content}</div>
             <div class="msg-reactions">
                <div class="reaction-pill gold">💎 ${Math.floor(Math.random()*100)}</div>
                <div class="reaction-pill red">❤️ ${Math.floor(Math.random()*50)}</div>
@@ -723,10 +841,9 @@
           `;
           container.appendChild(wrapper);
         } else {
-          // ДМ стиль
           const wrapper = document.createElement('div');
           wrapper.className = `msg-dm ${isMe ? 'me' : ''}`;
-          wrapper.innerHTML = `<div class="msg-bubble">${content}</div>`;
+          wrapper.innerHTML = `<div class="msg-bubble">${forwardHtml}${replyHtml}${content}</div>`;
           wrapper.querySelector('.msg-bubble').onclick = () => openMsgCtx(chatIdKey, key);
           container.appendChild(wrapper);
         }
@@ -735,52 +852,61 @@
     });
 
     db.ref('unread/' + state.uid + '/' + chatId).remove();
+    renderChatList();
   }
 
   function closeChatView() {
     if (currentMessagesListener) currentMessagesListener.off();
     document.getElementById('chatView').classList.remove('active');
     state.currentChatId = null;
+    replyTo = null;
   }
 
   function updateChatHeader(chatId) {
     if (!chatId) return;
+    
+    if (chatId.startsWith('group_')) {
+      const group = ALL_GROUPS[chatId];
+      if (!group) return;
+      document.getElementById('chatHeaderName').innerText = group.name;
+      document.getElementById('chatHeaderStatus').innerText = 'Групповой чат';
+      return;
+    }
+
     const u = ALL_USERS[chatId];
     if (!u) return;
-    
-    let badges = '';
-    if (u.verified_dev) badges = '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>';
+    let badges = u.verified_dev ? '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>' : '';
     
     document.getElementById('chatHeaderName').innerHTML = `${u.nick} ${badges}`;
-    document.getElementById('chatHeaderStatus').innerText = u.online ? 'в сети' : 'был(а) недавно';
+    
+    // ИСПРАВЛЕНИЕ БАГА "В СЕТИ"
+    let isActuallyOnline = u.online && !(u.settings && u.settings.hideOnline);
+    let status = isActuallyOnline ? 'в сети' : 'был(а) недавно';
+    
+    document.getElementById('chatHeaderStatus').innerText = status;
   }
 
-  // --- CHAT LIST ---
-  function renderChatList() {
-    const list = document.getElementById('chatList');
-    if (!list) return;
-    list.innerHTML = '';
-    if (MY_CHATS.length === 0) { list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted);">Найдите друга через поиск!</div>'; return; }
-    
-    MY_CHATS.forEach(cid => {
-      if (cid === state.uid) return;
-      const u = ALL_USERS[cid];
-      if (!u) return;
-      
-      const unread = state.unread[cid] || 0;
-      const isPinned = state.pinnedChats && state.pinnedChats[cid];
-      let badge = u.verified_dev ? '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>' : '';
+  function isUserBlocked(uid) { return state.blockedUsers && state.blockedUsers[uid]; }
+  function amIBlocked(uid) {
+    const other = ALL_USERS[uid];
+    return other && other.blockedUsers && other.blockedUsers[state.uid];
+  }
 
-      list.innerHTML += `
-        <div class="chat-item" onclick="openChatView('${cid}')">
-          <div class="chat-avatar">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
-          <div class="chat-info">
-            <div class="chat-name">${u.nick} ${badge} ${isPinned ? '<span class="pin-icon">📌</span>' : ''}</div>
-            <div class="chat-preview">${u.username}</div>
-          </div>
-          ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}
-        </div>
-      `;
+  function openCurrentProfile() {
+    if (!state.currentChatId) return;
+    if (state.currentChatId.startsWith('group_')) {
+      // Можно сделать модалку группы, пока просто заглушка
+      alert('Групповой чат');
+    } else {
+      openUserProfile(state.currentChatId);
+    }
+  }
+
+  // 4. СПИСКИ И СОРТИРОВКА
+  function loadUnreadCounts() {
+    db.ref('unread/' + state.uid).on('value', snapshot => {
+      state.unread = snapshot.val() || {};
+      renderChatList();
     });
   }
 
@@ -790,16 +916,87 @@
       const chatIdKey = cid.startsWith('group_') ? cid : [state.uid, cid].sort().join('_');
       db.ref('messages/' + chatIdKey).limitToLast(1).on('value', snap => {
         const msgs = snap.val();
-        if (msgs) chatMeta[cid] = Object.values(msgs)[0];
+        if (msgs) {
+          chatMeta[cid] = Object.values(msgs)[0];
+        } else {
+          chatMeta[cid] = { timestamp: 0, text: '' };
+        }
         renderChatList();
       });
     });
   }
 
-  function loadUnreadCounts() {
-    db.ref('unread/' + state.uid).on('value', snapshot => {
-      state.unread = snapshot.val() || {};
-      renderChatList();
+  function renderChatList() {
+    const list = document.getElementById('chatList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (MY_CHATS.length === 0) { list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted);">Найдите друга через поиск!</div>'; return; }
+    
+    // Сортировка: сначала непрочитанные, потом закрепленные, потом по времени
+    const sortedChats = [...MY_CHATS].sort((a, b) => {
+      const unreadA = (state.unread[a] || 0) > 0;
+      const unreadB = (state.unread[b] || 0) > 0;
+      
+      if (unreadA && !unreadB) return -1;
+      if (!unreadA && unreadB) return 1;
+
+      const isPinnedA = state.pinnedChats && state.pinnedChats[a];
+      const isPinnedB = state.pinnedChats && state.pinnedChats[b];
+      if (isPinnedA && !isPinnedB) return -1;
+      if (!isPinnedA && isPinnedB) return 1;
+      
+      const timeA = (chatMeta[a] && chatMeta[a].timestamp) || 0;
+      const timeB = (chatMeta[b] && chatMeta[b].timestamp) || 0;
+      return timeB - timeA;
+    });
+    
+    sortedChats.forEach(cid => {
+      if (cid === state.uid) return;
+      
+      if (cid.startsWith('group_')) {
+        const group = ALL_GROUPS[cid];
+        if (!group) return;
+        const unread = state.unread[cid] || 0;
+        const isPinned = state.pinnedChats && state.pinnedChats[cid];
+        let lastMsg = chatMeta[cid] ? chatMeta[cid].text : 'Группа';
+        
+        list.innerHTML += `
+          <div class="chat-item" onclick="openChatView('${cid}')">
+            <div class="chat-avatar">${group.avatar ? `<img src="${group.avatar}">` : '👥'}</div>
+            <div class="chat-info">
+              <div class="chat-name">${group.name} ${isPinned ? '<span class="pin-icon">📌</span>' : ''}</div>
+              <div class="chat-preview ${unread > 0 ? 'unread' : ''}">${lastMsg}</div>
+            </div>
+            ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}
+          </div>`;
+        return;
+      }
+
+      const u = ALL_USERS[cid];
+      if (!u) return;
+      const unread = state.unread[cid] || 0;
+      const isPinned = state.pinnedChats && state.pinnedChats[cid];
+      let badge = u.verified_dev ? '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>' : '';
+      
+      let previewText = u.username;
+      const meta = chatMeta[cid];
+      if (meta && meta.text) {
+        if (meta.type === 'image') previewText = '📷 Фото';
+        else if (meta.type === 'gift') previewText = '🎁 Подарок';
+        else previewText = meta.text;
+        
+        if (meta.senderId === state.uid) previewText = 'Вы: ' + previewText;
+      }
+
+      list.innerHTML += `
+        <div class="chat-item" onclick="openChatView('${cid}')">
+          <div class="chat-avatar">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
+          <div class="chat-info">
+            <div class="chat-name">${u.nick} ${badge} ${isPinned ? '<span class="pin-icon">📌</span>' : ''}</div>
+            <div class="chat-preview ${unread > 0 ? 'unread' : ''}">${previewText}</div>
+          </div>
+          ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}
+        </div>`;
     });
   }
 
@@ -808,12 +1005,15 @@
     if (!val) { renderChatList(); return; }
     const list = document.getElementById('chatList');
     list.innerHTML = '';
+    
     if (!val.startsWith('@')) val = '@' + val;
+    let found = false;
     
     for (let uid in ALL_USERS) {
       if (uid === state.uid) continue;
       const u = ALL_USERS[uid];
       if (u.username.toLowerCase() === val) {
+        found = true;
         list.innerHTML += `
           <div class="chat-item">
             <div class="chat-avatar">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
@@ -824,6 +1024,7 @@
           </div>`;
       }
     }
+    if (!found) list.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">Пользователь не найден</div>';
   }
 
   function startChatWith(uid) {
@@ -837,7 +1038,236 @@
     setTimeout(renderChatList, 500); 
   }
 
-  // --- FEED ---
+  // 5. ПРОФИЛЬ И ПОДАРКИ
+  function openUserProfile(uid) {
+    if (!uid) return;
+    state.viewedProfileId = uid;
+    const u = ALL_USERS[uid];
+    if (u) { fillUserProfile(uid, u); return; }
+    db.ref('users/' + uid).once('value').then(snap => {
+      const data = snap.val();
+      if (!data) { alert('Профиль не найден'); return; }
+      ALL_USERS[uid] = data;
+      fillUserProfile(uid, data);
+    });
+  }
+
+  function fillUserProfile(uid, u) {
+    document.getElementById('upAvatar').innerHTML = u.avatar ? `<img src="${u.avatar}">` : '👤';
+    let badgeHtml = u.verified_dev ? '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>' : '';
+    document.getElementById('upName').innerHTML = `${u.nick} ${badgeHtml}`;
+    document.getElementById('upUsername').innerText = u.username;
+    
+    // Исправлен статус
+    let isActuallyOnline = u.online && !(u.settings && u.settings.hideOnline);
+    document.getElementById('upStatus').innerText = isActuallyOnline ? 'в сети' : 'был(а) недавно';
+    document.getElementById('upStatus').style.color = isActuallyOnline ? 'var(--success)' : 'var(--text-muted)';
+    
+    const followersCount = u.followers ? Object.keys(u.followers).length : 0;
+    const followingCount = u.following ? Object.keys(u.following).length : 0;
+    document.getElementById('upFollowers').innerText = followersCount;
+    document.getElementById('upFollowing').innerText = followingCount;
+    
+    const btn = document.getElementById('upSubscribeBtn');
+    if (uid === state.uid) {
+      btn.style.display = 'none';
+    } else {
+      btn.style.display = 'block';
+      if (u.followers && u.followers[state.uid]) {
+        btn.innerText = 'Отписаться';
+        btn.classList.add('subscribed');
+        btn.style.background = 'var(--panel)';
+      } else {
+        btn.innerText = 'Подписаться';
+        btn.classList.remove('subscribed');
+        btn.style.background = 'var(--accent)';
+      }
+    }
+
+    // Подарки
+    const upGiftsSection = document.getElementById('upGiftsSection');
+    const upGiftsList = document.getElementById('upGiftsList');
+    upGiftsList.innerHTML = '';
+    
+    db.ref('users/' + uid + '/gifts').once('value').then(snap => {
+      const gifts = snap.val();
+      if (gifts) {
+        const arr = Object.keys(gifts).map(k => ({ id: k, ...gifts[k] })).sort((a,b) => b.date - a.date);
+        arr.forEach(g => {
+          // Генерация случайного стиля карточки
+          const randBg = ['#1e1b4b', '#450a0a', '#064e3b'][Math.floor(Math.random() * 3)];
+          const randId = Math.floor(Math.random() * 900) + 100;
+          upGiftsList.innerHTML += `
+            <div class="gift-card" style="background: ${randBg};">
+              <div class="gift-card-id">#${randId}</div>
+              <div class="gift-card-img">${g.emoji}</div>
+              <div class="gift-card-price">💎 ${g.price}</div>
+            </div>
+          `;
+        });
+        upGiftsSection.style.display = 'block';
+      } else {
+        upGiftsSection.style.display = 'none';
+      }
+    });
+
+    document.getElementById('userProfileModal').classList.add('show');
+  }
+
+  function toggleSubscribe(targetUid) {
+    if (!targetUid || targetUid === state.uid) return;
+    const targetRef = db.ref('users/' + targetUid + '/followers/' + state.uid);
+    const myRef = db.ref('users/' + state.uid + '/following/' + targetUid);
+    
+    const isSubscribed = ALL_USERS[targetUid] && ALL_USERS[targetUid].followers && ALL_USERS[targetUid].followers[state.uid];
+    
+    if (isSubscribed) {
+      targetRef.remove();
+      myRef.remove();
+    } else {
+      targetRef.set(true);
+      myRef.set(true);
+    }
+    
+    setTimeout(() => {
+      if (state.viewedProfileId === targetUid) {
+        fillUserProfile(targetUid, ALL_USERS[targetUid]);
+      }
+    }, 300);
+  }
+
+  function openGiftPicker() {
+    document.getElementById('giftBalance').innerText = state.glass;
+    const grid = document.getElementById('giftGrid');
+    grid.innerHTML = '';
+    const emojis = ['🧸', '🌹', '🎂', '💎', '👑', '🚗', '🏰'];
+    emojis.forEach((e, i) => {
+      const price = (i + 1) * 15;
+      const randBg = ['#1e1b4b', '#450a0a', '#064e3b'][i % 3];
+      const randId = Math.floor(Math.random() * 900) + 100;
+      
+      grid.innerHTML += `
+        <div class="gift-card" style="background: ${randBg}; cursor: pointer;" onclick="sendGift('${e}', ${price})">
+          <div class="gift-card-id">#${randId}</div>
+          <div class="gift-card-img">${e}</div>
+          <div class="gift-card-price">💎 ${price}</div>
+        </div>
+      `;
+    });
+    document.getElementById('giftPickerModal').classList.add('show');
+  }
+
+  function sendGift(emoji, price) {
+    if (state.glass < price) { alert('Недостаточно Glass!'); return; }
+    db.ref('users/' + state.uid + '/glass').transaction(g => (g || 0) - price);
+    
+    const giftData = { from: state.username, emoji: emoji, price: price, date: Date.now() };
+    
+    if (!state.currentChatId.startsWith('group_')) {
+      db.ref('users/' + state.currentChatId + '/gifts').push(giftData);
+    }
+
+    const chatIdKey = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
+    db.ref('messages/' + chatIdKey).push({ senderId: state.uid, text: emoji, type: 'gift', timestamp: Date.now() });
+    
+    let updates = {};
+    if (!state.currentChatId.startsWith('group_')) {
+      updates['unread/' + state.currentChatId + '/' + state.uid] = firebase.database.ServerValue.increment(1);
+    }
+    db.ref().update(updates);
+    
+    document.getElementById('giftPickerModal').classList.remove('show');
+  }
+
+  // 6. КОНТЕКСТНОЕ МЕНЮ И ЗАКРЕПЫ
+  function openChatMenu() {
+    if (!state.currentChatId) return;
+    const list = document.getElementById('chatMenuActionList');
+    list.innerHTML = '';
+    
+    if (state.currentChatId.startsWith('group_')) {
+      list.innerHTML += `<div class="ctx-item" onclick="alert('Удаление группы в разработке')">🚪 Выйти из группы</div>`;
+    } else {
+      const isPinned = state.pinnedChats && state.pinnedChats[state.currentChatId];
+      list.innerHTML += `<div class="ctx-item" onclick="togglePinChat()">📌 ${isPinned ? 'Открепить' : 'Закрепить'} чат</div>`;
+      list.innerHTML += `<div class="ctx-item danger" onclick="alert('Очистка чата в разработке')">🗑 Очистить чат</div>`;
+    }
+    
+    document.getElementById('chatMenuModal').classList.add('show');
+  }
+
+  function togglePinChat() {
+    document.getElementById('chatMenuModal').classList.remove('show');
+    if (!state.currentChatId) return;
+    
+    const isPinned = state.pinnedChats && state.pinnedChats[state.currentChatId];
+    if (isPinned) {
+      db.ref('users/' + state.uid + '/pinnedChats/' + state.currentChatId).remove();
+      alert('Чат откреплен');
+    } else {
+      db.ref('users/' + state.uid + '/pinnedChats/' + state.currentChatId).set(true);
+      alert('Чат закреплен');
+    }
+  }
+
+  function openMsgCtx(chatIdKey, msgKey) {
+    activeCtxChatId = chatIdKey;
+    activeCtxMsgKey = msgKey;
+    document.getElementById('ctxList').innerHTML = `
+      <div class="ctx-item" onclick="showReactionPanel()">😀 Реакция</div>
+      <div class="ctx-item" onclick="replyToMessage()">↪️ Ответить</div>
+      <div class="ctx-item" onclick="pinMessage()">📌 Закрепить</div>
+      <div class="ctx-item danger" onclick="deleteMsg()">🗑 Удалить</div>
+    `;
+    document.getElementById('ctxOverlay').classList.add('show');
+  }
+
+  function showReactionPanel() {
+    document.getElementById('ctxOverlay').classList.remove('show');
+    const emojis = ['❤️','👍','😂','😮','😢','🔥','🎉','💩'];
+    let html = '<div style="display:flex; justify-content:space-around; padding:10px;">';
+    emojis.forEach(e => { html += `<span style="font-size:24px; cursor:pointer;" onclick="applyReaction('${e}')">${e}</span>`; });
+    html += '</div>';
+    document.getElementById('ctxList').innerHTML = html;
+    document.getElementById('ctxOverlay').classList.add('show');
+  }
+
+  function applyReaction(emoji) {
+    document.getElementById('ctxOverlay').classList.remove('show');
+    db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey + '/reaction').set(emoji);
+  }
+
+  function replyToMessage() {
+    document.getElementById('ctxOverlay').classList.remove('show');
+    db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey).once('value').then(snap => {
+      const m = snap.val();
+      replyTo = { text: m.text, type: m.type, name: m.senderId === state.uid ? 'Вы' : (ALL_USERS[m.senderId] ? ALL_USERS[m.senderId].nick : 'Пользователь') };
+      document.getElementById('msgInput').focus();
+    });
+  }
+
+  function pinMessage() {
+    document.getElementById('ctxOverlay').classList.remove('show');
+    db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey).once('value').then(snap => {
+      const m = snap.val();
+      const senderName = m.senderId === state.uid ? 'Вы' : (ALL_USERS[m.senderId] ? ALL_USERS[m.senderId].nick : 'Пользователь');
+      const pinData = { text: m.text, senderName: senderName, msgId: activeCtxMsgKey };
+      
+      db.ref('users/' + state.uid + '/pinned/' + state.currentChatId).set(pinData).then(() => {
+        document.getElementById('pinnedText').innerText = senderName + ': ' + m.text;
+        document.getElementById('pinnedBanner').classList.add('show');
+      });
+    });
+  }
+
+  function deleteMsg() {
+    document.getElementById('ctxOverlay').classList.remove('show');
+    if(confirm('Удалить сообщение у всех?')) {
+      db.ref('messages/' + activeCtxChatId + '/' + activeCtxMsgKey).update({ deleted: true, text: 'Сообщение удалено' });
+    }
+  }
+
+  // 7. ЛЕНТА (FEED)
   function renderFeed() {
     db.ref('posts').on('value', snapshot => {
       const posts = snapshot.val() || {};
@@ -916,11 +1346,126 @@
     }).then(() => {
       document.getElementById('postText').value = '';
       document.getElementById('createPostModal').classList.remove('show');
-      switchPage('feed', document.querySelector('.nav-btn[onclick*="feed"]'));
     });
   }
 
-  // --- PROFILE ---
+  // 8. СОЗДАНИЕ ГРУПП/КАНАЛОВ
+  function openCreateGroupModal() {
+    document.getElementById('createGroupModal').classList.add('show');
+    groupAvatarBase64 = null;
+    selectedGroupMembers = [];
+    document.getElementById('groupNameInput').value = '';
+    document.getElementById('groupAvatarPreview').innerHTML = '<span>📷</span>';
+    
+    const list = document.getElementById('groupMemberList');
+    list.innerHTML = '';
+    
+    MY_CHATS.forEach(cid => {
+      if (cid === state.uid || cid.startsWith('group_')) return;
+      const u = ALL_USERS[cid];
+      if (!u) return;
+      
+      list.innerHTML += `
+        <div style="display:flex; align-items:center; gap:10px; padding:5px; border-radius:8px; cursor:pointer;" onclick="toggleGroupMember('${cid}', this)">
+          <input type="checkbox" style="pointer-events:none;">
+          <div class="chat-avatar" style="width:30px; height:30px; font-size:12px;">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
+          <div style="font-size:14px;">${u.nick}</div>
+        </div>
+      `;
+    });
+    
+    if (MY_CHATS.length <= 1) {
+       list.innerHTML = '<div style="text-align:center; opacity:0.5; font-size:13px;">Нет контактов для приглашения</div>';
+    }
+  }
+
+  function previewGroupAvatar(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = ev => { 
+      groupAvatarBase64 = ev.target.result; 
+      document.getElementById('groupAvatarPreview').innerHTML = `<img src="${groupAvatarBase64}" style="width:100%; height:100%; object-fit:cover;">`; 
+    };
+    r.readAsDataURL(file);
+  }
+
+  function toggleGroupMember(uid, el) {
+    const checkbox = el.querySelector('input[type="checkbox"]');
+    checkbox.checked = !checkbox.checked;
+    
+    if (checkbox.checked) {
+      if (!selectedGroupMembers.includes(uid)) selectedGroupMembers.push(uid);
+      el.style.background = 'rgba(29, 155, 240, 0.2)';
+    } else {
+      selectedGroupMembers = selectedGroupMembers.filter(id => id !== uid);
+      el.style.background = 'transparent';
+    }
+  }
+
+  function createGroup() {
+    const name = document.getElementById('groupNameInput').value.trim();
+    if (!name) { alert('Введите название группы'); return; }
+    
+    const groupId = 'group_' + Date.now();
+    const groupData = {
+      isGroup: true,
+      name: name,
+      avatar: groupAvatarBase64,
+      owner: state.uid,
+      members: {
+        [state.uid]: true
+      },
+      timestamp: Date.now()
+    };
+    
+    selectedGroupMembers.forEach(uid => {
+      groupData.members[uid] = true;
+    });
+    
+    db.ref('groups/' + groupId).set(groupData).then(() => {
+      let updates = {};
+      Object.keys(groupData.members).forEach(uid => {
+        updates['user_chats/' + uid + '/' + groupId] = true;
+      });
+      return db.ref().update(updates);
+    }).then(() => {
+      document.getElementById('createGroupModal').classList.remove('show');
+      alert('Группа создана!');
+      openChatView(groupId);
+    }).catch(err => {
+      alert('Ошибка создания группы: ' + err.message);
+    });
+  }
+
+  // 9. УТИЛИТЫ
+  function showScreen(id) { 
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+    document.getElementById(id).classList.add('active'); 
+  }
+  
+  function switchPage(page, btn) { 
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); 
+    document.getElementById('page-' + page).classList.add('active'); 
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); 
+    if (btn) btn.classList.add('active'); 
+    
+    const titles = { chats: 'Чаты', feed: 'Лента', profile: 'Профиль', settings: 'Настройки' };
+    document.getElementById('pageTitle').innerText = titles[page];
+    
+    document.getElementById('createPostBtn').style.display = page === 'feed' ? 'block' : 'none';
+    document.getElementById('createGroupBtn').style.display = page === 'chats' ? 'block' : 'none';
+
+    if (page === 'profile') updateProfileUI();
+    if (page === 'feed') renderFeed();
+    if (page === 'settings') renderBlacklist();
+  }
+
+  function toggleTheme() {
+    // Тема пока черная, можно оставить заглушку
+    alert('Светлая тема в разработке');
+  }
+
   function updateProfileUI() {
     if (!document.getElementById('profileName')) return;
     let badgeHtml = state.verified_dev ? '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>' : '';
@@ -945,45 +1490,6 @@
     reader.readAsDataURL(file);
   }
 
-  function toggleSubscribe(targetUid) {
-    if (!targetUid || targetUid === state.uid) return;
-    const targetRef = db.ref('users/' + targetUid + '/followers/' + state.uid);
-    const myRef = db.ref('users/' + state.uid + '/following/' + targetUid);
-    const isSubscribed = ALL_USERS[targetUid] && ALL_USERS[targetUid].followers && ALL_USERS[targetUid].followers[state.uid];
-    
-    if (isSubscribed) { targetRef.remove(); myRef.remove(); }
-    else { targetRef.set(true); myRef.set(true); }
-  }
-
-  function openUserProfile(uid) {
-    state.viewedProfileId = uid;
-    const u = ALL_USERS[uid];
-    if (!u) return;
-    
-    document.getElementById('upAvatar').innerHTML = u.avatar ? `<img src="${u.avatar}">` : '👤';
-    let badgeHtml = u.verified_dev ? '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>' : '';
-    document.getElementById('upName').innerHTML = `${u.nick} ${badgeHtml}`;
-    document.getElementById('upUsername').innerText = u.username;
-    document.getElementById('upFollowers').innerText = Object.keys(u.followers || {}).length;
-    document.getElementById('upFollowing').innerText = Object.keys(u.following || {}).length;
-    
-    const btn = document.getElementById('upSubscribeBtn');
-    if (u.followers && u.followers[state.uid]) {
-      btn.innerText = 'Вы подписаны';
-      btn.style.background = 'var(--panel)';
-    } else {
-      btn.innerText = 'Подписаться';
-      btn.style.background = 'var(--accent)';
-    }
-    
-    document.getElementById('userProfileModal').classList.add('show');
-  }
-
-  function openCurrentProfile() {
-    if (state.currentChatId) openUserProfile(state.currentChatId);
-  }
-
-  // --- SETTINGS ---
   function renderBlacklist() {
     const container = document.getElementById('blacklistContainer');
     if (!container) return;
@@ -1013,42 +1519,22 @@
     db.ref('users/' + state.uid + '/settings/hideOnline').set(this.checked);
   });
 
-  // --- UTILS ---
-  function showScreen(id) { 
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
-    document.getElementById(id).classList.add('active'); 
-  }
-  
-  function switchPage(page, btn) { 
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); 
-    document.getElementById('page-' + page).classList.add('active'); 
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); 
-    if (btn) btn.classList.add('active'); 
-    
-    const titles = { chats: 'Чаты', feed: 'Лента', profile: 'Профиль', settings: 'Настройки' };
-    document.getElementById('pageTitle').innerText = titles[page];
-    
-    document.getElementById('createPostBtn').style.display = page === 'feed' ? 'block' : 'none';
-    document.getElementById('createGroupBtn').style.display = page === 'chats' ? 'block' : 'none';
-
-    if (page === 'profile') updateProfileUI();
-    if (page === 'feed') renderFeed();
-    if (page === 'settings') renderBlacklist();
-  }
-
-  function switchFeedTab(tab, el) {
-    document.querySelectorAll('.feed-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-  }
-
-  // --- ВОССТАНОВЛЕННАЯ АДМИНКА ---
+  // 10. АДМИНКА (Секретная команда)
   const SECRET = [47, 112, 97, 110, 101, 108, 61, 49, 117, 105, 100].map(c => String.fromCharCode(c)).join('');
   document.getElementById('chatSearch').addEventListener('input', function() {
     const val = this.value.trim().toLowerCase();
+    
     if (val === SECRET) { 
       this.value = ''; 
       document.getElementById('adminAuthModal').classList.add('show'); 
       return; 
+    }
+    
+    if (val === '/иванпанель') {
+      this.value = '';
+      // Заглушка, так как Иван панель не была запрошена в этом коде
+      alert('Иван панель отключена в этой версии');
+      return;
     }
   });
 
@@ -1058,13 +1544,7 @@
       document.getElementById('adminPanelModal').classList.add('show');
     } else { alert('ACCESS DENIED'); }
   }
-
-  function switchAdminTab(btn, id) { 
-    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active')); 
-    document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active')); 
-    btn.classList.add('active'); 
-    document.getElementById(id).classList.add('active'); 
-  }
+  function switchAdminTab(btn, id) { document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active')); document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active')); btn.classList.add('active'); document.getElementById(id).classList.add('active'); }
   
   function adminAction(type, give) {
     let un = '';
