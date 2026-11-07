@@ -193,7 +193,7 @@
   .stat-val { font-weight: 800; font-size: 16px; }
   .stat-lbl { font-size: 13px; color: var(--text-muted); }
 
-  /* Gifts Grid (Screen 6 style) */
+  /* Gifts Grid */
   .gifts-section { width: 100%; padding: 15px; }
   .gifts-title { font-size: 16px; font-weight: 700; margin-bottom: 15px; text-align: center; }
   .gifts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -206,14 +206,8 @@
   .gift-card:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
   .gift-card-id { position: absolute; top: 5px; right: 5px; font-size: 10px; color: rgba(255,255,255,0.8); font-weight: bold; text-shadow: 1px 1px 2px black; }
   .gift-card-price { font-size: 12px; color: var(--gold); display: flex; align-items: center; gap: 3px; position: absolute; bottom: 5px; text-shadow: 1px 1px 2px black; }
-  
-  /* Анимация для NFT подарков */
-  @keyframes floatGift { 0% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-5px) rotate(3deg); } 100% { transform: translateY(0px) rotate(0deg); } }
-  .gift-card.nft { animation: floatGift 3s ease-in-out infinite; }
-  .gift-card.nft::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); opacity: 0; transition: 0.3s; }
-  .gift-card.nft:hover::before { opacity: 1; }
-  
-  /* Модельки подарков (CSS-арт) */
+
+  /* --- АНИМИРОВАННЫЕ МОДЕЛЬКИ (CSS-АРТ) --- */
   .gift-model { width: 50px; height: 50px; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
   
   /* Мишка */
@@ -234,37 +228,33 @@
   /* Алмаз */
   .model-diamond { width: 30px; height: 30px; background: #00bcd4; transform: rotate(45deg); box-shadow: 0 0 15px rgba(0,188,212,0.6); }
   .model-diamond::before { content: ''; position: absolute; inset: 5px; background: #fff; opacity: 0.3; }
+
+  /* --- NFT MODELS (Детализированные) --- */
   
-  /* Сигара */
-  .model-cigar { width: 45px; height: 15px; background: #5d4037; border-radius: 10px; transform: rotate(-20deg); position: relative; }
-  .model-cigar::before { content: ''; position: absolute; right: -5px; top: 0; width: 10px; height: 100%; background: #ff9800; border-radius: 0 10px 10px 0; filter: blur(2px); }
+  /* Сигара (С дымом) */
+  .model-cigar { width: 50px; height: 16px; background: linear-gradient(90deg, #4e342e, #795548); border-radius: 10px; transform: rotate(-15deg); position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+  .model-cigar::before { content: ''; position: absolute; right: -8px; top: 2px; width: 12px; height: 12px; background: #ff5722; border-radius: 50%; box-shadow: 0 0 10px #ff5722; }
+  .model-cigar::after { content: ''; position: absolute; left: 5px; top: 2px; width: 40px; height: 12px; background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.1) 4px, rgba(255,255,255,0.1) 8px); border-radius: 5px; }
   
-  /* Лягушка */
-  .model-frog { width: 40px; height: 30px; background: #4caf50; border-radius: 50% 50% 40% 40%; position: relative; }
-  .model-frog::before { content: ''; position: absolute; top: -8px; left: 5px; width: 12px; height: 12px; background: #4caf50; border-radius: 50%; box-shadow: 15px 0 0 #4caf50; }
-  .model-frog::after { content: ''; position: absolute; top: 5px; left: 50%; transform: translateX(-50%); width: 20px; height: 2px; background: #000; border-radius: 2px; }
+  /* Собака (Snoop Dogg style) */
+  .model-dog { width: 40px; height: 40px; background: #e67e22; border-radius: 40% 40% 50% 50%; position: relative; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.2); }
+  .model-dog::before { content: ''; position: absolute; top: -8px; left: 5px; width: 15px; height: 15px; background: #d35400; border-radius: 50%; }
+  .model-dog::after { content: '🕶️'; position: absolute; top: 10px; left: 10px; font-size: 20px; transform: rotate(-10deg); }
   
-  /* Тун Тун Сахур */
-  .model-tung { width: 45px; height: 45px; background: #795548; border-radius: 20%; position: relative; overflow: hidden; }
-  .model-tung::before { content: ''; position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px; background: #ffccbc; border-radius: 50%; }
-  .model-tung::after { content: ''; position: absolute; top: 15px; left: 10px; width: 25px; height: 3px; background: #000; box-shadow: 0 5px 0 #000; }
+  /* Маска (Myth Mask style) */
+  .model-mask { width: 40px; height: 50px; background: linear-gradient(135deg, #d32f2f, #b71c1c); border-radius: 50% 50% 30% 30%; position: relative; box-shadow: 0 5px 15px rgba(211,47,47,0.5); }
+  .model-mask::before { content: ''; position: absolute; top: 10px; left: 5px; width: 10px; height: 15px; background: #fff; border-radius: 50%; box-shadow: 20px 0 0 #fff; opacity: 0.8; }
+  .model-mask::after { content: ''; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); width: 20px; height: 5px; background: #fff; border-radius: 5px; }
   
-  /* Часы */
-  .model-watch { width: 40px; height: 40px; background: #b0bec5; border-radius: 50%; border: 4px solid #607d8b; position: relative; }
-  .model-watch::before { content: ''; position: absolute; top: 50%; left: 50%; width: 2px; height: 15px; background: #000; transform-origin: bottom; transform: translate(-50%, -100%) rotate(45deg); }
+  /* Кепка (Durov's Cap style) */
+  .model-cap { width: 45px; height: 25px; background: linear-gradient(135deg, #2196f3, #1976d2); border-radius: 20px 20px 5px 5px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+  .model-cap::before { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); width: 35px; height: 8px; background: #1565c0; border-radius: 10px 10px 0 0; }
+  .model-cap::after { content: '▲'; position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
   
-  /* Маска */
-  .model-mask { width: 40px; height: 30px; background: #fff; border-radius: 50% 50% 30% 30%; position: relative; }
-  .model-mask::before { content: ''; position: absolute; top: 8px; left: 5px; width: 10px; height: 10px; background: #000; border-radius: 50%; box-shadow: 20px 0 0 #000; }
-  
-  /* Кепка */
-  .model-cap { width: 45px; height: 25px; background: #f44336; border-radius: 20px 20px 0 0; position: relative; }
-  .model-cap::before { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 30px; height: 10px; background: #d32f2f; border-radius: 10px 10px 0 0; }
-  
-  /* Собака */
-  .model-dog { width: 40px; height: 30px; background: #a1887f; border-radius: 50% 50% 30% 30%; position: relative; }
-  .model-dog::before { content: ''; position: absolute; top: -5px; left: 0; width: 15px; height: 15px; background: #a1887f; border-radius: 50%; }
-  .model-dog::after { content: ''; position: absolute; top: -5px; right: 0; width: 15px; height: 15px; background: #a1887f; border-radius: 50%; }
+  /* Лягушка (Plush Pepe style) */
+  .model-frog { width: 45px; height: 35px; background: #4caf50; border-radius: 50% 50% 40% 40%; position: relative; box-shadow: inset -3px -3px 8px rgba(0,0,0,0.2); }
+  .model-frog::before { content: ''; position: absolute; top: -10px; left: 2px; width: 15px; height: 15px; background: #4caf50; border-radius: 50%; box-shadow: 21px 0 0 #4caf50; }
+  .model-frog::after { content: '❤️'; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 16px; }
 
   /* --- BOTTOM NAV (Liquid Glass) --- */
   .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 450px; height: var(--nav-h); background: rgba(20, 20, 20, 0.4); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); border-radius: 35px; display: flex; align-items: center; justify-content: space-around; z-index: 50; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2); padding: 0 10px; }
@@ -715,9 +705,9 @@
 
   let groupAvatarBase64 = null;
   let selectedGroupMembers = [];
-  let createType = 'chat'; // chat или channel
+  let createType = 'chat';
 
-  // Списки подарков
+  // Списки подарков (без Тун Тун Сахура)
   const REGULAR_GIFTS = [
     { id: 'bear', name: 'Мишка', price: 15, modelClass: 'model-bear' },
     { id: 'present', name: 'Подарок', price: 20, modelClass: 'model-present' },
@@ -731,11 +721,9 @@
     { id: 'watch', name: 'Часы', price: 2500, modelClass: 'model-watch' },
     { id: 'mask', name: 'Маска', price: 15000, modelClass: 'model-mask' },
     { id: 'frog', name: 'Лягушка', price: 25000, modelClass: 'model-frog' },
-    { id: 'cap', name: 'Кепка', price: 30000, modelClass: 'model-cap' },
-    { id: 'tung', name: 'Тун Тун Сахур', price: 45000, modelClass: 'model-tung' }
+    { id: 'cap', name: 'Кепка', price: 30000, modelClass: 'model-cap' }
   ];
 
-  // Фоны для NFT с шансами
   const NFT_BACKGROUNDS = [
     { id: 'black', name: 'Черный', chance: 10, bg: '#000000', textColor: '#fff' },
     { id: 'blue', name: 'Голубой', chance: 25, bg: '#00bcd4', textColor: '#fff' },
@@ -784,7 +772,6 @@
         }
       });
 
-      // Слушатель Групп
       db.ref('groups').on('value', snapshot => {
         ALL_GROUPS = snapshot.val() || {};
         if (state.currentChatId && state.currentChatId.startsWith('group_')) {
@@ -948,7 +935,7 @@
           // Для подарков в чате
           const gift = REGULAR_GIFTS.find(g => g.name === m.text) || NFT_GIFTS.find(g => g.name === m.text);
           if (gift) {
-             content = `<div class="gift-card ${gift.id === 'cigar' || gift.id === 'frog' || gift.id === 'tung' || gift.id === 'watch' || gift.id === 'mask' || gift.id === 'cap' || gift.id === 'dog' ? 'nft' : ''}" style="background: ${m.bg || '#1a1a2e'}; width: 80px; height: 100px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; margin: 5px;">
+             content = `<div class="gift-card" style="background: ${m.bg || '#1a1a2e'}; width: 80px; height: 100px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; margin: 5px;">
                           <div class="gift-model ${gift.modelClass}"></div>
                           <div style="font-size: 10px; color: #fff; margin-top: 5px;">${gift.name}</div>
                         </div>`;
@@ -1031,7 +1018,6 @@
     
     document.getElementById('chatHeaderName').innerHTML = `${u.nick} ${badges}`;
     
-    // ИСПРАВЛЕНИЕ БАГА "В СЕТИ"
     let isActuallyOnline = u.online && !(u.settings && u.settings.hideOnline);
     let status = isActuallyOnline ? 'в сети' : 'был(а) недавно';
     
@@ -1083,7 +1069,6 @@
     list.innerHTML = '';
     if (MY_CHATS.length === 0) { list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted);">Найдите друга через поиск!</div>'; return; }
     
-    // Сортировка: сначала непрочитанные, потом закрепленные, потом по времени
     const sortedChats = [...MY_CHATS].sort((a, b) => {
       const unreadA = (state.unread[a] || 0) > 0;
       const unreadB = (state.unread[b] || 0) > 0;
@@ -1209,7 +1194,6 @@
     document.getElementById('upName').innerHTML = `${u.nick} ${badgeHtml}`;
     document.getElementById('upUsername').innerText = u.username;
     
-    // Исправлен статус
     let isActuallyOnline = u.online && !(u.settings && u.settings.hideOnline);
     document.getElementById('upStatus').innerText = isActuallyOnline ? 'в сети' : 'был(а) недавно';
     document.getElementById('upStatus').style.color = isActuallyOnline ? 'var(--success)' : 'var(--text-muted)';
@@ -1245,14 +1229,12 @@
       if (gifts) {
         const arr = Object.keys(gifts).map(k => ({ id: k, ...gifts[k] })).sort((a,b) => b.date - a.date);
         arr.forEach(g => {
-          // Берем стиль из данных подарка
           const bgStyle = g.bg || '#1a1a2e';
-          const displayId = g.giftId || '???';
+          const displayId = g.giftId || '—';
           const modelClass = g.modelClass || 'model-diamond';
-          const isNFT = g.isNFT || false;
           
           upGiftsList.innerHTML += `
-            <div class="gift-card ${isNFT ? 'nft' : ''}" style="background: ${bgStyle};" onclick="showGiftDetails('${g.id}', '${uid}')">
+            <div class="gift-card" style="background: ${bgStyle};" onclick="showGiftDetails('${g.id}', '${uid}')">
               <div class="gift-card-id">#${displayId}</div>
               <div class="gift-model ${modelClass}"></div>
             </div>
@@ -1273,9 +1255,8 @@
       if (!g) return;
       
       document.getElementById('nftDetailName').innerText = g.name || 'Подарок';
-      document.getElementById('nftDetailNumber').innerText = 'Номер: #' + (g.giftId || '???');
+      document.getElementById('nftDetailNumber').innerText = 'Номер: #' + (g.giftId || '—');
       
-      // Находим информацию о фоне
       let bgName = 'Неизвестно';
       let bgChance = 0;
       if (g.bgId) {
@@ -1324,7 +1305,6 @@
     const grid = document.getElementById('giftGrid');
     grid.innerHTML = '';
     
-    // Обычные
     REGULAR_GIFTS.forEach(g => {
       grid.innerHTML += `
         <div class="gift-card" style="background: #1a1a2e; cursor: pointer;" onclick="sendGift('${g.id}', '${g.name}', ${g.price}, false)">
@@ -1333,10 +1313,9 @@
         </div>
       `;
     });
-    // NFT
     NFT_GIFTS.forEach(g => {
       grid.innerHTML += `
-        <div class="gift-card nft" style="background: linear-gradient(135deg, #2a2a3e, #1a1a2e); cursor: pointer; border: 1px solid #fbbf24;" onclick="sendGift('${g.id}', '${g.name}', ${g.price}, true)">
+        <div class="gift-card" style="background: linear-gradient(135deg, #2a2a3e, #1a1a2e); cursor: pointer; border: 1px solid #fbbf24;" onclick="sendGift('${g.id}', '${g.name}', ${g.price}, true)">
           <div class="gift-model ${g.modelClass}" style="transform: scale(0.8);"></div>
           <div class="gift-card-price" style="color: #fbbf24;">💎 ${g.price}</div>
         </div>
@@ -1347,14 +1326,10 @@
 
   function sendGift(giftId, name, price, isNFT) {
     if (state.glass < price) { alert('Недостаточно Glass!'); return; }
-    
-    // Проверяем, что чат открыт
     if (!state.currentChatId) { alert('Откройте чат для отправки подарка'); return; }
 
-    // Списываем баланс
     db.ref('users/' + state.uid + '/glass').transaction(g => (g || 0) - price);
     
-    // Определяем данные подарка
     let giftData = {
       from: state.username,
       name: name,
@@ -1365,7 +1340,6 @@
     };
     
     if (isNFT) {
-      // Для NFT выбираем случайный фон
       let totalChance = NFT_BACKGROUNDS.reduce((sum, b) => sum + b.chance, 0);
       let random = Math.random() * totalChance;
       let selectedBg = NFT_BACKGROUNDS[0];
@@ -1375,7 +1349,6 @@
         random -= bg.chance;
       }
       
-      // Генерируем уникальный номер
       const nftCounterRef = db.ref('nft_counters/' + giftId);
       nftCounterRef.transaction(count => {
         return (count || 0) + 1;
@@ -1386,10 +1359,8 @@
         giftData.bgId = selectedBg.id;
         giftData.giftId = newNumber;
         
-        // Сохраняем подарок
         db.ref('users/' + state.currentChatId + '/gifts').push(giftData);
         
-        // Отправляем сообщение
         const chatIdKey = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
         db.ref('messages/' + chatIdKey).push({ 
           senderId: state.uid, 
@@ -1399,7 +1370,6 @@
           bg: selectedBg.bg 
         });
         
-        // Анимация выпадения
         showNFTPopup(giftData, selectedBg);
         
         let updates = {};
@@ -1411,7 +1381,6 @@
         document.getElementById('giftPickerModal').classList.remove('show');
       });
     } else {
-      // Обычный подарок
       giftData.bg = '#1a1a2e';
       giftData.giftId = '—';
       
@@ -1430,9 +1399,7 @@
     }
   }
 
-  // Анимация выпадения NFT
   function showNFTPopup(giftData, bg) {
-    // Создаем временный попап
     const popup = document.createElement('div');
     popup.style.cssText = `
       position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center;
@@ -1471,7 +1438,6 @@
   function buyNFT(giftId, name, price, modelClass) {
     if (state.glass < price) { alert('Недостаточно Glass!'); return; }
     
-    // Выбираем случайный фон
     let totalChance = NFT_BACKGROUNDS.reduce((sum, b) => sum + b.chance, 0);
     let random = Math.random() * totalChance;
     let selectedBg = NFT_BACKGROUNDS[0];
@@ -1481,10 +1447,8 @@
       random -= bg.chance;
     }
     
-    // Списываем баланс
     db.ref('users/' + state.uid + '/glass').transaction(g => (g || 0) - price);
     
-    // Генерируем номер
     const nftCounterRef = db.ref('nft_counters/' + giftId);
     nftCounterRef.transaction(count => {
       return (count || 0) + 1;
@@ -1503,13 +1467,10 @@
         giftId: newNumber
       };
       
-      // Сохраняем в профиль
       db.ref('users/' + state.uid + '/gifts').push(giftData);
       
-      // Анимация
       showNFTPopup(giftData, selectedBg);
       
-      // Обновляем баланс
       setTimeout(() => {
         document.getElementById('nftBalance').innerText = state.glass;
       }, 500);
@@ -1839,7 +1800,6 @@
     document.getElementById('profFollowing').innerText = Object.keys(state.following || {}).length;
     document.getElementById('profileGlassBalance').innerText = state.glass;
 
-    // Мои подарки
     db.ref('users/' + state.uid + '/gifts').once('value').then(snap => {
       const gifts = snap.val();
       const grid = document.getElementById('myGiftsGrid');
@@ -1849,10 +1809,9 @@
         arr.forEach(g => {
           const bgStyle = g.bg || '#1a1a2e';
           const displayId = g.giftId || '—';
-          const isNFT = g.isNFT || false;
           
           grid.innerHTML += `
-            <div class="gift-card ${isNFT ? 'nft' : ''}" style="background: ${bgStyle};" onclick="showGiftDetails('${g.id}', '${state.uid}')">
+            <div class="gift-card" style="background: ${bgStyle};" onclick="showGiftDetails('${g.id}', '${state.uid}')">
               <div class="gift-card-id">#${displayId}</div>
               <div class="gift-model ${g.modelClass || 'model-diamond'}"></div>
             </div>
