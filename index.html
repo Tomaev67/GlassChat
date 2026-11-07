@@ -100,10 +100,10 @@
 
   .feed-post { padding: 15px; border-bottom: var(--glass-border); }
   .feed-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .feed-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #333; display: flex; align-items: center; justify-content: center; }
+  .feed-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #333; display: flex; align-items: center; justify-content: center; cursor: pointer; }
   .feed-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .feed-info { flex: 1; }
-  .feed-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 5px; }
+  .feed-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 5px; cursor: pointer; }
   .feed-time { font-size: 13px; color: var(--text-muted); }
   .feed-content { font-size: 15px; line-height: 1.5; margin-bottom: 10px; word-wrap: break-word; }
   .feed-media { width: 100%; border-radius: 15px; margin-bottom: 10px; display: block; }
@@ -343,27 +343,6 @@
     <div id="feedContainer"></div>
   </div>
 
-  <!-- SETTINGS PAGE -->
-  <div class="page" id="page-settings">
-    <div style="padding: 20px;">
-      <div style="margin-bottom: 20px;">
-        <div style="font-weight: 700; margin-bottom: 10px; color: var(--accent);">Тема</div>
-        <button class="btn-secondary" onclick="toggleTheme()" style="max-width: 100%;">Переключить тему</button>
-      </div>
-      <div style="margin-bottom: 20px;">
-        <div style="font-weight: 700; margin-bottom: 10px; color: var(--accent);">Конфиденциальность</div>
-        <label style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #fff;">
-          <span>Скрыть "в сети"</span>
-          <input type="checkbox" id="setHideOnline">
-        </label>
-      </div>
-      <div>
-        <div style="font-weight: 700; margin-bottom: 10px; color: var(--accent);">Черный список</div>
-        <div id="blacklistContainer"></div>
-      </div>
-    </div>
-  </div>
-
   <!-- PROFILE PAGE -->
   <div class="page" id="page-profile">
     <div class="profile-header">
@@ -382,6 +361,33 @@
       <div class="profile-stats">
         <div class="stat-item"><span class="stat-val" id="profFollowers">0</span><span class="stat-lbl">Подписчики</span></div>
         <div class="stat-item"><span class="stat-val" id="profFollowing">0</span><span class="stat-lbl">Подписки</span></div>
+      </div>
+      
+      <div class="balance-card" onclick="alert('Баланс: ' + state.glass + ' 💎')" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); padding: 10px 20px; border-radius: 15px; color: #000; font-weight: bold; margin-top: 15px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+        <span>Баланс:</span> <span id="profileGlassBalance">0</span> 💎
+      </div>
+    </div>
+
+    <!-- Мои подарки -->
+    <div class="gifts-section">
+      <div class="gifts-title">Мои подарки</div>
+      <div class="gifts-grid" id="myGiftsGrid"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div class="page" id="page-settings">
+    <div style="padding: 20px;">
+      <div style="margin-bottom: 20px;">
+        <div style="font-weight: 700; margin-bottom: 10px; color: var(--accent);">Конфиденциальность</div>
+        <label style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #fff;">
+          <span>Скрыть "в сети"</span>
+          <input type="checkbox" id="setHideOnline">
+        </label>
+      </div>
+      <div>
+        <div style="font-weight: 700; margin-bottom: 10px; color: var(--accent);">Черный список</div>
+        <div id="blacklistContainer"></div>
       </div>
     </div>
   </div>
@@ -488,13 +494,18 @@
 <!-- CREATE GROUP/CHANNEL MODAL -->
 <div class="modal-overlay" id="createGroupModal">
   <div class="modal-card">
-    <div class="modal-title">Создать чат/канал</div>
+    <div class="modal-title" id="createGroupTitle">Создать</div>
     <div class="avatar-upload" id="groupAvatarPreview" onclick="document.getElementById('groupAvatarInput').click()" style="width: 80px; height: 80px; margin: 0 auto 15px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden;">
       <span>📷</span>
     </div>
     <input type="file" id="groupAvatarInput" accept="image/*" hidden onchange="previewGroupAvatar(event)">
     
     <input type="text" id="groupNameInput" class="modal-input" placeholder="Название (без @)" maxlength="30">
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+      <button class="btn-main" style="flex: 1; margin: 0; padding: 10px; font-size: 14px;" id="createChatBtn" onclick="setCreateType('chat')">Создать Чат</button>
+      <button class="btn-secondary" style="flex: 1; margin: 0; padding: 10px; font-size: 14px;" id="createChannelBtn" onclick="setCreateType('channel')">Создать Канал</button>
+    </div>
     
     <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--accent);">Пригласить участников:</div>
     <div id="groupMemberList" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px;"></div>
@@ -602,6 +613,7 @@
 
   let groupAvatarBase64 = null;
   let selectedGroupMembers = [];
+  let createType = 'chat'; // chat или channel
 
   // 1. АВТОРИЗАЦИЯ
   auth.onAuthStateChanged(user => {
@@ -895,7 +907,6 @@
   function openCurrentProfile() {
     if (!state.currentChatId) return;
     if (state.currentChatId.startsWith('group_')) {
-      // Можно сделать модалку группы, пока просто заглушка
       alert('Групповой чат');
     } else {
       openUserProfile(state.currentChatId);
@@ -1094,12 +1105,13 @@
       if (gifts) {
         const arr = Object.keys(gifts).map(k => ({ id: k, ...gifts[k] })).sort((a,b) => b.date - a.date);
         arr.forEach(g => {
-          // Генерация случайного стиля карточки
-          const randBg = ['#1e1b4b', '#450a0a', '#064e3b'][Math.floor(Math.random() * 3)];
-          const randId = Math.floor(Math.random() * 900) + 100;
+          // Берем стиль из данных подарка или ставим дефолтный
+          const bgStyle = g.bg || '#1a1a2e';
+          const displayId = g.giftId || '???';
+          
           upGiftsList.innerHTML += `
-            <div class="gift-card" style="background: ${randBg};">
-              <div class="gift-card-id">#${randId}</div>
+            <div class="gift-card" style="background: ${bgStyle};">
+              <div class="gift-card-id">#${displayId}</div>
               <div class="gift-card-img">${g.emoji}</div>
               <div class="gift-card-price">💎 ${g.price}</div>
             </div>
@@ -1136,39 +1148,58 @@
     }, 300);
   }
 
+  // ГЕНЕРАЦИЯ ПОДАРКОВ НЕ СМАЙЛИКОВ
+  const GIFT_TYPES = [
+    { id: 1, emoji: '🚬', price: 10, bg: 'linear-gradient(135deg, #1e1b4b, #312e81)' }, // Сигарета
+    { id: 2, emoji: '🍺', price: 25, bg: 'linear-gradient(135deg, #064e3b, #065f46)' }, // Пиво
+    { id: 3, emoji: '🍕', price: 50, bg: 'linear-gradient(135deg, #450a0a, #7f1d1d)' }, // Пицца
+    { id: 4, emoji: '🎸', price: 100, bg: 'linear-gradient(135deg, #1e1b4b, #312e81)' }, // Гитара
+    { id: 5, emoji: '💎', price: 200, bg: 'linear-gradient(135deg, #064e3b, #065f46)' }, // Бриллиант
+    { id: 6, emoji: '🚗', price: 500, bg: 'linear-gradient(135deg, #450a0a, #7f1d1d)' }, // Машина
+    { id: 7, emoji: '🏰', price: 1000, bg: 'linear-gradient(135deg, #1e1b4b, #312e81)' }, // Замок
+    { id: 8, emoji: '🦄', price: 2000, bg: 'linear-gradient(135deg, #064e3b, #065f46)' }, // Единорог
+    { id: 9, emoji: '🐉', price: 5000, bg: 'linear-gradient(135deg, #450a0a, #7f1d1d)' } // Дракон
+  ];
+
   function openGiftPicker() {
     document.getElementById('giftBalance').innerText = state.glass;
     const grid = document.getElementById('giftGrid');
     grid.innerHTML = '';
-    const emojis = ['🧸', '🌹', '🎂', '💎', '👑', '🚗', '🏰'];
-    emojis.forEach((e, i) => {
-      const price = (i + 1) * 15;
-      const randBg = ['#1e1b4b', '#450a0a', '#064e3b'][i % 3];
-      const randId = Math.floor(Math.random() * 900) + 100;
-      
+    
+    GIFT_TYPES.forEach(g => {
       grid.innerHTML += `
-        <div class="gift-card" style="background: ${randBg}; cursor: pointer;" onclick="sendGift('${e}', ${price})">
-          <div class="gift-card-id">#${randId}</div>
-          <div class="gift-card-img">${e}</div>
-          <div class="gift-card-price">💎 ${price}</div>
+        <div class="gift-card" style="background: ${g.bg}; cursor: pointer;" onclick="sendGift(${g.id})">
+          <div class="gift-card-id">#${g.id}</div>
+          <div class="gift-card-img">${g.emoji}</div>
+          <div class="gift-card-price">💎 ${g.price}</div>
         </div>
       `;
     });
     document.getElementById('giftPickerModal').classList.add('show');
   }
 
-  function sendGift(emoji, price) {
-    if (state.glass < price) { alert('Недостаточно Glass!'); return; }
-    db.ref('users/' + state.uid + '/glass').transaction(g => (g || 0) - price);
+  function sendGift(giftId) {
+    const gift = GIFT_TYPES.find(g => g.id === giftId);
+    if (!gift) return;
     
-    const giftData = { from: state.username, emoji: emoji, price: price, date: Date.now() };
+    if (state.glass < gift.price) { alert('Недостаточно Glass!'); return; }
+    db.ref('users/' + state.uid + '/glass').transaction(g => (g || 0) - gift.price);
+    
+    const giftData = { 
+      from: state.username, 
+      emoji: gift.emoji, 
+      price: gift.price, 
+      date: Date.now(),
+      giftId: gift.id,
+      bg: gift.bg
+    };
     
     if (!state.currentChatId.startsWith('group_')) {
       db.ref('users/' + state.currentChatId + '/gifts').push(giftData);
     }
 
     const chatIdKey = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
-    db.ref('messages/' + chatIdKey).push({ senderId: state.uid, text: emoji, type: 'gift', timestamp: Date.now() });
+    db.ref('messages/' + chatIdKey).push({ senderId: state.uid, text: gift.emoji, type: 'gift', timestamp: Date.now() });
     
     let updates = {};
     if (!state.currentChatId.startsWith('group_')) {
@@ -1298,11 +1329,12 @@
         container.innerHTML += `
           <div class="feed-post">
             <div class="feed-header">
-              <div class="feed-avatar">${author.avatar ? `<img src="${author.avatar}">` : '👤'}</div>
+              <div class="feed-avatar" onclick="openUserProfile('${p.authorUid}')"><img src="${author.avatar || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'}"></div>
               <div class="feed-info">
-                <div class="feed-name">${author.nick || 'Пользователь'} <span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span></div>
+                <div class="feed-name" onclick="openUserProfile('${p.authorUid}')">${author.nick || 'Пользователь'} <span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span></div>
                 <div class="feed-time">${new Date(p.timestamp).toLocaleString()}</div>
               </div>
+              <button class="btn-subscribe" onclick="toggleSubscribe('${p.authorUid}')" style="background: ${author.followers && author.followers[state.uid] ? 'var(--panel)' : 'var(--accent)'}; border: none; color: #fff; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer;">${author.followers && author.followers[state.uid] ? 'Вы подписаны' : 'Подписаться'}</button>
             </div>
             ${p.isPoll ? pollHtml : `<div class="feed-content">${p.text || ''}</div>`}
             ${p.image ? `<img src="${p.image}" class="feed-media">` : ''}
@@ -1379,6 +1411,23 @@
     }
   }
 
+  function setCreateType(type) {
+    createType = type;
+    const btnChat = document.getElementById('createChatBtn');
+    const btnChannel = document.getElementById('createChannelBtn');
+    if (type === 'chat') {
+      btnChat.style.background = 'var(--accent)';
+      btnChat.style.color = '#fff';
+      btnChannel.style.background = 'transparent';
+      btnChannel.style.color = 'var(--text)';
+    } else {
+      btnChannel.style.background = 'var(--accent)';
+      btnChannel.style.color = '#fff';
+      btnChat.style.background = 'transparent';
+      btnChat.style.color = 'var(--text)';
+    }
+  }
+
   function previewGroupAvatar(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1405,11 +1454,12 @@
 
   function createGroup() {
     const name = document.getElementById('groupNameInput').value.trim();
-    if (!name) { alert('Введите название группы'); return; }
+    if (!name) { alert('Введите название'); return; }
     
     const groupId = 'group_' + Date.now();
     const groupData = {
       isGroup: true,
+      isChannel: createType === 'channel',
       name: name,
       avatar: groupAvatarBase64,
       owner: state.uid,
@@ -1431,10 +1481,10 @@
       return db.ref().update(updates);
     }).then(() => {
       document.getElementById('createGroupModal').classList.remove('show');
-      alert('Группа создана!');
+      alert(createType === 'channel' ? 'Канал создан!' : 'Группа создана!');
       openChatView(groupId);
     }).catch(err => {
-      alert('Ошибка создания группы: ' + err.message);
+      alert('Ошибка: ' + err.message);
     });
   }
 
@@ -1462,7 +1512,6 @@
   }
 
   function toggleTheme() {
-    // Тема пока черная, можно оставить заглушку
     alert('Светлая тема в разработке');
   }
 
@@ -1478,6 +1527,28 @@
     
     document.getElementById('profFollowers').innerText = Object.keys(state.followers || {}).length;
     document.getElementById('profFollowing').innerText = Object.keys(state.following || {}).length;
+    document.getElementById('profileGlassBalance').innerText = state.glass;
+
+    // Мои подарки
+    db.ref('users/' + state.uid + '/gifts').once('value').then(snap => {
+      const gifts = snap.val();
+      const grid = document.getElementById('myGiftsGrid');
+      grid.innerHTML = '';
+      if (gifts) {
+        const arr = Object.values(gifts).sort((a,b) => b.date - a.date);
+        arr.forEach(g => {
+          const bgStyle = g.bg || '#1a1a2e';
+          const displayId = g.giftId || '???';
+          grid.innerHTML += `
+            <div class="gift-card" style="background: ${bgStyle};">
+              <div class="gift-card-id">#${displayId}</div>
+              <div class="gift-card-img">${g.emoji}</div>
+              <div class="gift-card-price">💎 ${g.price}</div>
+            </div>
+          `;
+        });
+      }
+    });
   }
 
   function changeMyAvatar(event) {
@@ -1528,13 +1599,6 @@
       this.value = ''; 
       document.getElementById('adminAuthModal').classList.add('show'); 
       return; 
-    }
-    
-    if (val === '/иванпанель') {
-      this.value = '';
-      // Заглушка, так как Иван панель не была запрошена в этом коде
-      alert('Иван панель отключена в этой версии');
-      return;
     }
   });
 
