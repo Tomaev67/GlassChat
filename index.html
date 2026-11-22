@@ -8,21 +8,23 @@
   * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color:transparent; }
 
   :root {
-    --bg: #000000;
-    --panel: rgba(30, 30, 30, 0.65);
-    --panel-solid: #121212;
-    --panel-hover: rgba(255, 255, 255, 0.1);
+    --bg: #050508;
+    --panel: rgba(30, 30, 40, 0.55);
+    --panel-solid: #121218;
+    --panel-hover: rgba(255, 255, 255, 0.12);
     --text: #ffffff;
     --text-muted: #8899a6;
     --accent: #1d9bf0;
     --accent-hover: #1a8cd8;
-    --border: rgba(255, 255, 255, 0.1);
-    --glass-blur: blur(24px);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.15);
+    --border: rgba(255, 255, 255, 0.12);
+    --glass-blur: blur(30px) saturate(180%);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.18);
     --nav-h: 70px;
     --danger: #f4212e;
     --success: #00ba7c;
     --gold: #fbbf24;
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   body {
@@ -32,254 +34,287 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    background-image: radial-gradient(circle at 10% 20%, rgba(29, 155, 240, 0.1) 0%, transparent 40%),
-                      radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
+    background-image: 
+      radial-gradient(circle at 15% 15%, rgba(29, 155, 240, 0.2) 0%, transparent 45%),
+      radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.2) 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 60%);
     background-attachment: fixed;
+    animation: bgShift 20s ease-in-out infinite alternate;
+  }
+
+  @keyframes bgShift {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 100% 100%; }
+  }
+
+  /* Ripple effect */
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(0);
+    animation: rippleAnim 0.6s ease-out;
+    pointer-events: none;
+  }
+  @keyframes rippleAnim {
+    to { transform: scale(4); opacity: 0; }
   }
 
   /* SCREENS */
   .screen { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; background: transparent; }
-  .screen.active { display: flex; }
+  .screen.active { display: flex; animation: screenIn 0.5s var(--ease-smooth); }
+  @keyframes screenIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
   /* --- LOADER & WELCOME --- */
   #loaderScreen { align-items: center; justify-content: center; z-index: 9999; background: var(--bg); }
-  .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+  .spinner { width: 44px; height: 44px; border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; box-shadow: 0 0 30px rgba(29,155,240,0.4); }
   @keyframes spin { 100% { transform: rotate(360deg); } }
 
   #welcomeScreen { align-items: center; justify-content: center; padding: 20px; text-align: center; }
-  .welcome-logo { font-size: 60px; margin-bottom: 20px; }
-  .welcome-title { font-size: 28px; font-weight: 800; margin-bottom: 10px; }
+  .welcome-logo { font-size: 60px; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  .welcome-title { font-size: 30px; font-weight: 800; margin-bottom: 10px; background: linear-gradient(135deg, #fff, #1d9bf0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .welcome-sub { color: var(--text-muted); margin-bottom: 30px; }
   
-  .btn-main { width: 100%; max-width: 300px; padding: 15px; border-radius: 30px; border: none; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; margin-bottom: 10px; transition: 0.2s; }
-  .btn-main:active { transform: scale(0.95); background: var(--accent-hover); }
-  .btn-secondary { width: 100%; max-width: 300px; padding: 15px; border-radius: 30px; border: var(--glass-border); background: var(--panel); backdrop-filter: var(--glass-blur); color: var(--text); font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-  .btn-secondary:active { background: rgba(255,255,255,0.1); }
+  .btn-main { position: relative; overflow: hidden; width: 100%; max-width: 300px; padding: 16px; border-radius: 30px; border: none; background: linear-gradient(135deg, #1d9bf0, #0d6efd); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; margin-bottom: 10px; transition: all 0.3s var(--ease-spring); box-shadow: 0 8px 25px rgba(29,155,240,0.4), inset 0 1px 0 rgba(255,255,255,0.3); }
+  .btn-main:active { transform: scale(0.94); box-shadow: 0 4px 15px rgba(29,155,240,0.3); }
+  .btn-secondary { position: relative; overflow: hidden; width: 100%; max-width: 300px; padding: 16px; border-radius: 30px; border: var(--glass-border); background: var(--panel); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--text); font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s var(--ease-spring); box-shadow: 0 8px 25px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15); }
+  .btn-secondary:active { transform: scale(0.94); background: rgba(255,255,255,0.12); }
 
   .reg-step { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; text-align: center; }
-  .input-large { width: 100%; max-width: 350px; padding: 15px 20px; background: var(--panel); backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: 12px; color: #fff; font-size: 16px; margin-bottom: 15px; outline: none; }
-  .input-large:focus { border-color: var(--accent); }
+  .input-large { width: 100%; max-width: 350px; padding: 16px 20px; background: var(--panel); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: 16px; color: #fff; font-size: 16px; margin-bottom: 15px; outline: none; transition: all 0.3s var(--ease-smooth); box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
+  .input-large:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,155,240,0.2), inset 0 1px 0 rgba(255,255,255,0.1); }
 
   /* --- MAIN LAYOUT --- */
   #mainScreen { padding-bottom: calc(var(--nav-h) + 20px); }
   
-  .topbar { padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: rgba(0,0,0,0.6); backdrop-filter: var(--glass-blur); z-index: 20; border-bottom: var(--glass-border); }
-  .topbar h1 { font-size: 20px; font-weight: 800; }
-  .topbar-actions { display: flex; gap: 15px; }
-  .icon-btn { font-size: 20px; cursor: pointer; background: none; border: none; color: #fff; display: flex; align-items: center; justify-content: center; padding: 5px; transition: 0.2s; }
-  .icon-btn:active { transform: scale(0.9); }
-  .icon-btn svg { width: 24px; height: 24px; fill: currentColor; }
+  .topbar { padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: rgba(10,10,15,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); z-index: 20; border-bottom: var(--glass-border); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+  .topbar h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .topbar-actions { display: flex; gap: 12px; }
+  .icon-btn { position: relative; overflow: hidden; font-size: 20px; cursor: pointer; background: rgba(255,255,255,0.06); border: var(--glass-border); color: #fff; display: flex; align-items: center; justify-content: center; padding: 8px; width: 38px; height: 38px; border-radius: 50%; transition: all 0.25s var(--ease-spring); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); }
+  .icon-btn:active { transform: scale(0.88); background: rgba(29,155,240,0.3); }
+  .icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
 
   .page { display: none; flex-direction: column; flex: 1; overflow-y: auto; }
-  .page.active { display: flex; }
+  .page.active { display: flex; animation: pageIn 0.4s var(--ease-smooth); }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   
   /* --- CHATS LIST --- */
-  .search-wrap { padding: 10px 15px; }
-  .search { width: 100%; padding: 12px 15px; background: var(--panel); backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: 20px; color: #fff; outline: none; }
+  .search-wrap { padding: 12px 15px; }
+  .search { width: 100%; padding: 13px 18px; background: var(--panel); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: 22px; color: #fff; outline: none; transition: all 0.3s var(--ease-smooth); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+  .search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,155,240,0.15), inset 0 1px 0 rgba(255,255,255,0.08); }
   
-  .chat-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: var(--glass-border); cursor: pointer; transition: 0.2s; }
-  .chat-item:active { background: var(--panel-hover); }
-  .chat-avatar { width: 50px; height: 50px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; flex-shrink: 0; }
+  .chat-item { position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin: 4px 10px; border-radius: 18px; cursor: pointer; transition: all 0.25s var(--ease-smooth); background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+  .chat-item:hover { background: var(--panel); border-color: var(--border); }
+  .chat-item:active { transform: scale(0.98); background: var(--panel-hover); }
+  .chat-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #333, #1a1a1a); display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.1); }
   .chat-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .chat-info { flex: 1; min-width: 0; }
   .chat-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 5px; }
   
-  .verified-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; color: var(--accent); }
+  .verified-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; color: var(--accent); filter: drop-shadow(0 0 6px rgba(29,155,240,0.6)); }
   .verified-icon svg { width: 100%; height: 100%; fill: currentColor; }
 
   .chat-preview { color: var(--text-muted); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
-  .chat-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
-  .unread-badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .unread-badge { background: linear-gradient(135deg, #1d9bf0, #0d6efd); color: #fff; font-size: 11px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 6px; box-shadow: 0 4px 10px rgba(29,155,240,0.5); animation: badgePulse 2s ease-in-out infinite; }
+  @keyframes badgePulse { 0%,100% { box-shadow: 0 4px 10px rgba(29,155,240,0.5); } 50% { box-shadow: 0 4px 18px rgba(29,155,240,0.8); } }
   .pin-icon { font-size: 12px; color: var(--text-muted); }
 
   /* --- FEED --- */
-  .feed-tabs { display: flex; border-bottom: var(--glass-border); background: rgba(0,0,0,0.3); backdrop-filter: var(--glass-blur); }
-  .feed-tab { flex: 1; text-align: center; padding: 15px 0; font-weight: 700; color: var(--text-muted); cursor: pointer; position: relative; }
+  .feed-tabs { display: flex; border-bottom: var(--glass-border); background: rgba(10,10,15,0.4); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); }
+  .feed-tab { flex: 1; text-align: center; padding: 16px 0; font-weight: 700; color: var(--text-muted); cursor: pointer; position: relative; transition: color 0.3s; }
   .feed-tab.active { color: #fff; }
-  .feed-tab.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 50%; height: 3px; background: var(--accent); border-radius: 3px; }
+  .feed-tab.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 50%; height: 3px; background: linear-gradient(90deg, transparent, var(--accent), transparent); border-radius: 3px; animation: tabIn 0.4s var(--ease-spring); }
+  @keyframes tabIn { from { width: 0; } to { width: 50%; } }
 
-  .feed-post { padding: 15px; border-bottom: var(--glass-border); }
-  .feed-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .feed-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #333; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .feed-post { padding: 16px; border-bottom: var(--glass-border); animation: postIn 0.5s var(--ease-smooth); }
+  @keyframes postIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+  .feed-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .feed-avatar { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; background: #333; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.25s var(--ease-spring); border: 1px solid rgba(255,255,255,0.15); }
+  .feed-avatar:active { transform: scale(0.9); }
   .feed-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .feed-info { flex: 1; }
   .feed-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 5px; cursor: pointer; }
   .feed-time { font-size: 13px; color: var(--text-muted); }
-  .feed-content { font-size: 15px; line-height: 1.5; margin-bottom: 10px; word-wrap: break-word; }
-  .feed-media { width: 100%; border-radius: 15px; margin-bottom: 10px; display: block; }
+  .feed-content { font-size: 15px; line-height: 1.5; margin-bottom: 12px; word-wrap: break-word; }
+  .feed-media { width: 100%; border-radius: 18px; margin-bottom: 12px; display: block; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
   
   /* Poll */
-  .poll-box { background: var(--panel); backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: 15px; padding: 15px; margin-top: 10px; }
+  .poll-box { background: var(--panel); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: 18px; padding: 16px; margin-top: 10px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
   .poll-question { font-weight: 700; font-size: 16px; margin-bottom: 5px; }
   .poll-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 15px; }
-  .poll-option { display: flex; align-items: center; gap: 10px; padding: 12px; border: var(--glass-border); border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: 0.2s; }
-  .poll-option:hover { background: rgba(255,255,255,0.05); }
-  .poll-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-muted); }
+  .poll-option { position: relative; overflow: hidden; display: flex; align-items: center; gap: 10px; padding: 13px; border: var(--glass-border); border-radius: 14px; margin-bottom: 8px; cursor: pointer; transition: all 0.25s var(--ease-smooth); background: rgba(255,255,255,0.03); }
+  .poll-option:hover { background: rgba(255,255,255,0.08); }
+  .poll-option:active { transform: scale(0.98); }
+  .poll-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-muted); transition: all 0.25s; }
   .poll-votes { font-size: 13px; color: var(--text-muted); text-align: center; margin-top: 10px; }
 
-  .feed-actions { display: flex; gap: 40px; margin-top: 10px; }
-  .action-item { display: flex; align-items: center; gap: 6px; color: var(--text-muted); cursor: pointer; font-size: 14px; transition: 0.2s; }
-  .action-item:hover { color: var(--accent); }
-  .action-item.liked { color: #f91880; }
+  .feed-actions { display: flex; gap: 20px; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
+  .action-item { display: flex; align-items: center; gap: 6px; color: var(--text-muted); cursor: pointer; font-size: 14px; transition: all 0.25s var(--ease-spring); padding: 6px 10px; border-radius: 10px; }
+  .action-item:hover { color: var(--accent); background: rgba(29,155,240,0.1); }
+  .action-item:active { transform: scale(0.9); }
+  .action-item.liked { color: #f91880; animation: heartPop 0.4s var(--ease-spring); }
+  @keyframes heartPop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
+
+  /* Comments */
+  .comments-section { margin-top: 12px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; display: none; }
+  .comments-section.show { display: block; animation: postIn 0.3s ease; }
+  .comment-item { display: flex; gap: 8px; margin-bottom: 10px; }
+  .comment-avatar { width: 28px; height: 28px; border-radius: 50%; background: #333; overflow: hidden; flex-shrink: 0; }
+  .comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .comment-body { flex: 1; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 12px; font-size: 13px; }
+  .comment-author { font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+  .comment-input-row { display: flex; gap: 8px; margin-top: 10px; }
+  .comment-input { flex: 1; background: rgba(0,0,0,0.3); border: var(--glass-border); border-radius: 20px; padding: 8px 14px; color: #fff; outline: none; font-size: 13px; }
+  .comment-send { background: var(--accent); border: none; color: #fff; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
   /* --- CHAT VIEW --- */
   #chatView { position: fixed; inset: 0; z-index: 30; display: none; flex-direction: column; background: var(--bg); }
-  #chatView.active { display: flex; }
+  #chatView.active { display: flex; animation: chatIn 0.35s var(--ease-smooth); }
+  @keyframes chatIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
   
-  .chat-header { padding: 10px 15px; display: flex; align-items: center; gap: 15px; border-bottom: var(--glass-border); background: rgba(0,0,0,0.6); backdrop-filter: var(--glass-blur); z-index: 10; }
-  .chat-header-back { font-size: 24px; cursor: pointer; color: #fff; background: none; border: none; display: flex; align-items: center; }
-  .chat-header-back svg { width: 24px; height: 24px; fill: currentColor; }
+  .chat-header { padding: 12px 16px; display: flex; align-items: center; gap: 15px; border-bottom: var(--glass-border); background: rgba(10,10,15,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+  .chat-header-back { font-size: 24px; cursor: pointer; color: #fff; background: rgba(255,255,255,0.06); border: var(--glass-border); display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; transition: all 0.25s var(--ease-spring); }
+  .chat-header-back:active { transform: scale(0.88); background: rgba(29,155,240,0.3); }
+  .chat-header-back svg { width: 20px; height: 20px; fill: currentColor; }
   .chat-header-info { flex: 1; display: flex; flex-direction: column; cursor: pointer; }
   .chat-header-info h3 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 5px; }
   .chat-header-info span { font-size: 13px; color: var(--text-muted); }
 
-  .messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+  .messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
   
   /* Pinned Message Banner */
-  .pinned-banner { background: rgba(29, 155, 240, 0.1); border-left: 4px solid var(--accent); padding: 10px 15px; margin: 0 15px 10px 15px; border-radius: 8px; display: none; cursor: pointer; }
-  .pinned-banner.show { display: block; }
+  .pinned-banner { background: linear-gradient(135deg, rgba(29,155,240,0.15), rgba(139,92,246,0.1)); border-left: 4px solid var(--accent); padding: 12px 16px; margin: 0 16px 10px 16px; border-radius: 12px; display: none; cursor: pointer; transition: all 0.25s var(--ease-smooth); }
+  .pinned-banner.show { display: block; animation: bannerIn 0.4s var(--ease-spring); }
+  @keyframes bannerIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+  .pinned-banner:active { transform: scale(0.98); }
   .pinned-label { font-size: 12px; color: var(--accent); font-weight: 700; margin-bottom: 3px; }
   .pinned-text { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* Channel-style Message */
-  .msg-channel { display: flex; flex-direction: column; gap: 5px; }
+  .msg-channel { display: flex; flex-direction: column; gap: 5px; animation: msgIn 0.35s var(--ease-smooth); }
+  @keyframes msgIn { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
   .msg-channel .msg-head { display: flex; align-items: center; gap: 10px; }
-  .msg-channel .msg-avatar { width: 36px; height: 36px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .msg-channel .msg-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #333, #1a1a1a); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
   .msg-channel .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .msg-channel .msg-name { font-weight: 700; font-size: 14px; color: var(--accent); display: flex; align-items: center; gap: 5px; }
   .msg-channel .msg-text { padding-left: 46px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
   
   /* DM Bubbles */
-  .msg-dm { display: flex; flex-direction: column; width: 100%; align-items: flex-start; }
+  .msg-dm { display: flex; flex-direction: column; width: 100%; align-items: flex-start; animation: msgIn 0.35s var(--ease-smooth); }
   .msg-dm.me { align-items: flex-end; }
-  .msg-bubble { padding: 10px 14px; border-radius: 18px; font-size: 15px; line-height: 1.4; max-width: 80%; word-wrap: break-word; background: var(--panel); backdrop-filter: var(--glass-blur); border: var(--glass-border); position: relative; }
-  .msg-dm.me .msg-bubble { background: var(--accent); color: #fff; border-color: transparent; }
+  .msg-bubble { position: relative; overflow: hidden; padding: 12px 16px; border-radius: 20px; font-size: 15px; line-height: 1.4; max-width: 80%; word-wrap: break-word; background: var(--panel); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.2s var(--ease-spring); }
+  .msg-bubble:active { transform: scale(0.97); }
+  .msg-dm.me .msg-bubble { background: linear-gradient(135deg, #1d9bf0, #0d6efd); color: #fff; border-color: transparent; box-shadow: 0 6px 20px rgba(29,155,240,0.35), inset 0 1px 0 rgba(255,255,255,0.25); }
   
   /* Reply & Forward */
-  .msg-reply-quote { background: rgba(0,0,0,0.2); border-left: 3px solid var(--accent); padding: 5px 8px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; display: flex; flex-direction: column; }
+  .msg-reply-quote { background: rgba(0,0,0,0.25); border-left: 3px solid var(--accent); padding: 6px 10px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; display: flex; flex-direction: column; }
   .msg-reply-quote .r-name { font-weight: 700; color: var(--accent); font-size: 12px; margin-bottom: 2px; }
-  .msg-wrapper.me .msg-reply-quote { background: rgba(0,0,0,0.1); border-left-color: #fff; }
+  .msg-wrapper.me .msg-reply-quote { background: rgba(0,0,0,0.12); border-left-color: #fff; }
   .msg-wrapper.me .msg-reply-quote .r-name { color: #fff; }
   .msg-forwarded { font-size: 12px; font-weight: 600; opacity: 0.8; margin-bottom: 4px; font-style: italic; color: var(--accent); }
   .msg-wrapper.me .msg-forwarded { color: #fff; }
 
   /* Reactions */
-  .msg-reactions { display: flex; gap: 6px; padding-left: 46px; margin-top: 5px; flex-wrap: wrap; }
-  .reaction-pill { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 12px; font-size: 12px; cursor: pointer; border: var(--glass-border); transition: 0.2s; }
-  .reaction-pill:hover { background: rgba(255,255,255,0.2); }
+  .msg-reactions { display: flex; gap: 6px; padding-left: 46px; margin-top: 6px; flex-wrap: wrap; }
+  .reaction-pill { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 14px; font-size: 12px; cursor: pointer; border: var(--glass-border); transition: all 0.25s var(--ease-spring); backdrop-filter: blur(10px); }
+  .reaction-pill:hover { background: rgba(255,255,255,0.18); transform: translateY(-2px); }
+  .reaction-pill:active { transform: scale(0.9); }
   .reaction-pill.gold { color: var(--gold); }
   .reaction-pill.red { color: #f91880; }
 
-  .input-row { padding: 10px 15px; display: flex; gap: 10px; align-items: center; background: rgba(0,0,0,0.6); backdrop-filter: var(--glass-blur); border-top: var(--glass-border); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-  .input-row input { flex: 1; padding: 12px 15px; border-radius: 20px; border: var(--glass-border); background: var(--panel); color: #fff; font-size: 15px; outline: none; }
-  .send-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--accent); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .input-row { padding: 12px 16px; display: flex; gap: 10px; align-items: center; background: rgba(10,10,15,0.6); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-top: var(--glass-border); padding-bottom: calc(12px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 20px rgba(0,0,0,0.3); }
+  .input-row input { flex: 1; padding: 13px 18px; border-radius: 22px; border: var(--glass-border); background: var(--panel); color: #fff; font-size: 15px; outline: none; transition: all 0.3s var(--ease-smooth); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+  .input-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,155,240,0.15), inset 0 1px 0 rgba(255,255,255,0.08); }
+  .send-btn { position: relative; overflow: hidden; width: 44px; height: 44px; border-radius: 50%; border: none; background: linear-gradient(135deg, #1d9bf0, #0d6efd); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.25s var(--ease-spring); box-shadow: 0 6px 18px rgba(29,155,240,0.4), inset 0 1px 0 rgba(255,255,255,0.3); }
+  .send-btn:active { transform: scale(0.88) rotate(-15deg); }
   .send-btn svg { width: 20px; height: 20px; fill: #fff; }
 
   /* --- PROFILE --- */
-  .profile-header { padding: 20px 15px; display: flex; flex-direction: column; align-items: center; border-bottom: var(--glass-border); }
-  .profile-avatar { width: 100px; height: 100px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 40px; color: #fff; margin-bottom: 15px; overflow: hidden; position: relative; border: 2px solid rgba(255,255,255,0.2); }
+  .profile-header { padding: 24px 16px; display: flex; flex-direction: column; align-items: center; border-bottom: var(--glass-border); }
+  .profile-avatar { width: 110px; height: 110px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 42px; color: #fff; margin-bottom: 16px; overflow: hidden; position: relative; border: 3px solid rgba(255,255,255,0.2); box-shadow: 0 10px 30px rgba(29,155,240,0.4), inset 0 2px 0 rgba(255,255,255,0.3); transition: transform 0.3s var(--ease-spring); }
+  .profile-avatar:active { transform: scale(0.95); }
   .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .edit-avatar-btn { position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; background: #000; border: var(--glass-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; }
+  .edit-avatar-btn { position: absolute; bottom: 2px; right: 2px; width: 32px; height: 32px; background: rgba(10,10,15,0.9); border: var(--glass-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; transition: all 0.25s var(--ease-spring); backdrop-filter: blur(10px); }
+  .edit-avatar-btn:active { transform: scale(0.88); }
   
-  .profile-name { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
-  .profile-online { background: var(--panel); backdrop-filter: var(--glass-blur); border: var(--glass-border); color: var(--text-muted); padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; }
-  .profile-online::before { content: ''; width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+  .profile-name { font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 6px; margin-bottom: 6px; letter-spacing: -0.5px; }
+  .profile-online { background: var(--panel); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border); color: var(--text-muted); padding: 5px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+  .profile-online::before { content: ''; width: 7px; height: 7px; background: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success); animation: onlinePulse 2s ease-in-out infinite; }
+  @keyframes onlinePulse { 0%,100% { box-shadow: 0 0 8px var(--success); } 50% { box-shadow: 0 0 16px var(--success); } }
   
   .profile-username { font-size: 15px; color: var(--text); margin-bottom: 2px; display: flex; align-items: center; gap: 5px; }
-  .profile-join-date { font-size: 13px; color: var(--text-muted); margin-bottom: 15px; display: flex; align-items: center; gap: 5px; }
+  .profile-join-date { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; gap: 5px; }
   
-  .profile-stats { display: flex; gap: 20px; margin-bottom: 20px; width: 100%; justify-content: flex-start; padding: 0 10px; border-bottom: var(--glass-border); padding-bottom: 20px; }
-  .stat-item { display: flex; flex-direction: column; cursor: pointer; }
-  .stat-val { font-weight: 800; font-size: 16px; }
+  .profile-stats { display: flex; gap: 24px; margin-bottom: 20px; width: 100%; justify-content: flex-start; padding: 0 10px; border-bottom: var(--glass-border); padding-bottom: 20px; }
+  .stat-item { display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s var(--ease-spring); }
+  .stat-item:active { transform: scale(0.95); }
+  .stat-val { font-weight: 800; font-size: 17px; }
   .stat-lbl { font-size: 13px; color: var(--text-muted); }
 
   /* Gifts Grid */
-  .gifts-section { width: 100%; padding: 15px; }
-  .gifts-title { font-size: 16px; font-weight: 700; margin-bottom: 15px; text-align: center; }
-  .gifts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .gifts-section { width: 100%; padding: 16px; }
+  .gifts-title { font-size: 17px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+  .gifts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   
-  /* Базовый стиль карточки подарка */
+  /* Карточка подарка */
   .gift-card { 
-    border-radius: 12px; padding: 10px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; 
-    border: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: 0.3s; height: 120px; justify-content: center;
+    position: relative; overflow: hidden; border-radius: 16px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.3s var(--ease-spring); height: 130px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 6px 18px rgba(0,0,0,0.3);
+    will-change: transform;
   }
-  .gift-card:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
-  .gift-card-id { position: absolute; top: 5px; right: 5px; font-size: 10px; color: rgba(255,255,255,0.8); font-weight: bold; text-shadow: 1px 1px 2px black; }
-  .gift-card-price { font-size: 12px; color: var(--gold); display: flex; align-items: center; gap: 3px; position: absolute; bottom: 5px; text-shadow: 1px 1px 2px black; }
+  .gift-card:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 12px 28px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15); }
+  .gift-card:active { transform: scale(0.95); }
+  .gift-card-id { position: absolute; top: 6px; right: 8px; font-size: 10px; color: rgba(255,255,255,0.9); font-weight: bold; text-shadow: 1px 1px 3px black; z-index: 2; }
+  .gift-card-price { font-size: 12px; color: var(--gold); display: flex; align-items: center; gap: 3px; position: absolute; bottom: 6px; text-shadow: 1px 1px 3px black; z-index: 2; font-weight: 700; }
 
-  /* --- МОДЕЛЬКИ (CSS-АРТ) --- */
-  .gift-model { width: 60px; height: 60px; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
+  /* Three.js Canvas container */
+  .gift-3d-canvas { display: block; pointer-events: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+  /* NFT details modal */
+  #nftDetailCard { width: 100%; aspect-ratio: 1/1; max-height: 250px; display: flex; align-items: center; justify-content: center; border-radius: 20px; position: relative; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
+  #nftDetailCard canvas { width: 100% !important; height: 100% !important; object-fit: contain; }
   
-  /* Обычные */
-  .model-bear { background: #8B4513; border-radius: 50%; width: 50px; height: 50px; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.3); }
-  .model-bear::before { content: ''; position: absolute; top: -6px; left: 6px; width: 15px; height: 15px; background: #8B4513; border-radius: 50%; }
-  .model-bear::after { content: ''; position: absolute; top: -6px; right: 6px; width: 15px; height: 15px; background: #8B4513; border-radius: 50%; }
-  
-  .model-present { width: 50px; height: 45px; background: #ff4081; border-radius: 4px; position: relative; box-shadow: 0 6px 15px rgba(255,64,129,0.4); }
-  .model-present::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 8px; height: 100%; background: #ffeb3b; }
-  .model-present::after { content: ''; position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 100%; height: 8px; background: #ffeb3b; }
-  
-  .model-heart { width: 45px; height: 45px; background: #e91e63; transform: rotate(-45deg); position: relative; box-shadow: 0 0 20px rgba(233,30,99,0.6); }
-  .model-heart::before { content: ''; position: absolute; top: -22px; left: 0; width: 45px; height: 45px; background: #e91e63; border-radius: 50%; }
-  .model-heart::after { content: ''; position: absolute; top: 0; left: 22px; width: 45px; height: 45px; background: #e91e63; border-radius: 50%; }
-  
-  .model-diamond { width: 40px; height: 40px; background: #00bcd4; transform: rotate(45deg); box-shadow: 0 0 20px rgba(0,188,212,0.6); }
-  .model-diamond::before { content: ''; position: absolute; inset: 6px; background: #fff; opacity: 0.3; }
-
-  /* --- NFT MODELS (Улучшенные) --- */
-  
-  /* 1. Собака (Snoop Dogg style) */
-  .model-dog { width: 45px; height: 45px; background: #e67e22; border-radius: 40% 40% 50% 50%; position: relative; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.3); }
-  .model-dog::before { content: ''; position: absolute; top: -8px; left: 6px; width: 18px; height: 18px; background: #d35400; border-radius: 50%; box-shadow: 10px 0 0 #d35400; }
-  .model-dog::after { content: '🕶️'; position: absolute; top: 12px; left: 12px; font-size: 22px; transform: rotate(-10deg); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); }
-
-  /* 2. Сигара */
-  .model-cigar { width: 60px; height: 18px; background: linear-gradient(90deg, #4e342e, #795548); border-radius: 10px; transform: rotate(-15deg); position: relative; box-shadow: 0 6px 10px rgba(0,0,0,0.5); }
-  .model-cigar::before { content: ''; position: absolute; right: -8px; top: 3px; width: 12px; height: 12px; background: #ff5722; border-radius: 50%; box-shadow: 0 0 15px #ff5722; }
-  .model-cigar::after { content: ''; position: absolute; left: 5px; top: 2px; width: 50px; height: 14px; background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px); border-radius: 5px; }
-
-  /* 3. Кепка */
-  .model-cap { width: 55px; height: 30px; background: linear-gradient(135deg, #2196f3, #1976d2); border-radius: 25px 25px 5px 5px; position: relative; box-shadow: 0 5px 10px rgba(0,0,0,0.3); }
-  .model-cap::before { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 45px; height: 10px; background: #1565c0; border-radius: 10px 10px 0 0; }
-  .model-cap::after { content: '▲'; position: absolute; top: 6px; left: 50%; transform: translateX(-50%); font-size: 14px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-
-  /* 4. Маска */
-  .model-mask { width: 50px; height: 60px; background: linear-gradient(135deg, #d32f2f, #b71c1c); border-radius: 50% 50% 30% 30%; position: relative; box-shadow: 0 6px 20px rgba(211,47,47,0.5); }
-  .model-mask::before { content: ''; position: absolute; top: 15px; left: 8px; width: 12px; height: 18px; background: #fff; border-radius: 50%; box-shadow: 22px 0 0 #fff; opacity: 0.8; }
-  .model-mask::after { content: ''; position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 25px; height: 6px; background: #fff; border-radius: 5px; }
-
-  /* 5. Лягушка */
-  .model-frog { width: 55px; height: 45px; background: #4caf50; border-radius: 50% 50% 40% 40%; position: relative; box-shadow: inset -4px -4px 10px rgba(0,0,0,0.2); }
-  .model-frog::before { content: ''; position: absolute; top: -12px; left: 4px; width: 18px; height: 18px; background: #4caf50; border-radius: 50%; box-shadow: 27px 0 0 #4caf50; }
-  .model-frog::after { content: '❤️'; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 20px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
-
-  /* 6. Часы */
-  .model-watch { width: 45px; height: 45px; background: #b0bec5; border-radius: 50%; border: 5px solid #607d8b; position: relative; box-shadow: 0 0 15px rgba(96,125,139,0.5); }
-  .model-watch::before { content: ''; position: absolute; top: 50%; left: 50%; width: 3px; height: 15px; background: #000; transform-origin: bottom; transform: translate(-50%, -100%) rotate(45deg); }
-  .model-watch::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: #607d8b; border-radius: 50%; }
+  .nft-info-table { width: 100%; border-collapse: separate; border-spacing: 0 5px; margin-bottom: 20px; text-align: left; }
+  .nft-info-table td { padding: 10px 12px; background: rgba(255,255,255,0.05); font-size: 14px; }
+  .nft-info-table td:first-child { border-radius: 10px 0 0 10px; color: var(--text-muted); width: 40%; }
+  .nft-info-table td:last-child { border-radius: 0 10px 10px 0; font-weight: 600; }
 
   /* --- BOTTOM NAV (Liquid Glass) --- */
-  .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 450px; height: var(--nav-h); background: rgba(20, 20, 20, 0.4); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); border-radius: 35px; display: flex; align-items: center; justify-content: space-around; z-index: 50; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2); padding: 0 10px; }
-  .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; flex: 1; }
+  .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 450px; height: var(--nav-h); background: rgba(20, 20, 30, 0.45); backdrop-filter: blur(40px) saturate(200%); -webkit-backdrop-filter: blur(40px) saturate(200%); border-radius: 35px; display: flex; align-items: center; justify-content: space-around; z-index: 50; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 10px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.2); padding: 0 10px; }
+  
+  /* Floating bubble */
+  .nav-bubble { position: absolute; top: 6px; bottom: 6px; width: 60px; background: rgba(255,255,255,0.1); border-radius: 28px; transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 1; pointer-events: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.05); left: 0; }
+  
+  .nav-btn { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: none; border: none; color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.3s var(--ease-spring); flex: 1; padding: 8px 0; height: 100%; border-radius: 28px; }
   .nav-btn.active { color: var(--accent); }
-  .nav-icon { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
+  .nav-btn:active { transform: scale(0.88); }
+  .nav-icon { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; transition: transform 0.3s var(--ease-spring); }
+  .nav-btn.active .nav-icon { transform: translateY(-2px) scale(1.1); filter: drop-shadow(0 0 8px rgba(29,155,240,0.6)); }
   .nav-icon svg { width: 100%; height: 100%; fill: currentColor; }
 
   /* --- MODALS --- */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; }
-  .modal-overlay.show { display: flex; }
-  .modal-card { background: rgba(30, 30, 30, 0.85); backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: 20px; width: 100%; max-width: 400px; padding: 20px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.show { display: flex; animation: overlayIn 0.3s ease; }
+  @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal-card { background: rgba(25, 25, 35, 0.75); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: 24px; width: 100%; max-width: 400px; padding: 24px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.15); animation: modalIn 0.4s var(--ease-spring); }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
   .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; text-align: center; }
-  .modal-input { width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: var(--glass-border); border-radius: 10px; color: #fff; margin-bottom: 15px; outline: none; }
-  .modal-btn { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 10px; color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; margin-bottom: 10px; }
-  .modal-btn.cancel { background: transparent; border: var(--glass-border); color: #fff; }
+  .modal-input { width: 100%; padding: 13px; background: rgba(0,0,0,0.4); border: var(--glass-border); border-radius: 12px; color: #fff; margin-bottom: 15px; outline: none; transition: all 0.3s var(--ease-smooth); }
+  .modal-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,155,240,0.15); }
+  .modal-btn { position: relative; overflow: hidden; width: 100%; padding: 13px; background: linear-gradient(135deg, #1d9bf0, #0d6efd); border: none; border-radius: 12px; color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; margin-bottom: 10px; transition: all 0.25s var(--ease-spring); box-shadow: 0 6px 18px rgba(29,155,240,0.3); }
+  .modal-btn:active { transform: scale(0.95); }
+  .modal-btn.cancel { background: transparent; border: var(--glass-border); color: #fff; box-shadow: none; }
+  .modal-btn.cancel:active { background: rgba(255,255,255,0.08); }
   
-  .ctx-menu { display: flex; flex-direction: column; gap: 5px; }
-  .ctx-item { padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; text-align: center; font-size: 15px; cursor: pointer; transition: 0.2s; }
-  .ctx-item:hover { background: rgba(255,255,255,0.1); }
+  .ctx-menu { display: flex; flex-direction: column; gap: 6px; }
+  .ctx-item { padding: 16px; background: rgba(255,255,255,0.06); border-radius: 12px; text-align: center; font-size: 15px; cursor: pointer; transition: all 0.25s var(--ease-smooth); border: 1px solid transparent; }
+  .ctx-item:hover { background: rgba(255,255,255,0.12); border-color: var(--border); }
+  .ctx-item:active { transform: scale(0.97); }
   .ctx-item.danger { color: var(--danger); }
 
-  .blocked-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 20; padding: 20px; text-align: center; }
+  .blocked-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.92); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 20; padding: 20px; text-align: center; }
   .blocked-overlay.show { display: flex; }
 
   /* ADMIN PANEL */
@@ -301,12 +336,18 @@
 
   /* NFT Market Styles */
   .nft-market-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px; }
-  .nft-market-item { background: var(--panel); border: var(--glass-border); border-radius: 15px; padding: 15px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; }
-  .nft-market-item:hover { transform: scale(1.03); background: var(--panel-hover); }
+  .nft-market-item { position: relative; overflow: hidden; background: var(--panel); border: var(--glass-border); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: all 0.3s var(--ease-spring); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); min-height: 160px; }
+  .nft-market-item:hover { transform: scale(1.04); background: var(--panel-hover); box-shadow: 0 12px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12); }
+  .nft-market-item:active { transform: scale(0.96); }
   
+  .nft-market-canvas-wrap { width: 80px; height: 80px; position: relative; margin-bottom: 8px; }
+
   /* Анимация выпадения фона */
-  @keyframes dropIn { 0% { transform: scale(0) rotate(-180deg); opacity: 0; } 50% { transform: scale(1.2) rotate(10deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+  @keyframes dropIn { 0% { transform: scale(0) rotate(-180deg); opacity: 0; } 50% { transform: scale(1.15) rotate(8deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
   .nft-drop-anim { animation: dropIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 0; }
 </style>
 </head>
 <body>
@@ -428,7 +469,7 @@
         <div class="stat-item"><span class="stat-val" id="profFollowing">0</span><span class="stat-lbl">Подписки</span></div>
       </div>
       
-      <div class="balance-card" onclick="alert('Баланс: ' + state.glass + ' 💎')" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); padding: 10px 20px; border-radius: 15px; color: #000; font-weight: bold; margin-top: 15px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+      <div class="balance-card" onclick="alert('Баланс: ' + state.glass + ' 💎')" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); padding: 12px 24px; border-radius: 16px; color: #000; font-weight: bold; margin-top: 15px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 8px 24px rgba(251,191,36,0.4), inset 0 1px 0 rgba(255,255,255,0.4); transition: all 0.3s var(--ease-spring);">
         <span>Баланс:</span> <span id="profileGlassBalance">0</span> 💎
       </div>
     </div>
@@ -461,11 +502,12 @@
   </div>
 
   <!-- BOTTOM NAV (Liquid Glass) -->
-  <div class="bottom-nav">
-    <button class="nav-btn active" onclick="switchPage('chats', this)"><span class="nav-icon"><svg><use href="#icon-chat"></use></svg></span>Чаты</button>
-    <button class="nav-btn" onclick="switchPage('feed', this)"><span class="nav-icon"><svg><use href="#icon-globe"></use></svg></span>Лента</button>
-    <button class="nav-btn" onclick="switchPage('profile', this)"><span class="nav-icon"><svg><use href="#icon-profile"></use></svg></span>Профиль</button>
-    <button class="nav-btn" onclick="switchPage('settings', this)"><span class="nav-icon"><svg><use href="#icon-settings"></use></svg></span>Настройки</button>
+  <div class="bottom-nav" id="bottomNav">
+    <div class="nav-bubble" id="navBubble"></div>
+    <button class="nav-btn active" data-page="chats" onclick="switchPage('chats', this)"><span class="nav-icon"><svg><use href="#icon-chat"></use></svg></span>Чаты</button>
+    <button class="nav-btn" data-page="feed" onclick="switchPage('feed', this)"><span class="nav-icon"><svg><use href="#icon-globe"></use></svg></span>Лента</button>
+    <button class="nav-btn" data-page="profile" onclick="switchPage('profile', this)"><span class="nav-icon"><svg><use href="#icon-profile"></use></svg></span>Профиль</button>
+    <button class="nav-btn" data-page="settings" onclick="switchPage('settings', this)"><span class="nav-icon"><svg><use href="#icon-settings"></use></svg></span>Настройки</button>
   </div>
 </div>
 
@@ -523,7 +565,6 @@
       
       <button class="btn-main" id="upSubscribeBtn" onclick="toggleSubscribe(state.viewedProfileId)">Подписаться</button>
     </div>
-    <!-- Gifts List for other profile (Screen 6 style) -->
     <div id="upGiftsSection" style="margin-top: 15px; display: none;">
       <div class="gifts-title">Подарки</div>
       <div class="gifts-grid" id="upGiftsList"></div>
@@ -559,7 +600,6 @@
   </div>
 </div>
 
-<!-- CREATE GROUP/CHANNEL MODAL -->
 <div class="modal-overlay" id="createGroupModal">
   <div class="modal-card">
     <div class="modal-title" id="createGroupTitle">Создать</div>
@@ -569,6 +609,7 @@
     <input type="file" id="groupAvatarInput" accept="image/*" hidden onchange="previewGroupAvatar(event)">
     
     <input type="text" id="groupNameInput" class="modal-input" placeholder="Название (без @)" maxlength="30">
+    <input type="text" id="channelUsernameInput" class="modal-input" placeholder="@username (для канала)" maxlength="20" style="display:none;">
     
     <div style="display: flex; gap: 10px; margin-bottom: 15px;">
       <button class="btn-main" style="flex: 1; margin: 0; padding: 10px; font-size: 14px;" id="createChatBtn" onclick="setCreateType('chat')">Создать Чат</button>
@@ -583,7 +624,6 @@
   </div>
 </div>
 
-<!-- NFT MARKET MODAL -->
 <div class="modal-overlay" id="nftMarketModal">
   <div class="modal-card">
     <div class="modal-title">Рынок NFT</div>
@@ -593,19 +633,26 @@
   </div>
 </div>
 
-<!-- NFT DETAILS MODAL -->
+<!-- ДИЗАЙН ДЕТАЛЕЙ NFT -->
 <div class="modal-overlay" id="nftDetailsModal">
-  <div class="modal-card" style="text-align: center;">
-    <div class="modal-title">Детали NFT</div>
-    <div id="nftDetailCard" style="margin: 0 auto 20px; width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; border-radius: 20px; position: relative; overflow: hidden;">
-      <!-- Card content injected by JS -->
-    </div>
-    <div style="font-size: 16px; font-weight: 700; margin-bottom: 10px;" id="nftDetailName">Название</div>
-    <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 5px;" id="nftDetailNumber">Номер: #0</div>
-    <div style="font-size: 14px; margin-bottom: 5px;" id="nftDetailBg">Фон: Черный (10%)</div>
-    <div style="font-size: 14px; font-weight: 700; color: var(--gold);" id="nftDetailPrice">Стоимость: 0 💎</div>
+  <div class="modal-card" style="text-align: center; padding: 15px;">
+    <div id="nftDetailCard"></div>
     
-    <button class="modal-btn cancel" style="margin-top:20px;" onclick="document.getElementById('nftDetailsModal').classList.remove('show')">Закрыть</button>
+    <div style="font-size: 22px; font-weight: 800; margin-bottom: 4px;" id="nftDetailName">Lunar Snake #40,430</div>
+    <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 15px;" id="nftDetailModelName">Cherry Glitch</div>
+    
+    <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+      <button class="btn-secondary" style="flex: 1; padding: 10px; border-radius: 12px; font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 4px;" onclick="sellNFT()">
+        <span style="font-size: 20px;">🏷️</span> Продать
+      </button>
+    </div>
+    
+    <table class="nft-info-table">
+      <tr><td>Владелец</td><td id="nftDetailOwner">Вы</td></tr>
+      <tr><td>Фон</td><td id="nftDetailBg">Desert Sand <span style="background: rgba(29,155,240,0.2); color: #1d9bf0; padding: 2px 6px; border-radius: 6px; font-size: 11px; margin-left: 5px;">10%</span></td></tr>
+    </table>
+    
+    <button class="modal-btn" style="background: #0ea5e9; border-radius: 20px;" onclick="document.getElementById('nftDetailsModal').classList.remove('show')">OK</button>
   </div>
 </div>
 
@@ -623,7 +670,8 @@
   <div class="modal-card admin-panel">
     <div class="admin-header"><h2>⚡ SYSTEM CONTROL ⚡</h2></div>
     <div class="admin-tabs">
-      <button class="admin-tab active" onclick="switchAdminTab(this, 'admin-verify')">VERIFY</button>
+      <button class="admin-tab active" onclick="switchAdminTab(this, 'admin-verify')">USER</button>
+      <button class="admin-tab" onclick="switchAdminTab(this, 'admin-verify-channel')">CHANNEL</button>
       <button class="admin-tab" onclick="switchAdminTab(this, 'admin-edit')">EDIT</button>
       <button class="admin-tab" onclick="switchAdminTab(this, 'admin-glass')">GLASS</button>
       <button class="admin-tab" onclick="switchAdminTab(this, 'admin-premium')">PREM</button>
@@ -640,6 +688,15 @@
         <button class="admin-btn red" onclick="adminAction('verify_dev', false)">REM DEV</button>
         <button class="admin-btn red" onclick="adminAction('verify_tester', false)">REM TEST</button>
         <button class="admin-btn red" onclick="adminAction('verify_owner', false)">REM OWN</button>
+      </div>
+    </div>
+    <div id="admin-verify-channel" class="admin-content">
+      <input type="text" id="adminVerifyChannelInput" class="admin-input" placeholder="TARGET @CHANNEL_USERNAME">
+      <div class="admin-btn-row">
+        <button class="admin-btn green" onclick="adminActionChannel('verify_channel', true)">GIVE VERIFY ✓</button>
+      </div>
+      <div class="admin-btn-row" style="margin-top:10px;">
+        <button class="admin-btn red" onclick="adminActionChannel('verify_channel', false)">REM VERIFY</button>
       </div>
     </div>
     <div id="admin-edit" class="admin-content">
@@ -672,6 +729,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
   // FIREBASE CONFIG
@@ -703,36 +761,476 @@
   let currentMessagesListener = null;
   let activeCtxChatId = null;
   let activeCtxMsgKey = null;
+  let activeGiftDetailKey = null;
   let replyTo = null;
 
   let groupAvatarBase64 = null;
   let selectedGroupMembers = [];
   let createType = 'chat';
 
-  // Списки подарков (без Тун Тун Сахура)
   const REGULAR_GIFTS = [
-    { id: 'bear', name: 'Мишка', price: 15, modelClass: 'model-bear' },
-    { id: 'present', name: 'Подарок', price: 20, modelClass: 'model-present' },
-    { id: 'heart', name: 'Сердце', price: 50, modelClass: 'model-heart' },
-    { id: 'diamond', name: 'Алмаз', price: 150, modelClass: 'model-diamond' }
+    { id: 'bear', name: 'Мишка', price: 15, type: 'bear' },
+    { id: 'present', name: 'Подарок', price: 20, type: 'present' },
+    { id: 'heart', name: 'Сердце', price: 50, type: 'heart' },
+    { id: 'diamond', name: 'Алмаз', price: 150, type: 'diamond' }
   ];
 
   const NFT_GIFTS = [
-    { id: 'dog', name: 'Собака', price: 1000, modelClass: 'model-dog' },
-    { id: 'cigar', name: 'Сигара', price: 1500, modelClass: 'model-cigar' },
-    { id: 'watch', name: 'Часы', price: 2500, modelClass: 'model-watch' },
-    { id: 'mask', name: 'Маска', price: 15000, modelClass: 'model-mask' },
-    { id: 'frog', name: 'Лягушка', price: 25000, modelClass: 'model-frog' },
-    { id: 'cap', name: 'Кепка', price: 30000, modelClass: 'model-cap' }
+    { id: 'cigar', name: 'Сигара', price: 1500, type: 'cigar' },
+    { id: 'watch', name: 'Часы', price: 2500, type: 'watch' },
+    { id: 'frog', name: 'Лягушка', price: 25000, type: 'frog' },
+    { id: 'cap', name: 'Кепка', price: 30000, type: 'cap' }
   ];
 
   const NFT_BACKGROUNDS = [
-    { id: 'black', name: 'Черный', chance: 10, bg: '#000000', textColor: '#fff' },
-    { id: 'blue', name: 'Голубой', chance: 25, bg: '#00bcd4', textColor: '#fff' },
-    { id: 'darkblue', name: 'Синий', chance: 45, bg: '#1e3a8a', textColor: '#fff' },
-    { id: 'pink', name: 'Розовый', chance: 50, bg: '#ec4899', textColor: '#fff' },
-    { id: 'orange', name: 'Оранжевый', chance: 60, bg: '#f59e0b', textColor: '#000' }
+    { id: 'black', name: 'Desert Sand', chance: 10, bg: '#d4a373', textColor: '#fff' },
+    { id: 'blue', name: 'Ocean Blue', chance: 25, bg: '#00bcd4', textColor: '#fff' },
+    { id: 'darkblue', name: 'Midnight', chance: 45, bg: '#1e3a8a', textColor: '#fff' },
+    { id: 'pink', name: 'Cherry Glitch', chance: 50, bg: '#ec4899', textColor: '#fff' },
+    { id: 'orange', name: 'Neon Orange', chance: 60, bg: '#f59e0b', textColor: '#000' }
   ];
+
+  // =============== THREE.JS 3D МОДЕЛИ С АНИМАЦИЯМИ ===============
+  function create3DGift(container, type, size = 70) {
+    if (!window.THREE) {
+      container.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:${size/2}px;opacity:0.5;">🎁</div>`;
+      return;
+    }
+
+    try {
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+      camera.position.set(0, 0, 4);
+      
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setSize(size, size);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.domElement.className = 'gift-3d-canvas';
+      renderer.domElement.style.width = size + 'px';
+      renderer.domElement.style.height = size + 'px';
+      
+      container.innerHTML = '';
+      container.appendChild(renderer.domElement);
+      
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+      scene.add(ambientLight);
+      
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+      dirLight.position.set(5, 10, 7);
+      scene.add(dirLight);
+      
+      const pointLight = new THREE.PointLight(0x1d9bf0, 1, 20);
+      pointLight.position.set(-3, 3, 5);
+      scene.add(pointLight);
+      
+      const pointLight2 = new THREE.PointLight(0x8b5cf6, 0.8, 20);
+      pointLight2.position.set(3, -3, 5);
+      scene.add(pointLight2);
+      
+      const model = new THREE.Group();
+      
+      let smokeParticles = [];
+      let emberLight = null;
+      let watchHand1 = null;
+      let watchHand2 = null;
+      let frogTongue = null;
+      let flyObj = null;
+
+      switch(type) {
+        case 'bear': {
+          const bodyMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.4, metalness: 0.1 });
+          const body = new THREE.Mesh(new THREE.SphereGeometry(0.7, 32, 32), bodyMat);
+          body.scale.set(1, 1.1, 0.9);
+          model.add(body);
+          
+          const headMat = new THREE.MeshStandardMaterial({ color: 0x9B5513, roughness: 0.4 });
+          const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), headMat);
+          head.position.y = 0.65;
+          model.add(head);
+          
+          const earMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.4 });
+          [-0.35, 0.35].forEach(x => {
+            const ear = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), earMat);
+            ear.position.set(x, 1.0, 0);
+            model.add(ear);
+          });
+          
+          const eyeMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
+          [-0.18, 0.18].forEach(x => {
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), eyeMat);
+            eye.position.set(x, 0.7, 0.42);
+            model.add(eye);
+          });
+          
+          const noseMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3 });
+          const nose = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), noseMat);
+          nose.position.set(0, 0.55, 0.48);
+          model.add(nose);
+          break;
+        }
+        case 'present': {
+          const boxMat = new THREE.MeshStandardMaterial({ color: 0xff4081, roughness: 0.3, metalness: 0.2 });
+          const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.9, 1.2), boxMat);
+          model.add(box);
+          
+          const ribbonMat = new THREE.MeshStandardMaterial({ color: 0xffeb3b, roughness: 0.2, metalness: 0.4 });
+          const ribbon1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.92, 1.22), ribbonMat);
+          model.add(ribbon1);
+          const ribbon2 = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.92, 0.2), ribbonMat);
+          model.add(ribbon2);
+          
+          const bowMat = new THREE.MeshStandardMaterial({ color: 0xffeb3b, roughness: 0.2, metalness: 0.4 });
+          const bowL = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.06, 8, 16), bowMat);
+          bowL.position.set(-0.15, 0.65, 0);
+          bowL.rotation.z = 0.5;
+          model.add(bowL);
+          const bowR = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.06, 8, 16), bowMat);
+          bowR.position.set(0.15, 0.65, 0);
+          bowR.rotation.z = -0.5;
+          model.add(bowR);
+          break;
+        }
+        case 'heart': {
+          const heartShape = new THREE.Shape();
+          heartShape.moveTo(0, 0.5);
+          heartShape.bezierCurveTo(0, 0.8, -0.6, 0.8, -0.6, 0.3);
+          heartShape.bezierCurveTo(-0.6, -0.2, 0, -0.5, 0, -0.9);
+          heartShape.bezierCurveTo(0, -0.5, 0.6, -0.2, 0.6, 0.3);
+          heartShape.bezierCurveTo(0.6, 0.8, 0, 0.8, 0, 0.5);
+          
+          const extrudeSettings = { depth: 0.4, bevelEnabled: true, bevelSize: 0.15, bevelThickness: 0.15, bevelSegments: 8 };
+          const geo = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
+          geo.center();
+          const mat = new THREE.MeshStandardMaterial({ color: 0xe91e63, roughness: 0.2, metalness: 0.5, emissive: 0x4a0018, emissiveIntensity: 0.3 });
+          const heart = new THREE.Mesh(geo, mat);
+          heart.scale.set(0.8, 0.8, 0.8);
+          model.add(heart);
+          break;
+        }
+        case 'diamond': {
+          const topMat = new THREE.MeshStandardMaterial({ color: 0x00bcd4, roughness: 0.05, metalness: 0.9, emissive: 0x003a44, emissiveIntensity: 0.4 });
+          const top = new THREE.Mesh(new THREE.OctahedronGeometry(0.8, 0), topMat);
+          top.scale.set(1, 0.6, 1);
+          top.position.y = 0.15;
+          model.add(top);
+          
+          const botMat = new THREE.MeshStandardMaterial({ color: 0x00bcd4, roughness: 0.05, metalness: 0.9, emissive: 0x003a44, emissiveIntensity: 0.4 });
+          const bot = new THREE.Mesh(new THREE.ConeGeometry(0.7, 0.9, 6), botMat);
+          bot.position.y = -0.4;
+          bot.rotation.y = Math.PI / 6;
+          model.add(bot);
+          break;
+        }
+        case 'cigar': {
+          const cigarMat = new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.7 });
+          const cigar = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.6, 16), cigarMat);
+          cigar.rotation.z = Math.PI / 2;
+          model.add(cigar);
+          
+          const bandMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.2, metalness: 0.8 });
+          const band = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.25, 16), bandMat);
+          band.rotation.z = Math.PI / 2;
+          band.position.x = 0.35;
+          model.add(band);
+          
+          const ashMat = new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.9 });
+          const ash = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.2, 16), ashMat);
+          ash.rotation.z = Math.PI / 2;
+          ash.position.x = -0.85;
+          model.add(ash);
+          
+          emberLight = new THREE.PointLight(0xff5722, 1, 5);
+          emberLight.position.set(-0.95, 0, 0);
+          model.add(emberLight);
+
+          const emberMat = new THREE.MeshStandardMaterial({ color: 0xff5722, emissive: 0xff5722, emissiveIntensity: 1 });
+          const ember = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.05, 16), emberMat);
+          ember.rotation.z = Math.PI / 2;
+          ember.position.x = -0.95;
+          model.add(ember);
+          break;
+        }
+        case 'watch': {
+          // Ремешок (дуга)
+          const bandMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.8, metalness: 0.2 });
+          
+          const bandGeoTop = new THREE.TorusGeometry(0.85, 0.15, 16, 32, Math.PI);
+          const bandTop = new THREE.Mesh(bandGeoTop, bandMat);
+          bandTop.rotation.x = Math.PI / 2;
+          bandTop.position.y = 0.1;
+          bandTop.scale.set(1, 1, 1.5);
+          model.add(bandTop);
+          
+          const bandBottom = new THREE.Mesh(bandGeoTop, bandMat);
+          bandBottom.rotation.x = Math.PI / 2;
+          bandBottom.rotation.z = Math.PI;
+          bandBottom.position.y = -0.1;
+          bandBottom.scale.set(1, 1, 1.5);
+          model.add(bandBottom);
+
+          // Корпус
+          const caseMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.1, metalness: 0.9 });
+          const watchCase = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.2, 32), caseMat);
+          watchCase.rotation.x = Math.PI / 2;
+          model.add(watchCase);
+          
+          // Циферблат
+          const faceMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3 });
+          const face = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.22, 32), faceMat);
+          face.rotation.x = Math.PI / 2;
+          model.add(face);
+          
+          // Стрелки
+          const handMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+          
+          watchHand1 = new THREE.Group();
+          const h1Mesh = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.35, 0.02), handMat);
+          h1Mesh.position.y = 0.17;
+          watchHand1.add(h1Mesh);
+          watchHand1.position.z = 0.12;
+          model.add(watchHand1);
+          
+          watchHand2 = new THREE.Group();
+          const h2Mesh = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.25, 0.02), handMat);
+          h2Mesh.position.y = 0.12;
+          watchHand2.add(h2Mesh);
+          watchHand2.position.z = 0.13;
+          model.add(watchHand2);
+          break;
+        }
+        case 'frog': {
+          // Pepe body
+          const bodyMat = new THREE.MeshStandardMaterial({ color: 0x55a630, roughness: 0.6 });
+          const body = new THREE.Mesh(new THREE.SphereGeometry(0.65, 32, 32), bodyMat);
+          body.scale.set(1.2, 0.9, 1);
+          model.add(body);
+          
+          // Eyes
+          const eyeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+          [-0.35, 0.35].forEach(x => {
+            const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 16), eyeMat);
+            eyeWhite.position.set(x, 0.45, 0.35);
+            model.add(eyeWhite);
+            
+            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), new THREE.MeshStandardMaterial({ color: 0x000000 }));
+            pupil.position.set(x, 0.45, 0.6);
+            model.add(pupil);
+          });
+          
+          // Mouth
+          const mouthMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+          const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.05, 0.05), mouthMat);
+          mouth.position.set(0, -0.1, 0.65);
+          model.add(mouth);
+          
+          // Tongue
+          frogTongue = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.0, 8), new THREE.MeshStandardMaterial({color: 0xff5252}));
+          frogTongue.rotation.x = Math.PI / 2;
+          frogTongue.position.set(0, -0.1, 0.5);
+          frogTongue.visible = false;
+          model.add(frogTongue);
+          
+          // Fly
+          flyObj = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshStandardMaterial({color: 0x000000}));
+          flyObj.visible = false;
+          model.add(flyObj);
+          break;
+        }
+        case 'cap': {
+          // Cap crown (segmented)
+          const capMat = new THREE.MeshStandardMaterial({ color: 0x2196f3, roughness: 0.4, metalness: 0.2 });
+          const dome = new THREE.Mesh(new THREE.SphereGeometry(0.65, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5), capMat);
+          dome.position.y = 0.2;
+          model.add(dome);
+          
+          // Brim
+          const brimMat = new THREE.MeshStandardMaterial({ color: 0x1565c0, roughness: 0.4 });
+          const brimGeo = new THREE.RingGeometry(0.2, 0.8, 32, 1, 0, Math.PI);
+          const brim = new THREE.Mesh(brimGeo, brimMat);
+          brim.rotation.x = -Math.PI / 2 + 0.2; // Slight tilt
+          brim.position.set(0, 0.1, 0.4);
+          model.add(brim);
+          
+          // Button
+          const button = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.05, 16), brimMat);
+          button.position.set(0, 0.85, 0);
+          model.add(button);
+          break;
+        }
+      }
+      
+      scene.add(model);
+      
+      model.rotation.y = -0.4;
+      model.rotation.x = 0.1;
+      
+      let startTime = performance.now();
+      let animFrame;
+      
+      // 4-second cycle loop for all specific animations
+      const CYCLE_DURATION = 4000;
+      
+      function animate() {
+        animFrame = requestAnimationFrame(animate);
+        const now = performance.now();
+        const t = (now - startTime) / 1000;
+        const cycleT = (now - startTime) % CYCLE_DURATION; // 0 to 4000
+        
+        // Custom Animations per type
+        if (type === 'cigar') {
+          const halfCycle = CYCLE_DURATION / 2;
+          let lift = 0;
+          let glow = 1;
+          
+          if (cycleT < 1000) {
+             lift = (cycleT / 1000) * 0.4;
+             glow = 1 + (cycleT / 1000) * 2;
+          } else if (cycleT < 2500) {
+             lift = 0.4;
+             glow = 3 - ((cycleT - 1000) / 1500) * 2;
+          } else {
+             lift = 0.4 - ((cycleT - 2500) / 1500) * 0.4;
+             glow = 1;
+          }
+          
+          model.position.y = Math.sin(t * 2) * 0.02 + lift;
+          if (emberLight) emberLight.intensity = glow;
+          
+          if (cycleT > 1000 && cycleT < 3000 && smokeParticles.length < 10 && Math.random() > 0.6) {
+             const sMat = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.3 });
+             const sParticle = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), sMat);
+             sParticle.position.set(-1.0, 0, 0);
+             sParticle.userData.velocity = { x: (Math.random()-0.5)*0.01, y: 0.02, z: (Math.random()-0.5)*0.01 };
+             sParticle.userData.life = 0;
+             scene.add(sParticle);
+             smokeParticles.push(sParticle);
+          }
+          
+          for (let i = smokeParticles.length - 1; i >= 0; i--) {
+             let p = smokeParticles[i];
+             p.position.x += p.userData.velocity.x;
+             p.position.y += p.userData.velocity.y;
+             p.position.z += p.userData.velocity.z;
+             p.userData.life += 0.016;
+             p.scale.setScalar(1 + p.userData.life * 2);
+             p.material.opacity = 0.3 - p.userData.life * 0.15;
+             if (p.userData.life > 2) {
+                 scene.remove(p);
+                 smokeParticles.splice(i, 1);
+             }
+          }
+        } 
+        else if (type === 'watch') {
+          let zoom = 1;
+          let spinSpeed = 1;
+          
+          if (cycleT < 1000) {
+             zoom = 1 + (cycleT / 1000) * 0.5;
+          } else if (cycleT < 3000) {
+             zoom = 1.5;
+             spinSpeed = 20;
+          } else {
+             zoom = 1.5 - ((cycleT - 3000) / 1000) * 0.5;
+          }
+          
+          camera.position.z = 4 / zoom;
+          
+          if (watchHand1) watchHand1.rotation.z -= 0.05 * spinSpeed;
+          if (watchHand2) watchHand2.rotation.z -= 0.1 * spinSpeed;
+          
+          model.position.y = Math.sin(t * 2) * 0.02;
+        }
+        else if (type === 'cap') {
+          if (cycleT < 1000) {
+             model.rotation.y = -0.4;
+          } else if (cycleT < 3000) {
+             const spinProgress = (cycleT - 1000) / 2000;
+             model.rotation.y = -0.4 + (spinProgress * Math.PI * 2);
+          } else {
+             model.rotation.y = -0.4 + Math.PI * 2;
+          }
+          model.position.y = Math.sin(t * 2) * 0.02;
+        }
+        else if (type === 'heart') {
+          let pulse = 0.05;
+          if (cycleT < 1000) pulse = 0.05;
+          else if (cycleT < 3000) pulse = 0.15;
+          else pulse = 0.05;
+          
+          model.scale.setScalar(1 + Math.sin(t * (pulse * 50)) * pulse);
+          model.position.y = Math.sin(t * 2) * 0.05;
+        }
+        else if (type === 'diamond') {
+           let sparkleSpeed = 15;
+           if (cycleT >= 1000 && cycleT < 3000) sparkleSpeed = 40;
+           
+           model.position.y = Math.sin(t * 2) * 0.05;
+           model.children.forEach(c => {
+               if(c.material) c.material.emissiveIntensity = 0.5 + Math.sin(t * sparkleSpeed) * 0.5;
+           });
+        }
+        else if (type === 'frog') {
+           model.position.y = Math.sin(t * 2) * 0.05;
+           
+           if (cycleT < 1000) {
+               frogTongue.visible = false;
+               flyObj.visible = false;
+           } else if (cycleT < 2000) {
+               frogTongue.visible = true;
+               const progress = (cycleT - 1000) / 1000;
+               frogTongue.scale.z = progress;
+               frogTongue.position.z = 0.5 + progress * 0.5;
+               frogTongue.position.y = -0.1 - progress * 0.2;
+               
+               flyObj.visible = true;
+               flyObj.position.set((Math.random()-0.5)*0.2, 0.5 + Math.random()*0.2, 1.5);
+           } else if (cycleT < 3000) {
+               const progress = (cycleT - 2000) / 1000;
+               frogTongue.scale.z = 1 - progress;
+               frogTongue.position.z = 1.0 - progress * 0.5;
+               frogTongue.position.y = -0.3 + progress * 0.2;
+               
+               flyObj.position.z = 1.5 - progress * 1.5;
+               flyObj.position.y = 0.5 - progress * 0.5;
+           } else {
+               frogTongue.visible = false;
+               flyObj.visible = false;
+           }
+        }
+        else {
+          model.position.y = Math.sin(t * 2) * 0.05;
+        }
+        
+        renderer.render(scene, camera);
+      }
+      animate();
+      
+      return { renderer, scene, camera, model, stop: () => {
+        cancelAnimationFrame(animFrame);
+        renderer.dispose();
+      }};
+    } catch(e) {
+      console.error("Three.js error:", e);
+      container.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:${size/2}px;opacity:0.5;">🎁</div>`;
+    }
+  }
+
+  // Ripple effect
+  document.addEventListener('click', e => {
+    const target = e.target.closest('.btn-main, .btn-secondary, .icon-btn, .send-btn, .modal-btn, .chat-item, .gift-card, .nav-btn, .feed-tab, .ctx-item, .nft-market-item, .reaction-pill, .action-item, .poll-option');
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+    ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+    target.style.position = 'relative';
+    target.style.overflow = 'hidden';
+    target.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  });
 
   // 1. АВТОРИЗАЦИЯ
   auth.onAuthStateChanged(user => {
@@ -792,6 +1290,11 @@
 
       showScreen('mainScreen');
       
+      setTimeout(() => {
+        const activeBtn = document.querySelector('.nav-btn.active');
+        if (activeBtn) moveBubble(activeBtn);
+      }, 100);
+
       if (!state.settings.hideOnline) {
         db.ref('users/' + user.uid + '/online').set(true);
         db.ref('users/' + user.uid + '/online').onDisconnect().set(false);
@@ -932,18 +1435,9 @@
         let content = '';
         
         if (m.type === 'text') content = m.text;
-        if (m.type === 'image') content = `<img src="${m.text}" style="max-width:100%; border-radius:10px; margin-top:5px;">`;
+        if (m.type === 'image') content = `<img src="${m.text}" style="max-width:100%; border-radius:12px; margin-top:5px;">`;
         if (m.type === 'gift') {
-          // Для подарков в чате
-          const gift = REGULAR_GIFTS.find(g => g.name === m.text) || NFT_GIFTS.find(g => g.name === m.text);
-          if (gift) {
-             content = `<div class="gift-card" style="background: ${m.bg || '#1a1a2e'}; width: 80px; height: 100px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; margin: 5px;">
-                          <div class="gift-model ${gift.modelClass}"></div>
-                          <div style="font-size: 10px; color: #fff; margin-top: 5px;">${gift.name}</div>
-                        </div>`;
-          } else {
-             content = `<span style="font-size:30px;">${m.text}</span>`;
-          }
+          content = `<div class="gift-card" style="background: ${m.bg || '#1a1a2e'}; width: 90px; height: 110px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; margin: 5px; pointer-events:none;" data-gift-type="${m.text}"></div>`;
         }
         
         let replyHtml = '';
@@ -989,6 +1483,16 @@
           container.appendChild(wrapper);
         }
       });
+      
+      // Render 3D gift models in chat
+      container.querySelectorAll('[data-gift-type]').forEach(el => {
+        const giftName = el.getAttribute('data-gift-type');
+        const gift = REGULAR_GIFTS.find(g => g.name === giftName) || NFT_GIFTS.find(g => g.name === giftName);
+        if (gift) {
+          create3DGift(el, gift.type, 80);
+        }
+      });
+      
       container.scrollTop = container.scrollHeight;
     });
 
@@ -1009,8 +1513,17 @@
     if (chatId.startsWith('group_')) {
       const group = ALL_GROUPS[chatId];
       if (!group) return;
-      document.getElementById('chatHeaderName').innerText = group.name;
-      document.getElementById('chatHeaderStatus').innerText = 'Групповой чат';
+      
+      let verifiedIcon = group.verified ? '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>' : '';
+      document.getElementById('chatHeaderName').innerHTML = `${group.name} ${verifiedIcon}`;
+      
+      if (group.isChannel) {
+        const memberCount = group.members ? Object.keys(group.members).length : 0;
+        document.getElementById('chatHeaderStatus').innerText = `${memberCount} подписчиков`;
+      } else {
+        const memberCount = group.members ? Object.keys(group.members).length : 0;
+        document.getElementById('chatHeaderStatus').innerText = `${memberCount} участников`;
+      }
       return;
     }
 
@@ -1026,16 +1539,11 @@
     document.getElementById('chatHeaderStatus').innerText = status;
   }
 
-  function isUserBlocked(uid) { return state.blockedUsers && state.blockedUsers[uid]; }
-  function amIBlocked(uid) {
-    const other = ALL_USERS[uid];
-    return other && other.blockedUsers && other.blockedUsers[state.uid];
-  }
-
   function openCurrentProfile() {
     if (!state.currentChatId) return;
     if (state.currentChatId.startsWith('group_')) {
-      alert('Групповой чат');
+      const group = ALL_GROUPS[state.currentChatId];
+      if(group) alert(`Канал: ${group.name}\nПодписчиков: ${Object.keys(group.members).length}`);
     } else {
       openUserProfile(state.currentChatId);
     }
@@ -1096,13 +1604,15 @@
         if (!group) return;
         const unread = state.unread[cid] || 0;
         const isPinned = state.pinnedChats && state.pinnedChats[cid];
-        let lastMsg = chatMeta[cid] ? chatMeta[cid].text : 'Группа';
+        let lastMsg = chatMeta[cid] ? chatMeta[cid].text : (group.isChannel ? 'Канал' : 'Группа');
+        
+        let verifiedIcon = group.verified ? '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>' : '';
         
         list.innerHTML += `
           <div class="chat-item" onclick="openChatView('${cid}')">
             <div class="chat-avatar">${group.avatar ? `<img src="${group.avatar}">` : '👥'}</div>
             <div class="chat-info">
-              <div class="chat-name">${group.name} ${isPinned ? '<span class="pin-icon">📌</span>' : ''}</div>
+              <div class="chat-name">${group.name} ${verifiedIcon} ${isPinned ? '<span class="pin-icon">📌</span>' : ''}</div>
               <div class="chat-preview ${unread > 0 ? 'unread' : ''}">${lastMsg}</div>
             </div>
             ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}
@@ -1162,7 +1672,23 @@
           </div>`;
       }
     }
-    if (!found) list.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">Пользователь не найден</div>';
+    
+    for (let gid in ALL_GROUPS) {
+      const g = ALL_GROUPS[gid];
+      if (g.username && g.username.toLowerCase() === val) {
+        found = true;
+        list.innerHTML += `
+          <div class="chat-item">
+            <div class="chat-avatar">${g.avatar ? `<img src="${g.avatar}">` : '👥'}</div>
+            <div class="chat-info" onclick="startChatWith('${gid}')">
+              <div class="chat-name">${g.name} ${g.verified ? '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>' : ''}</div>
+              <div class="chat-preview">${g.username}</div>
+            </div>
+          </div>`;
+      }
+    }
+    
+    if (!found) list.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">Не найдено</div>';
   }
 
   function startChatWith(uid) {
@@ -1217,11 +1743,10 @@
       } else {
         btn.innerText = 'Подписаться';
         btn.classList.remove('subscribed');
-        btn.style.background = 'var(--accent)';
+        btn.style.background = 'linear-gradient(135deg, #1d9bf0, #0d6efd)';
       }
     }
 
-    // Подарки
     const upGiftsSection = document.getElementById('upGiftsSection');
     const upGiftsList = document.getElementById('upGiftsList');
     upGiftsList.innerHTML = '';
@@ -1233,14 +1758,17 @@
         arr.forEach(g => {
           const bgStyle = g.bg || '#1a1a2e';
           const displayId = g.giftId || '—';
-          const modelClass = g.modelClass || 'model-diamond';
+          const giftObj = [...REGULAR_GIFTS, ...NFT_GIFTS].find(x => x.name === g.name);
+          const type = giftObj ? giftObj.type : 'diamond';
           
-          upGiftsList.innerHTML += `
-            <div class="gift-card" style="background: ${bgStyle};" onclick="showGiftDetails('${g.id}', '${uid}')">
-              <div class="gift-card-id">#${displayId}</div>
-              <div class="gift-model ${modelClass}"></div>
-            </div>
-          `;
+          const card = document.createElement('div');
+          card.className = 'gift-card';
+          card.style.background = bgStyle;
+          card.onclick = () => showGiftDetails(g.id, uid);
+          card.innerHTML = `<div class="gift-card-id">#${displayId}</div>`;
+          upGiftsList.appendChild(card);
+          
+          setTimeout(() => create3DGift(card, type, 60), 0);
         });
         upGiftsSection.style.display = 'block';
       } else {
@@ -1252,30 +1780,55 @@
   }
 
   function showGiftDetails(giftKey, uid) {
+    activeGiftDetailKey = giftKey;
     db.ref('users/' + uid + '/gifts/' + giftKey).once('value').then(snap => {
       const g = snap.val();
       if (!g) return;
       
-      document.getElementById('nftDetailName').innerText = g.name || 'Подарок';
-      document.getElementById('nftDetailNumber').innerText = 'Номер: #' + (g.giftId || '—');
+      document.getElementById('nftDetailName').innerText = (g.name || 'Подарок') + ' #' + (g.giftId || '—');
+      document.getElementById('nftDetailModelName').innerText = g.name || 'Модель';
       
       let bgName = 'Неизвестно';
       let bgChance = 0;
       if (g.bgId) {
         const bgObj = NFT_BACKGROUNDS.find(b => b.id === g.bgId);
         if (bgObj) { bgName = bgObj.name; bgChance = bgObj.chance; }
-      } else if (g.bg) {
-        bgName = 'Стандартный';
       }
       
-      document.getElementById('nftDetailBg').innerText = 'Фон: ' + bgName + ' (' + bgChance + '%)';
-      document.getElementById('nftDetailPrice').innerText = 'Стоимость: ' + (g.price || 0) + ' 💎';
+      document.getElementById('nftDetailBg').innerHTML = bgName + ' <span style="background: rgba(29,155,240,0.2); color: #1d9bf0; padding: 2px 6px; border-radius: 6px; font-size: 11px; margin-left: 5px;">' + bgChance + '%</span>';
+      document.getElementById('nftDetailOwner').innerText = uid === state.uid ? 'Вы' : (ALL_USERS[uid] ? ALL_USERS[uid].nick : 'Неизвестно');
       
       const card = document.getElementById('nftDetailCard');
       card.style.background = g.bg || '#1a1a2e';
-      card.innerHTML = `<div class="gift-model ${g.modelClass || 'model-diamond'}" style="width: 100px; height: 100px; transform: scale(1.5);"></div>`;
+      card.innerHTML = '';
+      
+      const giftObj = [...REGULAR_GIFTS, ...NFT_GIFTS].find(x => x.name === g.name);
+      if (giftObj) {
+        create3DGift(card, giftObj.type, 250);
+      }
       
       document.getElementById('nftDetailsModal').classList.add('show');
+    });
+  }
+
+  function sellNFT() {
+    if (!activeGiftDetailKey || !state.uid) return;
+    
+    db.ref('users/' + state.uid + '/gifts/' + activeGiftDetailKey).once('value').then(snap => {
+       const g = snap.val();
+       if (!g) return;
+       
+       const sellPrice = Math.floor((g.price || 0) * 0.9);
+       
+       if(confirm(`Вы уверены, что хотите продать этот NFT за ${sellPrice} 💎? (Комиссия 10%)`)) {
+           db.ref('users/' + state.uid + '/glass').transaction(bal => (bal || 0) + sellPrice);
+           db.ref('users/' + state.uid + '/gifts/' + activeGiftDetailKey).remove();
+           
+           document.getElementById('nftDetailsModal').classList.remove('show');
+           alert('Успешно продано! Вы получили ' + sellPrice + ' 💎');
+           
+           updateProfileUI();
+       }
     });
   }
 
@@ -1301,27 +1854,31 @@
     }, 300);
   }
 
-  // Открытие выбора подарков
   function openGiftPicker() {
     document.getElementById('giftBalance').innerText = state.glass;
     const grid = document.getElementById('giftGrid');
     grid.innerHTML = '';
     
     REGULAR_GIFTS.forEach(g => {
-      grid.innerHTML += `
-        <div class="gift-card" style="background: #1a1a2e; cursor: pointer;" onclick="sendGift('${g.id}', '${g.name}', ${g.price}, false)">
-          <div class="gift-model ${g.modelClass}" style="transform: scale(0.8);"></div>
-          <div class="gift-card-price">💎 ${g.price}</div>
-        </div>
-      `;
+      const card = document.createElement('div');
+      card.className = 'gift-card';
+      card.style.background = 'linear-gradient(135deg, #4c1d95, #1e1b4b)';
+      card.style.cursor = 'pointer';
+      card.onclick = () => sendGift(g.id, g.name, g.price, false);
+      card.innerHTML = `<div class="gift-card-price">💎 ${g.price}</div>`;
+      grid.appendChild(card);
+      setTimeout(() => create3DGift(card, g.type, 70), 0);
     });
     NFT_GIFTS.forEach(g => {
-      grid.innerHTML += `
-        <div class="gift-card" style="background: linear-gradient(135deg, #2a2a3e, #1a1a2e); cursor: pointer; border: 1px solid #fbbf24;" onclick="sendGift('${g.id}', '${g.name}', ${g.price}, true)">
-          <div class="gift-model ${g.modelClass}" style="transform: scale(0.8);"></div>
-          <div class="gift-card-price" style="color: #fbbf24;">💎 ${g.price}</div>
-        </div>
-      `;
+      const card = document.createElement('div');
+      card.className = 'gift-card';
+      card.style.background = 'linear-gradient(135deg, #be123c, #4c0519)';
+      card.style.cursor = 'pointer';
+      card.style.border = '1px solid #fbbf24';
+      card.onclick = () => sendGift(g.id, g.name, g.price, true);
+      card.innerHTML = `<div class="gift-card-price" style="color: #fbbf24;">💎 ${g.price}</div>`;
+      grid.appendChild(card);
+      setTimeout(() => create3DGift(card, g.type, 70), 0);
     });
     document.getElementById('giftPickerModal').classList.add('show');
   }
@@ -1332,13 +1889,14 @@
 
     db.ref('users/' + state.uid + '/glass').transaction(g => (g || 0) - price);
     
+    const giftObj = (isNFT ? NFT_GIFTS.find(g => g.id === giftId) : REGULAR_GIFTS.find(g => g.id === giftId));
     let giftData = {
       from: state.username,
       name: name,
       price: price,
       date: Date.now(),
       isNFT: isNFT,
-      modelClass: (isNFT ? NFT_GIFTS.find(g => g.id === giftId) : REGULAR_GIFTS.find(g => g.id === giftId)).modelClass
+      type: giftObj.type
     };
     
     if (isNFT) {
@@ -1407,16 +1965,19 @@
       position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center;
       background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
     `;
-    popup.innerHTML = `
-      <div class="nft-drop-anim" style="background: ${bg.bg}; width: 200px; height: 200px; border-radius: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 50px ${bg.bg};">
-        <div class="gift-model ${giftData.modelClass}" style="transform: scale(2); margin-bottom: 20px;"></div>
-        <div style="font-size: 20px; font-weight: 800; color: ${bg.textColor};">#${giftData.giftId}</div>
-        <div style="font-size: 14px; color: ${bg.textColor}; opacity: 0.8;">${bg.name} фон (${bg.chance}%)</div>
-      </div>
-    `;
+    const card = document.createElement('div');
+    card.className = 'nft-drop-anim';
+    card.style.cssText = `background: ${bg.bg}; width: 200px; height: 200px; border-radius: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 60px ${bg.bg}, inset 0 2px 0 rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.15);`;
+    card.innerHTML = `<div style="font-size: 20px; font-weight: 800; color: ${bg.textColor}; margin-top: 10px;">#${giftData.giftId}</div><div style="font-size: 14px; color: ${bg.textColor}; opacity: 0.8;">${bg.name} фон (${bg.chance}%)</div>`;
+    popup.appendChild(card);
     document.body.appendChild(popup);
     
-    setTimeout(() => { popup.remove(); }, 2500);
+    const giftObj = [...REGULAR_GIFTS, ...NFT_GIFTS].find(x => x.name === giftData.name);
+    if (giftObj) {
+      setTimeout(() => create3DGift(card, giftObj.type, 120), 0);
+    }
+    
+    setTimeout(() => { popup.remove(); }, 2800);
   }
 
   // 6. РЫНОК NFT
@@ -1426,18 +1987,23 @@
     grid.innerHTML = '';
     
     NFT_GIFTS.forEach(g => {
-      grid.innerHTML += `
-        <div class="nft-market-item" onclick="buyNFT('${g.id}', '${g.name}', ${g.price}, '${g.modelClass}')">
-          <div class="gift-model ${g.modelClass}" style="transform: scale(1.2); margin-bottom: 10px;"></div>
-          <div style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 5px;">${g.name}</div>
-          <div style="font-size: 12px; color: var(--gold);">💎 ${g.price}</div>
-        </div>
-      `;
+      const item = document.createElement('div');
+      item.className = 'nft-market-item';
+      item.onclick = () => buyNFT(g.id, g.name, g.price, g.type);
+      
+      const canvasWrap = document.createElement('div');
+      canvasWrap.className = 'nft-market-canvas-wrap';
+      
+      item.innerHTML = `<div style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 5px;">${g.name}</div><div style="font-size: 14px; font-weight: 700; color: var(--gold);">💎 ${g.price}</div>`;
+      item.insertBefore(canvasWrap, item.firstChild);
+      
+      grid.appendChild(item);
+      setTimeout(() => create3DGift(canvasWrap, g.type, 80), 0);
     });
     document.getElementById('nftMarketModal').classList.add('show');
   }
 
-  function buyNFT(giftId, name, price, modelClass) {
+  function buyNFT(giftId, name, price, type) {
     if (state.glass < price) { alert('Недостаточно Glass!'); return; }
     
     let totalChance = NFT_BACKGROUNDS.reduce((sum, b) => sum + b.chance, 0);
@@ -1463,7 +2029,7 @@
         price: price,
         date: Date.now(),
         isNFT: true,
-        modelClass: modelClass,
+        type: type,
         bg: selectedBg.bg,
         bgId: selectedBg.id,
         giftId: newNumber
@@ -1479,7 +2045,7 @@
       
       setTimeout(() => {
         document.getElementById('nftMarketModal').classList.remove('show');
-      }, 2500);
+      }, 2800);
     });
   }
 
@@ -1530,7 +2096,7 @@
     document.getElementById('ctxOverlay').classList.remove('show');
     const emojis = ['❤️','👍','😂','😮','😢','🔥','🎉','💩'];
     let html = '<div style="display:flex; justify-content:space-around; padding:10px;">';
-    emojis.forEach(e => { html += `<span style="font-size:24px; cursor:pointer;" onclick="applyReaction('${e}')">${e}</span>`; });
+    emojis.forEach(e => { html += `<span style="font-size:24px; cursor:pointer; transition: transform 0.2s;" onclick="applyReaction('${e}')" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform='scale(1)'">${e}</span>`; });
     html += '</div>';
     document.getElementById('ctxList').innerHTML = html;
     document.getElementById('ctxOverlay').classList.add('show');
@@ -1571,7 +2137,7 @@
     }
   }
 
-  // 8. ЛЕНТА (FEED)
+  // 8. ЛЕНТА (FEED) + КОММЕНТАРИИ
   function renderFeed() {
     db.ref('posts').on('value', snapshot => {
       const posts = snapshot.val() || {};
@@ -1584,6 +2150,7 @@
       arr.forEach(p => {
         const isLiked = p.likes && p.likes[state.uid];
         const likesCount = p.likes ? Object.keys(p.likes).length : 0;
+        const commentsCount = p.comments ? Object.keys(p.comments).length : 0;
         const author = ALL_USERS[p.authorUid] || {};
         
         let pollHtml = '';
@@ -1599,26 +2166,72 @@
           `;
         }
 
-        container.innerHTML += `
-          <div class="feed-post">
+        let commentsHtml = '';
+        if (p.comments) {
+          Object.keys(p.comments).forEach(cid => {
+            const c = p.comments[cid];
+            const cAuthor = ALL_USERS[c.authorUid] || { nick: 'Пользователь', avatar: null };
+            commentsHtml += `
+              <div class="comment-item">
+                <div class="comment-avatar">${cAuthor.avatar ? `<img src="${cAuthor.avatar}">` : '👤'}</div>
+                <div class="comment-body">
+                  <div class="comment-author">${cAuthor.nick}</div>
+                  <div>${c.text}</div>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        const postHtml = `
+          <div class="feed-post" id="post-${p.key}">
             <div class="feed-header">
               <div class="feed-avatar" onclick="openUserProfile('${p.authorUid}')"><img src="${author.avatar || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'}"></div>
               <div class="feed-info">
                 <div class="feed-name" onclick="openUserProfile('${p.authorUid}')">${author.nick || 'Пользователь'} <span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span></div>
                 <div class="feed-time">${new Date(p.timestamp).toLocaleString()}</div>
               </div>
-              <button class="btn-subscribe" onclick="toggleSubscribe('${p.authorUid}')" style="background: ${author.followers && author.followers[state.uid] ? 'var(--panel)' : 'var(--accent)'}; border: none; color: #fff; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer;">${author.followers && author.followers[state.uid] ? 'Вы подписаны' : 'Подписаться'}</button>
+              <button class="btn-subscribe" onclick="toggleSubscribe('${p.authorUid}')" style="background: ${author.followers && author.followers[state.uid] ? 'var(--panel)' : 'linear-gradient(135deg, #1d9bf0, #0d6efd)'}; border: none; color: #fff; padding: 6px 12px; border-radius: 16px; font-size: 12px; cursor: pointer; font-weight: 600; transition: all 0.25s var(--ease-spring); box-shadow: 0 4px 12px rgba(29,155,240,0.3);">${author.followers && author.followers[state.uid] ? 'Вы подписаны' : 'Подписаться'}</button>
             </div>
             ${p.isPoll ? pollHtml : `<div class="feed-content">${p.text || ''}</div>`}
             ${p.image ? `<img src="${p.image}" class="feed-media">` : ''}
             <div class="feed-actions">
               <div class="action-item ${isLiked ? 'liked' : ''}" onclick="toggleLike('${p.key}')">${isLiked ? '❤️' : '🤍'} ${likesCount}</div>
-              <div class="action-item">💬 0</div>
+              <div class="action-item" onclick="toggleComments('${p.key}')">💬 ${commentsCount}</div>
               <div class="action-item">↪️</div>
+            </div>
+            <div class="comments-section" id="comments-${p.key}">
+              <div id="comments-list-${p.key}">${commentsHtml}</div>
+              <div class="comment-input-row">
+                <input type="text" class="comment-input" id="comment-input-${p.key}" placeholder="Написать комментарий..." onkeydown="if(event.key==='Enter')addComment('${p.key}')">
+                <button class="comment-send" onclick="addComment('${p.key}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+              </div>
             </div>
           </div>
         `;
+        container.innerHTML += postHtml;
       });
+    });
+  }
+
+  function toggleComments(postKey) {
+    const section = document.getElementById(`comments-${postKey}`);
+    if (section) {
+      section.classList.toggle('show');
+    }
+  }
+
+  function addComment(postKey) {
+    const input = document.getElementById(`comment-input-${postKey}`);
+    const text = input.value.trim();
+    if (!text) return;
+    
+    db.ref(`posts/${postKey}/comments`).push({
+      authorUid: state.uid,
+      text: text,
+      timestamp: Date.now()
+    }).then(() => {
+      input.value = '';
     });
   }
 
@@ -1671,7 +2284,7 @@
       if (!u) return;
       
       list.innerHTML += `
-        <div style="display:flex; align-items:center; gap:10px; padding:5px; border-radius:8px; cursor:pointer;" onclick="toggleGroupMember('${cid}', this)">
+        <div style="display:flex; align-items:center; gap:10px; padding:6px; border-radius:8px; cursor:pointer; transition: background 0.2s;" onclick="toggleGroupMember('${cid}', this)" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
           <input type="checkbox" style="pointer-events:none;">
           <div class="chat-avatar" style="width:30px; height:30px; font-size:12px;">${u.avatar ? `<img src="${u.avatar}">` : '👤'}</div>
           <div style="font-size:14px;">${u.nick}</div>
@@ -1688,16 +2301,20 @@
     createType = type;
     const btnChat = document.getElementById('createChatBtn');
     const btnChannel = document.getElementById('createChannelBtn');
+    const channelInput = document.getElementById('channelUsernameInput');
+    
     if (type === 'chat') {
-      btnChat.style.background = 'var(--accent)';
+      btnChat.style.background = 'linear-gradient(135deg, #1d9bf0, #0d6efd)';
       btnChat.style.color = '#fff';
       btnChannel.style.background = 'transparent';
       btnChannel.style.color = 'var(--text)';
+      channelInput.style.display = 'none';
     } else {
-      btnChannel.style.background = 'var(--accent)';
+      btnChannel.style.background = 'linear-gradient(135deg, #1d9bf0, #0d6efd)';
       btnChannel.style.color = '#fff';
       btnChat.style.background = 'transparent';
       btnChat.style.color = 'var(--text)';
+      channelInput.style.display = 'block';
     }
   }
 
@@ -1729,11 +2346,23 @@
     const name = document.getElementById('groupNameInput').value.trim();
     if (!name) { alert('Введите название'); return; }
     
+    let channelUsername = document.getElementById('channelUsernameInput').value.trim();
+    if (createType === 'channel') {
+       if (!channelUsername) { alert('Введите @username для канала'); return; }
+       if (!channelUsername.startsWith('@')) channelUsername = '@' + channelUsername;
+       channelUsername = channelUsername.toLowerCase();
+       
+       const taken = Object.values(ALL_GROUPS).some(g => g.username && g.username.toLowerCase() === channelUsername);
+       if (taken) { alert('Этот юзернейм уже занят!'); return; }
+    }
+    
     const groupId = 'group_' + Date.now();
     const groupData = {
       isGroup: true,
       isChannel: createType === 'channel',
       name: name,
+      username: createType === 'channel' ? channelUsername : null,
+      verified: false,
       avatar: groupAvatarBase64,
       owner: state.uid,
       members: {
@@ -1767,11 +2396,32 @@
     document.getElementById(id).classList.add('active'); 
   }
   
+  function moveBubble(btn) {
+    const bubble = document.getElementById('navBubble');
+    const nav = document.getElementById('bottomNav');
+    if (!bubble || !nav || !btn) return;
+    
+    const navRect = nav.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    const bubbleWidth = 60; // fixed width from CSS
+    
+    // Calculate center of the button relative to nav
+    const btnCenter = (btnRect.left - navRect.left) + (btnRect.width / 2);
+    
+    // We want the bubble's center to align with the button's center
+    const leftPos = btnCenter - (bubbleWidth / 2);
+    
+    bubble.style.transform = `translateX(${leftPos}px)`;
+  }
+
   function switchPage(page, btn) { 
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); 
     document.getElementById('page-' + page).classList.add('active'); 
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); 
-    if (btn) btn.classList.add('active'); 
+    if (btn) {
+      btn.classList.add('active');
+      moveBubble(btn);
+    }
     
     const titles = { chats: 'Чаты', feed: 'Лента', profile: 'Профиль', settings: 'Настройки' };
     document.getElementById('pageTitle').innerText = titles[page];
@@ -1811,13 +2461,16 @@
         arr.forEach(g => {
           const bgStyle = g.bg || '#1a1a2e';
           const displayId = g.giftId || '—';
+          const giftObj = [...REGULAR_GIFTS, ...NFT_GIFTS].find(x => x.name === g.name);
+          const type = giftObj ? giftObj.type : 'diamond';
           
-          grid.innerHTML += `
-            <div class="gift-card" style="background: ${bgStyle};" onclick="showGiftDetails('${g.id}', '${state.uid}')">
-              <div class="gift-card-id">#${displayId}</div>
-              <div class="gift-model ${g.modelClass || 'model-diamond'}"></div>
-            </div>
-          `;
+          const card = document.createElement('div');
+          card.className = 'gift-card';
+          card.style.background = bgStyle;
+          card.onclick = () => showGiftDetails(g.id, state.uid);
+          card.innerHTML = `<div class="gift-card-id">#${displayId}</div>`;
+          grid.appendChild(card);
+          setTimeout(() => create3DGift(card, type, 60), 0);
         });
       }
     });
@@ -1846,9 +2499,9 @@
       const u = ALL_USERS[uid];
       if (!u) return;
       container.innerHTML += `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:var(--panel); padding:10px; border-radius:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:var(--panel); padding:12px; border-radius:12px;">
           <div style="color:#fff;">${u.nick}</div>
-          <button class="modal-btn cancel" style="width:auto; padding:5px 10px; margin:0;" onclick="unblock('${uid}')">Разблокировать</button>
+          <button class="modal-btn cancel" style="width:auto; padding:6px 12px; margin:0;" onclick="unblock('${uid}')">Разблокировать</button>
         </div>
       `;
     });
@@ -1902,11 +2555,32 @@
     if (type === 'delete') { db.ref('users/' + targetUid + '/deleted').set(true); db.ref('users/' + targetUid + '/nick').set('Аккаунт удален'); }
     alert('Готово!');
   }
+  
+  function adminActionChannel(type, give) {
+    let un = document.getElementById('adminVerifyChannelInput').value.trim();
+    if (!un.startsWith('@')) un = '@' + un;
+    
+    let targetGid = Object.keys(ALL_GROUPS).find(k => ALL_GROUPS[k].username && ALL_GROUPS[k].username.toLowerCase() === un.toLowerCase());
+    if (!targetGid) { alert('Канал не найден'); return; }
+
+    if (type === 'verify_channel') db.ref('groups/' + targetGid + '/verified').set(give);
+    alert('Готово!');
+  }
 
   // Глобальная инициализация при загрузке
   window.onload = () => {
     setTimeout(() => {
       if (!state.uid) showScreen('welcomeScreen');
+      
+      // Init nav bubble position
+      const activeBtn = document.querySelector('.nav-btn.active');
+      if (activeBtn) moveBubble(activeBtn);
+      
+      // Handle window resize to reposition bubble
+      window.addEventListener('resize', () => {
+        const active = document.querySelector('.nav-btn.active');
+        if (active) moveBubble(active);
+      });
     }, 1000);
   };
 </script>
