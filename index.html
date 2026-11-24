@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover.0, maximum-scale=1.0, user-scalable=no">
 <title>GlassChat</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color:transparent; }
@@ -348,6 +348,19 @@
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 0; }
+.profile-header{background:linear-gradient(160deg,rgba(29,155,240,.13),rgba(139,92,246,.09));border:1px solid rgba(255,255,255,.09);border-radius:0 0 28px 28px;margin:0 8px;}.settings-subtab .poll-box{margin-bottom:12px;}#userProfileModal .modal-card{border-radius:30px;background:rgba(8,12,22,.92);}
+
+.user-profile-sheet{padding:0!important;overflow:hidden!important;background:rgba(8,12,22,.97)!important;border-radius:28px!important;max-width:440px!important;}
+.user-profile-cover{height:120px;background:radial-gradient(circle at 20% 20%,rgba(29,155,240,.8),transparent 50%),linear-gradient(130deg,#12162c,#301b48);}
+.user-profile-main{padding:0 20px 18px;text-align:center;}
+.user-profile-avatar{width:96px;height:96px;margin:-48px auto 12px;border:4px solid #10121b;background:#25283a;}
+.profile-close{position:absolute;right:14px;top:14px;z-index:4;background:rgba(0,0,0,.5);color:white;border:1px solid #ffffff33;border-radius:50%;width:36px;height:36px;font-size:18px;}
+.user-profile-sheet .profile-stats{justify-content:center;margin-top:12px;}
+
+
+  .settings-list-item{width:100%;display:flex;align-items:center;justify-content:space-between;padding:17px 16px;border:1px solid rgba(255,255,255,.1);border-radius:17px;background:var(--panel);color:var(--text);font-size:16px;font-weight:650;text-align:left;cursor:pointer;}
+  .settings-list-item:active{transform:scale(.985)}
+  @media(max-width:480px){.settings-list-item{padding:16px 14px;font-size:15px}}
 </style>
 </head>
 <body>
@@ -367,6 +380,13 @@
 </svg>
 
 <div class="screen active" id="loaderScreen"><div class="spinner"></div></div>
+<script>
+// Independent fallback, unaffected by Firebase initialization errors.
+(function(){ setTimeout(function(){
+ var l=document.getElementById('loaderScreen'), w=document.getElementById('welcomeScreen');
+ if(l && l.classList.contains('active')) { l.classList.remove('active'); if(w) w.classList.add('active'); }
+},8000); })();
+</script>
 
 <div class="screen" id="welcomeScreen">
   <div class="welcome-logo">💬</div>
@@ -462,6 +482,7 @@
       <div class="profile-online">в сети</div>
       
       <div class="profile-username" id="profileUsername">@username</div>
+      <div id="profileAnonNumber" style="display:none;font-weight:800;color:#b9d8ff;font-size:19px;letter-spacing:1px;margin:6px 0 12px;"></div>
       <div class="profile-join-date" id="profileJoinDate">📅 На GlassChat с 7 нояб. 2026 г.</div>
       
       <div class="profile-stats">
@@ -483,21 +504,24 @@
 
   <!-- SETTINGS PAGE -->
   <div class="page" id="page-settings">
-    <div style="padding: 20px;">
-      <div style="margin-bottom: 20px;">
-        <div style="font-weight: 700; margin-bottom: 10px; color: var(--accent);">Конфиденциальность</div>
-        <label style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #fff;">
-          <span>Скрыть "в сети"</span>
-          <input type="checkbox" id="setHideOnline">
-        </label>
+    <div style="padding:16px;">
+      <div id="settingsMenuList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:15px;">
+        <button class="settings-list-item" onclick="showSettingsTab('privacy')"><span>🔒 Конфиденциальность</span><span>›</span></button>
+        <button class="settings-list-item" onclick="showSettingsTab('chat')"><span>💬 Настройки чата</span><span>›</span></button>
+        <button class="settings-list-item" onclick="openNFTMarket()"><span>💎 Рынок NFT</span><span>›</span></button>
+        <button class="settings-list-item" onclick="doLogout()" style="color:#ff8b8b"><span>↪ Выход из аккаунта</span><span>›</span></button>
       </div>
-      <div>
-        <div style="font-weight: 700; margin-bottom: 10px; color: var(--accent);">Черный список</div>
-        <div id="blacklistContainer"></div>
-      </div>
-      <div style="margin-top: 20px;">
-        <button class="btn-main" onclick="openNFTMarket()" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">Рынок NFT</button>
-      </div>
+      <div id="settingsDetailHeader" style="display:none;margin-bottom:12px"><button class="modal-btn cancel" onclick="showSettingsTab('menu')">‹ Настройки</button><div id="settingsDetailTitle" style="font-size:20px;font-weight:800;margin-top:12px"></div></div>
+      <section id="settings-privacy" class="settings-subtab" style="display:none">
+        <div class="poll-box"><b>Статус активности</b><label style="display:flex;justify-content:space-between;gap:12px;margin-top:15px;align-items:center"><span>Скрывать точный статус (показывать «был недавно»)</span><input type="checkbox" id="setHideOnline"></label></div>
+        <div class="poll-box"><b>Черный список</b><div id="blacklistContainer" style="margin-top:10px"></div></div>
+      </section>
+      <section id="settings-chat" class="settings-subtab" style="display:none">
+        <div class="poll-box"><b>Размер текста</b><input id="chatFontSize" type="range" min="13" max="22" value="15" style="width:100%;margin-top:12px" oninput="applyChatFont()"><div id="fontSizeLabel">15 px</div></div>
+        <div class="poll-box"><b>Обои чата</b><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="modal-btn" style="width:auto" onclick="setChatWallpaper('default')">Стандартные</button><button class="modal-btn" style="width:auto" onclick="setChatWallpaper('blue')">Синий градиент</button><button class="modal-btn" style="width:auto" onclick="setChatWallpaper('purple')">Фиолетовый</button><button class="modal-btn" style="width:auto" onclick="setChatWallpaper('night')">Ночь</button><button class="modal-btn" style="width:auto" onclick="setChatWallpaper('mint')">Мята</button></div>
+          <label class="modal-btn cancel" style="display:block;text-align:center;margin-top:12px">Свои обои<input type="file" accept="image/*" id="customWallpaperInput" style="display:none" onchange="uploadChatWallpaper(event)"></label>
+        </div></section>
     </div>
   </div>
 
@@ -534,7 +558,7 @@
      </div>
   </div>
   
-  <div class="input-row">
+  <div class="input-row" id="chatInputRow">
     <button class="icon-btn" onclick="openGiftPicker()" style="color: var(--gold); font-size: 24px;">🎁</button>
     <input type="text" id="msgInput" placeholder="Написать сообщение..." onkeydown="if(event.key==='Enter')sendMessage()" oninput="handleTyping()">
     <button class="send-btn" onclick="sendMessage()"><svg><use href="#icon-send"></use></svg></button>
@@ -550,27 +574,49 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="userProfileModal">
-  <div class="modal-card">
-    <div class="profile-header" style="padding-top: 0; border: none;">
-      <div class="profile-avatar" id="upAvatar"><span>👤</span></div>
-      <div class="profile-name" id="upName">Имя</div>
-      <div class="profile-online" id="upStatus">в сети</div>
-      <div class="profile-username" id="upUsername">@username</div>
+<!-- CHANNEL PROFILE MODAL -->
+<div class="modal-overlay" id="channelProfileModal">
+  <div class="modal-card" style="padding-top: 0;">
+    <div class="profile-header" style="padding-top: 20px; border: none;">
+      <div class="profile-avatar" id="cpAvatar" style="background: #333; font-size: 40px;">👥</div>
+      <div class="profile-name" id="cpName">Название канала</div>
+      <div class="profile-username" id="cpUsername" style="color: var(--text-muted); margin-bottom: 10px;">@username</div>
       
-      <div class="profile-stats">
-        <div class="stat-item"><span class="stat-val" id="upFollowers">0</span><span class="stat-lbl">Подписчики</span></div>
-        <div class="stat-item"><span class="stat-val" id="upFollowing">0</span><span class="stat-lbl">Подписки</span></div>
+      <div class="profile-stats" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+        <div class="stat-item" style="align-items: center;"><span class="stat-val" id="cpSubsCount">0</span><span class="stat-lbl">подписчиков</span></div>
       </div>
       
-      <button class="btn-main" id="upSubscribeBtn" onclick="toggleSubscribe(state.viewedProfileId)">Подписаться</button>
-    </div>
-    <div id="upGiftsSection" style="margin-top: 15px; display: none;">
-      <div class="gifts-title">Подарки</div>
-      <div class="gifts-grid" id="upGiftsList"></div>
+      <div style="font-size: 14px; color: var(--text-muted); text-align: center; margin: 15px 0 20px; padding: 0 20px;" id="cpDesc">Описание канала</div>
+      
+      <button class="btn-main" id="cpSubscribeBtn" onclick="toggleSubscribeChannel(state.viewedChannelId)">Подписаться</button>
+      <button class="btn-secondary" id="cpEditBtn" onclick="openEditChannelModal()" style="display:none; margin-top: 10px;">Редактировать</button>
     </div>
     
-    <button class="modal-btn cancel" onclick="document.getElementById('userProfileModal').classList.remove('show')">Закрыть</button>
+    <div id="cpGiftsSection" style="margin-top: 15px;">
+      <div class="gifts-title">Подарки канала</div>
+      <div class="gifts-grid" id="cpGiftsList"></div>
+    </div>
+    
+    <button class="modal-btn cancel" style="margin-top: 15px;" onclick="document.getElementById('channelProfileModal').classList.remove('show')">Закрыть</button>
+  </div>
+</div>
+
+<!-- EDIT CHANNEL MODAL -->
+<div class="modal-overlay" id="editChannelModal">
+  <div class="modal-card">
+    <div class="modal-title">Редакция</div>
+    
+    <div class="avatar-upload" id="editChannelAvatarPreview" onclick="document.getElementById('editChannelAvatarInput').click()" style="width: 80px; height: 80px; margin: 0 auto 15px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden;">
+      <span>📷</span>
+    </div>
+    <input type="file" id="editChannelAvatarInput" accept="image/*" hidden onchange="previewEditChannelAvatar(event)">
+    
+    <input type="text" id="editChannelNameInput" class="modal-input" placeholder="Название">
+    <input type="text" id="editChannelUsernameInput" class="modal-input" placeholder="@username">
+    <input type="text" id="editChannelDescInput" class="modal-input" placeholder="Описание">
+    
+    <button class="modal-btn" onclick="saveChannelEdit()">Сохранить</button>
+    <button class="modal-btn cancel" onclick="document.getElementById('editChannelModal').classList.remove('show')">Отмена</button>
   </div>
 </div>
 
@@ -656,6 +702,25 @@
   </div>
 </div>
 
+
+<!-- USER PROFILE SHEET (restored markup for existing profile functions) -->
+<div class="modal-overlay" id="userProfileModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal-card user-profile-sheet">
+    <button class="profile-close" onclick="document.getElementById('userProfileModal').classList.remove('show')">✕</button>
+    <div class="user-profile-cover"></div>
+    <div class="user-profile-main">
+      <div class="profile-avatar user-profile-avatar" id="upAvatar">👤</div>
+      <div class="profile-name" id="upName">Пользователь</div>
+      <div class="profile-username" id="upUsername">@username</div>
+      <div class="profile-online" id="upStatus">был недавно</div>
+      <div class="profile-stats"><div class="stat-item"><span class="stat-val" id="upFollowers">0</span><span class="stat-lbl">Подписчики</span></div><div class="stat-item"><span class="stat-val" id="upFollowing">0</span><span class="stat-lbl">Подписки</span></div></div>
+      <button class="modal-btn" id="upSubscribeBtn" onclick="toggleSubscribe(state.viewedProfileId)">Подписаться</button>
+    </div>
+    <div class="gifts-section" id="upGiftsSection"><div class="gifts-title">Подарки</div><div class="gifts-grid" id="upGiftsList"></div></div>
+    <button class="modal-btn cancel" onclick="startChatWith(state.viewedProfileId)">Написать</button>
+  </div>
+</div>
+
 <!-- ADMIN MODALS -->
 <div class="modal-overlay" id="adminAuthModal">
   <div class="modal-card admin-panel">
@@ -676,6 +741,7 @@
       <button class="admin-tab" onclick="switchAdminTab(this, 'admin-glass')">GLASS</button>
       <button class="admin-tab" onclick="switchAdminTab(this, 'admin-premium')">PREM</button>
       <button class="admin-tab" onclick="switchAdminTab(this, 'admin-delete')">KILL</button>
+      <button class="admin-tab" onclick="switchAdminTab(this, 'admin-anon')">+888</button>
     </div>
     <div id="admin-verify" class="admin-content active">
       <input type="text" id="adminVerifyInput" class="admin-input" placeholder="TARGET @USERNAME">
@@ -716,6 +782,7 @@
         <button class="admin-btn red" onclick="adminAction('premium', false)">REM PREM</button>
       </div>
     </div>
+    <div id="admin-anon" class="admin-content"><input id="adminAnonUser" class="admin-input" placeholder="TARGET @USERNAME"><input id="adminAnonDigits" class="admin-input" placeholder="888 + digits (e.g. 1234567)" inputmode="numeric"><button class="admin-btn green" onclick="adminAssignAnon()">ВЫДАТЬ +888</button><button class="admin-btn red" onclick="adminRemoveAnon()">ОТЗЫВ НОМЕРА</button></div>
     <div id="admin-delete" class="admin-content">
       <input type="text" id="adminDeleteInput" class="admin-input" placeholder="TARGET @USERNAME">
       <button class="admin-btn red" onclick="adminAction('delete')">DELETE ACCOUNT 🗑</button>
@@ -754,9 +821,9 @@
   let state = { 
     uid: null, nick: '', username: '', avatar: null, glass: 0, 
     verified_dev: false, verified_tester: false, verified_owner: false, premium: false,
-    settings: { hideOnline: false },
+    settings: { hideOnline: false }, anonNumber: null,
     currentChatId: null, unread: {}, pinnedChats: {}, contacts: {}, followers: {}, following: {}, 
-    viewedProfileId: null, blockedUsers: {}, pinnedMessages: {}
+    viewedProfileId: null, viewedChannelId: null, blockedUsers: {}, pinnedMessages: {}
   };
   let currentMessagesListener = null;
   let activeCtxChatId = null;
@@ -767,6 +834,8 @@
   let groupAvatarBase64 = null;
   let selectedGroupMembers = [];
   let createType = 'chat';
+  
+  let editChannelAvatarBase64 = null;
 
   const REGULAR_GIFTS = [
     { id: 'bear', name: 'Мишка', price: 15, type: 'bear' },
@@ -1234,6 +1303,8 @@
 
   // 1. АВТОРИЗАЦИЯ
   auth.onAuthStateChanged(user => {
+    clearTimeout(loaderFailsafe);
+    loaderResolved = true;
     if (user) {
       state.uid = user.uid;
       
@@ -1249,7 +1320,7 @@
         state.verified_tester = data.verified_tester || false;
         state.verified_owner = data.verified_owner || false;
         state.premium = data.premium || false;
-        state.settings = data.settings || { hideOnline: false };
+        state.settings = data.settings || { hideOnline: false }; state.anonNumber=data.anonNumber||null; state.chatPrefs=data.chatPrefs||{}; applyChatPrefs();
         state.contacts = data.contacts || {};
         state.pinnedChats = data.pinnedChats || {};
         state.followers = data.followers || {};
@@ -1274,6 +1345,7 @@
 
       db.ref('groups').on('value', snapshot => {
         ALL_GROUPS = snapshot.val() || {};
+        ensureGlassChatMembership();
         if (state.currentChatId && state.currentChatId.startsWith('group_')) {
           updateChatHeader(state.currentChatId);
         }
@@ -1296,14 +1368,41 @@
       }, 100);
 
       if (!state.settings.hideOnline) {
-        db.ref('users/' + user.uid + '/online').set(true);
-        db.ref('users/' + user.uid + '/online').onDisconnect().set(false);
+        db.ref('users/' + user.uid + '/online').set(true); db.ref('users/'+user.uid+'/lastSeen').set(firebase.database.ServerValue.TIMESTAMP);
+        db.ref('users/' + user.uid + '/online').onDisconnect().set(false); db.ref('users/'+user.uid+'/lastSeen').onDisconnect().set(firebase.database.ServerValue.TIMESTAMP);
       }
 
     } else {
       showScreen('welcomeScreen');
     }
   });
+
+  // --- FIX: надежное завершение загрузки (не зависать на спиннере) ---
+  let loaderResolved = false;
+  function finishInitialLoader(screenId) {
+    if (loaderResolved) return;
+    loaderResolved = true;
+    showScreen(screenId);
+  }
+  // Firebase auth callback normally decides the screen; if network/CDN hangs,
+  // fall back to welcome screen rather than leaving a permanent spinner.
+  const loaderFailsafe = setTimeout(() => {
+    const loader = document.getElementById('loaderScreen');
+    if (loader && loader.classList.contains('active')) {
+      console.warn('GlassChat: auth initialization timed out; showing welcome screen.');
+      finishInitialLoader('welcomeScreen');
+    }
+  }, 12000);
+  try {
+    if (!window.firebase || !firebase.auth || !firebase.database) {
+      clearTimeout(loaderFailsafe);
+      finishInitialLoader('welcomeScreen');
+    }
+  } catch (loaderCheckError) {
+    clearTimeout(loaderFailsafe);
+    finishInitialLoader('welcomeScreen');
+  }
+  // --- end loader fix ---
 
   // 2. РЕГИСТРАЦИЯ И ВХОД
   let tempEmail, tempPass;
@@ -1349,6 +1448,23 @@
         settings: { hideOnline: false },
         followers: {}, following: {}, joinDate: Date.now()
       });
+
+      // Автоподписка на @GlassChat
+      let glassChatChannelId = null;
+      for(let gid in ALL_GROUPS) {
+        if(String(ALL_GROUPS[gid].username||'').toLowerCase() === '@glasschat') {
+          glassChatChannelId = gid;
+          break;
+        }
+      }
+      
+      if (glassChatChannelId) {
+        let updates = {};
+        updates['user_chats/' + cred.user.uid + '/' + glassChatChannelId] = true;
+        updates['groups/' + glassChatChannelId + '/members/' + cred.user.uid] = true;
+        await db.ref().update(updates);
+      }
+
     } catch(e) { alert('Ошибка: ' + e.message); }
   }
 
@@ -1368,6 +1484,14 @@
   function sendMessage() {
     const text = document.getElementById('msgInput').value.trim();
     if (!text || !state.currentChatId) return;
+    
+    if (state.currentChatId.startsWith('group_')) {
+      const group = ALL_GROUPS[state.currentChatId];
+      if (group && group.isChannel && group.owner !== state.uid) {
+        alert('Только создатель канала может писать сообщения!');
+        return;
+      }
+    }
     
     const chatId = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
     
@@ -1401,6 +1525,18 @@
     if (currentMessagesListener) currentMessagesListener.off();
     
     const chatIdKey = chatId.startsWith('group_') ? chatId : [state.uid, chatId].sort().join('_');
+    
+    // Check if channel and hide input if not owner
+    if (chatId.startsWith('group_')) {
+      const group = ALL_GROUPS[chatId];
+      if (group && group.isChannel && group.owner !== state.uid) {
+        document.getElementById('chatInputRow').style.display = 'none';
+      } else {
+        document.getElementById('chatInputRow').style.display = 'flex';
+      }
+    } else {
+      document.getElementById('chatInputRow').style.display = 'flex';
+    }
     
     if (!chatId.startsWith('group_')) {
       db.ref('users/' + state.uid + '/pinned/' + chatId).once('value').then(snap => {
@@ -1454,9 +1590,6 @@
            forwardHtml = `<div class="msg-forwarded">Переслано от ${m.forwardedFrom}</div>`;
         }
         
-        let reactionHtml = '';
-        if (m.reaction) reactionHtml = `<div class="msg-reactions">${m.reaction}</div>`;
-        
         if (isGroup) {
           const sender = ALL_USERS[m.senderId] || { nick: 'Пользователь', avatar: null };
           let avatarHtml = sender.avatar ? `<img src="${sender.avatar}">` : '👤';
@@ -1469,10 +1602,6 @@
               <div class="msg-name">${sender.nick} <span style="color:var(--text-muted); font-size:12px; font-weight:normal;">${new Date(m.timestamp).toLocaleTimeString()}</span></div>
             </div>
             <div class="msg-text">${forwardHtml}${replyHtml}${content}</div>
-            <div class="msg-reactions">
-               <div class="reaction-pill gold">💎 ${Math.floor(Math.random()*100)}</div>
-               <div class="reaction-pill red">❤️ ${Math.floor(Math.random()*50)}</div>
-            </div>
           `;
           container.appendChild(wrapper);
         } else {
@@ -1542,8 +1671,7 @@
   function openCurrentProfile() {
     if (!state.currentChatId) return;
     if (state.currentChatId.startsWith('group_')) {
-      const group = ALL_GROUPS[state.currentChatId];
-      if(group) alert(`Канал: ${group.name}\nПодписчиков: ${Object.keys(group.members).length}`);
+      openChannelProfile(state.currentChatId);
     } else {
       openUserProfile(state.currentChatId);
     }
@@ -1571,6 +1699,20 @@
         renderChatList();
       });
     });
+  }
+
+  let glassChatMembershipCheckFor = null;
+  function ensureGlassChatMembership(){
+    if(!state.uid || glassChatMembershipCheckFor===state.uid) return;
+    const channelId=Object.keys(ALL_GROUPS||{}).find(id=>{
+      const g=ALL_GROUPS[id]; return g && String(g.username||'').trim().toLowerCase()==='@glasschat' && g.isChannel;
+    });
+    if(!channelId) return;
+    glassChatMembershipCheckFor=state.uid;
+    const updates={};
+    updates['user_chats/'+state.uid+'/'+channelId]=true;
+    updates['groups/'+channelId+'/members/'+state.uid]=true;
+    db.ref().update(updates).catch(err=>{glassChatMembershipCheckFor=null;console.warn('GlassChat channel join failed',err);});
   }
 
   function renderChatList() {
@@ -1703,6 +1845,9 @@
   }
 
   // 5. ПРОФИЛЬ И ПОДАРКИ
+
+  function toggleSubscribe(uid){if(!uid||uid===state.uid)return;const following=!!(ALL_USERS[uid]&&ALL_USERS[uid].followers&&ALL_USERS[uid].followers[state.uid]);const updates={};if(following){updates['users/'+uid+'/followers/'+state.uid]=null;updates['users/'+state.uid+'/following/'+uid]=null;}else{updates['users/'+uid+'/followers/'+state.uid]=true;updates['users/'+state.uid+'/following/'+uid]=true;}db.ref().update(updates);}
+
   function openUserProfile(uid) {
     if (!uid) return;
     state.viewedProfileId = uid;
@@ -1721,10 +1866,11 @@
     let badgeHtml = u.verified_dev ? '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>' : '';
     document.getElementById('upName').innerHTML = `${u.nick} ${badgeHtml}`;
     document.getElementById('upUsername').innerText = u.username;
+    let anon=document.getElementById('upAnonNumber'); if(!anon){anon=document.createElement('div');anon.id='upAnonNumber';anon.style.cssText='font-weight:800;color:#b9d8ff;font-size:19px;letter-spacing:1px;margin:6px 0';document.getElementById('upUsername').insertAdjacentElement('afterend',anon);} if(anon){anon.textContent=u.anonNumber?'+'+u.anonNumber:'';anon.style.display=u.anonNumber?'block':'none';}
     
-    let isActuallyOnline = u.online && !(u.settings && u.settings.hideOnline);
-    document.getElementById('upStatus').innerText = isActuallyOnline ? 'в сети' : 'был(а) недавно';
-    document.getElementById('upStatus').style.color = isActuallyOnline ? 'var(--success)' : 'var(--text-muted)';
+    let isActuallyOnline = !!u.online;
+    document.getElementById('upStatus').innerText = (u.settings&&u.settings.hideOnline)?'был(а) недавно':(isActuallyOnline?'в сети':'был(а) недавно');
+    document.getElementById('upStatus').style.color = (isActuallyOnline && !(u.settings&&u.settings.hideOnline)) ? 'var(--success)' : 'var(--text-muted)';
     
     const followersCount = u.followers ? Object.keys(u.followers).length : 0;
     const followingCount = u.following ? Object.keys(u.following).length : 0;
@@ -1779,9 +1925,153 @@
     document.getElementById('userProfileModal').classList.add('show');
   }
 
-  function showGiftDetails(giftKey, uid) {
+  // CHANNEL PROFILE
+  function openChannelProfile(gid) {
+    if (!gid) return;
+    state.viewedChannelId = gid;
+    
+    db.ref('groups/' + gid).once('value').then(snap => {
+      const g = snap.val();
+      if (!g) return;
+      
+      document.getElementById('cpAvatar').innerHTML = g.avatar ? `<img src="${g.avatar}">` : '👥';
+      let verifiedIcon = g.verified ? '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>' : '';
+      document.getElementById('cpName').innerHTML = `${g.name} ${verifiedIcon}`;
+      document.getElementById('cpUsername').innerText = g.username || '';
+      
+      const subsCount = g.members ? Object.keys(g.members).length : 0;
+      document.getElementById('cpSubsCount').innerText = subsCount;
+      
+      document.getElementById('cpDesc').innerText = g.description || 'Нет описания';
+      
+      const btn = document.getElementById('cpSubscribeBtn');
+      const editBtn = document.getElementById('cpEditBtn');
+      
+      const isOwner = g.owner === state.uid;
+      if (isOwner) {
+        editBtn.style.display = 'block';
+        btn.style.display = 'none';
+      } else {
+        editBtn.style.display = 'none';
+        btn.style.display = 'block';
+        
+        if (g.members && g.members[state.uid]) {
+          btn.innerText = 'Отписаться';
+          btn.style.background = 'var(--panel)';
+        } else {
+          btn.innerText = 'Подписаться';
+          btn.style.background = 'linear-gradient(135deg, #1d9bf0, #0d6efd)';
+        }
+      }
+      
+      // Load channel gifts
+      const cpGiftsList = document.getElementById('cpGiftsList');
+      cpGiftsList.innerHTML = '';
+      
+      db.ref('groups/' + gid + '/gifts').once('value').then(gsnap => {
+        const gifts = gsnap.val();
+        if (gifts) {
+          const arr = Object.keys(gifts).map(k => ({ id: k, ...gifts[k] })).sort((a,b) => b.date - a.date);
+          arr.forEach(g => {
+            const bgStyle = g.bg || '#1a1a2e';
+            const displayId = g.giftId || '—';
+            const giftObj = [...REGULAR_GIFTS, ...NFT_GIFTS].find(x => x.name === g.name);
+            const type = giftObj ? giftObj.type : 'diamond';
+            
+            const card = document.createElement('div');
+            card.className = 'gift-card';
+            card.style.background = bgStyle;
+            card.onclick = () => showGiftDetails(g.id, gid, true); // true for channel
+            card.innerHTML = `<div class="gift-card-id">#${displayId}</div>`;
+            cpGiftsList.appendChild(card);
+            
+            setTimeout(() => create3DGift(card, type, 60), 0);
+          });
+        }
+      });
+      
+      document.getElementById('channelProfileModal').classList.add('show');
+    });
+  }
+
+  function toggleSubscribeChannel(gid) {
+    if (!gid || !ALL_GROUPS[gid]) return;
+    const isSubscribed = ALL_GROUPS[gid].members && ALL_GROUPS[gid].members[state.uid];
+    
+    let updates = {};
+    if (isSubscribed) {
+      updates['groups/' + gid + '/members/' + state.uid] = null;
+      updates['user_chats/' + state.uid + '/' + gid] = null;
+    } else {
+      updates['groups/' + gid + '/members/' + state.uid] = true;
+      updates['user_chats/' + state.uid + '/' + gid] = true;
+    }
+    db.ref().update(updates).then(() => {
+      db.ref('groups/'+gid+'/members').once('value').then(ms=>{
+        const count=ms.val()?Object.keys(ms.val()).length:0;
+        const c=document.getElementById('cpSubsCount'); if(c)c.innerText=count;
+      });
+      openChannelProfile(gid);
+    });
+  }
+
+  function openEditChannelModal() {
+    if (!state.viewedChannelId) return;
+    const g = ALL_GROUPS[state.viewedChannelId];
+    if (!g) return;
+    
+    editChannelAvatarBase64 = g.avatar;
+    document.getElementById('editChannelAvatarPreview').innerHTML = g.avatar ? `<img src="${g.avatar}">` : '<span>📷</span>';
+    document.getElementById('editChannelNameInput').value = g.name || '';
+    document.getElementById('editChannelUsernameInput').value = g.username || '';
+    document.getElementById('editChannelDescInput').value = g.description || '';
+    
+    document.getElementById('channelProfileModal').classList.remove('show');
+    document.getElementById('editChannelModal').classList.add('show');
+  }
+
+  function previewEditChannelAvatar(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = ev => { 
+      editChannelAvatarBase64 = ev.target.result; 
+      document.getElementById('editChannelAvatarPreview').innerHTML = `<img src="${editChannelAvatarBase64}">`; 
+    };
+    r.readAsDataURL(file);
+  }
+
+  function saveChannelEdit() {
+    if (!state.viewedChannelId) return;
+    const g = ALL_GROUPS[state.viewedChannelId];
+    if (g.owner !== state.uid) { alert('Нет прав'); return; }
+    
+    const newName = document.getElementById('editChannelNameInput').value.trim();
+    let newUsername = document.getElementById('editChannelUsernameInput').value.trim();
+    const newDesc = document.getElementById('editChannelDescInput').value.trim();
+    
+    if (!newName) { alert('Введите название'); return; }
+    if (newUsername && !newUsername.startsWith('@')) newUsername = '@' + newUsername;
+    
+    let updates = {
+      ['groups/' + state.viewedChannelId + '/name']: newName,
+      ['groups/' + state.viewedChannelId + '/username']: newUsername || null,
+      ['groups/' + state.viewedChannelId + '/description']: newDesc,
+      ['groups/' + state.viewedChannelId + '/avatar']: editChannelAvatarBase64
+    };
+    
+    db.ref().update(updates).then(() => {
+      document.getElementById('editChannelModal').classList.remove('show');
+      openChannelProfile(state.viewedChannelId);
+      renderChatList();
+    });
+  }
+
+  function showGiftDetails(giftKey, id, isChannel = false) {
     activeGiftDetailKey = giftKey;
-    db.ref('users/' + uid + '/gifts/' + giftKey).once('value').then(snap => {
+    const path = isChannel ? 'groups/' + id + '/gifts/' + giftKey : 'users/' + id + '/gifts/' + giftKey;
+    
+    db.ref(path).once('value').then(snap => {
       const g = snap.val();
       if (!g) return;
       
@@ -1796,7 +2086,12 @@
       }
       
       document.getElementById('nftDetailBg').innerHTML = bgName + ' <span style="background: rgba(29,155,240,0.2); color: #1d9bf0; padding: 2px 6px; border-radius: 6px; font-size: 11px; margin-left: 5px;">' + bgChance + '%</span>';
-      document.getElementById('nftDetailOwner').innerText = uid === state.uid ? 'Вы' : (ALL_USERS[uid] ? ALL_USERS[uid].nick : 'Неизвестно');
+      
+      if (isChannel) {
+        document.getElementById('nftDetailOwner').innerText = ALL_GROUPS[id].name;
+      } else {
+        document.getElementById('nftDetailOwner').innerText = id === state.uid ? 'Вы' : (ALL_USERS[id] ? ALL_USERS[id].nick : 'Неизвестно');
+      }
       
       const card = document.getElementById('nftDetailCard');
       card.style.background = g.bg || '#1a1a2e';
@@ -1805,6 +2100,16 @@
       const giftObj = [...REGULAR_GIFTS, ...NFT_GIFTS].find(x => x.name === g.name);
       if (giftObj) {
         create3DGift(card, giftObj.type, 250);
+      }
+      
+      // Only allow selling if it's my profile gift (not channel gift, unless I'm owner?)
+      const sellBtn = document.querySelector('#nftDetailsModal button[onclick="sellNFT()"]');
+      if (sellBtn) {
+        if (isChannel || id !== state.uid) {
+          sellBtn.style.display = 'none';
+        } else {
+          sellBtn.style.display = 'flex';
+        }
       }
       
       document.getElementById('nftDetailsModal').classList.add('show');
@@ -1830,28 +2135,6 @@
            updateProfileUI();
        }
     });
-  }
-
-  function toggleSubscribe(targetUid) {
-    if (!targetUid || targetUid === state.uid) return;
-    const targetRef = db.ref('users/' + targetUid + '/followers/' + state.uid);
-    const myRef = db.ref('users/' + state.uid + '/following/' + targetUid);
-    
-    const isSubscribed = ALL_USERS[targetUid] && ALL_USERS[targetUid].followers && ALL_USERS[targetUid].followers[state.uid];
-    
-    if (isSubscribed) {
-      targetRef.remove();
-      myRef.remove();
-    } else {
-      targetRef.set(true);
-      myRef.set(true);
-    }
-    
-    setTimeout(() => {
-      if (state.viewedProfileId === targetUid) {
-        fillUserProfile(targetUid, ALL_USERS[targetUid]);
-      }
-    }, 300);
   }
 
   function openGiftPicker() {
@@ -1919,7 +2202,8 @@
         giftData.bgId = selectedBg.id;
         giftData.giftId = newNumber;
         
-        db.ref('users/' + state.currentChatId + '/gifts').push(giftData);
+        const targetPath = state.currentChatId.startsWith('group_') ? 'groups/' + state.currentChatId + '/gifts' : 'users/' + state.currentChatId + '/gifts';
+        db.ref(targetPath).push(giftData);
         
         const chatIdKey = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
         db.ref('messages/' + chatIdKey).push({ 
@@ -1944,7 +2228,8 @@
       giftData.bg = '#1a1a2e';
       giftData.giftId = '—';
       
-      db.ref('users/' + state.currentChatId + '/gifts').push(giftData);
+      const targetPath = state.currentChatId.startsWith('group_') ? 'groups/' + state.currentChatId + '/gifts' : 'users/' + state.currentChatId + '/gifts';
+      db.ref(targetPath).push(giftData);
       
       const chatIdKey = state.currentChatId.startsWith('group_') ? state.currentChatId : [state.uid, state.currentChatId].sort().join('_');
       db.ref('messages/' + chatIdKey).push({ senderId: state.uid, text: name, type: 'gift', timestamp: Date.now(), bg: '#1a1a2e' });
@@ -2056,7 +2341,12 @@
     list.innerHTML = '';
     
     if (state.currentChatId.startsWith('group_')) {
-      list.innerHTML += `<div class="ctx-item" onclick="alert('Удаление группы в разработке')">🚪 Выйти из группы</div>`;
+      const group = ALL_GROUPS[state.currentChatId];
+      if (group && group.owner === state.uid) {
+        list.innerHTML += `<div class="ctx-item" onclick="document.getElementById('chatMenuModal').classList.remove('show'); openEditChannelModal();">⚙️ Редактировать</div>`;
+      } else {
+        list.innerHTML += `<div class="ctx-item" onclick="alert('Удаление группы в разработке')">🚪 Выйти из группы</div>`;
+      }
     } else {
       const isPinned = state.pinnedChats && state.pinnedChats[state.currentChatId];
       list.innerHTML += `<div class="ctx-item" onclick="togglePinChat()">📌 ${isPinned ? 'Открепить' : 'Закрепить'} чат</div>`;
@@ -2443,6 +2733,7 @@
     let badgeHtml = state.verified_dev ? '<span class="verified-icon"><svg><use href="#icon-verified"></use></svg></span>' : '';
     document.getElementById('profileName').innerHTML = `${state.nick} ${badgeHtml}`;
     document.getElementById('profileUsername').innerText = state.username;
+    const anonEl=document.getElementById('profileAnonNumber'); if(anonEl){anonEl.textContent=state.anonNumber?'+'+state.anonNumber:'';anonEl.style.display=state.anonNumber?'block':'none';}
     
     if (state.avatar) {
       document.getElementById('profileAvatar').innerHTML = `<img src="${state.avatar}"><div class="edit-avatar-btn" onclick="document.getElementById('myAvatarInput').click()">✏️</div>`;
@@ -2486,6 +2777,24 @@
     reader.readAsDataURL(file);
   }
 
+  function showSettingsTab(which){
+    const menu=document.getElementById('settingsMenuList'), header=document.getElementById('settingsDetailHeader');
+    const privacy=document.getElementById('settings-privacy'), chat=document.getElementById('settings-chat');
+    if(menu)menu.style.display=which==='menu'?'flex':'none';
+    if(header)header.style.display=(which==='privacy'||which==='chat')?'block':'none';
+    if(privacy)privacy.style.display=which==='privacy'?'block':'none';
+    if(chat)chat.style.display=which==='chat'?'block':'none';
+    const title=document.getElementById('settingsDetailTitle'); if(title)title.textContent=which==='privacy'?'Конфиденциальность':'Настройки чата';
+  }
+  function applyChatPrefs(){const prefs=state.chatPrefs||{};const size=prefs.fontSize||15;const slider=document.getElementById('chatFontSize');if(slider)slider.value=size;const label=document.getElementById('fontSizeLabel');if(label)label.textContent=size+' px';document.querySelectorAll('.messages').forEach(el=>el.style.fontSize=size+'px');if(prefs.wallpaperImage){document.getElementById('chatView').style.background='center/cover no-repeat url('+JSON.stringify(prefs.wallpaperImage)+')';}else if(prefs.wallpaper){setChatWallpaper(prefs.wallpaper,false);}}
+  function saveChatPrefs(){if(state.uid)db.ref('users/'+state.uid+'/chatPrefs').set(state.chatPrefs||{});}
+  function applyChatFont(){state.chatPrefs=state.chatPrefs||{};state.chatPrefs.fontSize=Number(document.getElementById('chatFontSize').value);applyChatPrefs();saveChatPrefs();}
+  function setChatWallpaper(w,save=true){const colors={default:'var(--bg)',blue:'linear-gradient(135deg,#071b38,#123c77)',purple:'linear-gradient(135deg,#160b2b,#44216d)',night:'linear-gradient(135deg,#020617,#111827)',mint:'linear-gradient(135deg,#052e2b,#134e4a)'};state.chatPrefs=state.chatPrefs||{};state.chatPrefs.wallpaper=w;document.getElementById('chatView').style.background=colors[w]||'var(--bg)';if(save)saveChatPrefs();}
+  function uploadChatWallpaper(e){const f=e.target.files&&e.target.files[0];if(!f)return;if(f.size>2*1024*1024){alert('Изображение максимум 2 МБ');return;}const r=new FileReader();r.onload=ev=>{state.chatPrefs=state.chatPrefs||{};state.chatPrefs.wallpaperImage=ev.target.result;document.getElementById('chatView').style.background='center/cover no-repeat url('+JSON.stringify(ev.target.result)+')';saveChatPrefs();};r.readAsDataURL(f);}
+  function adminFindTarget(){let un=document.getElementById('adminAnonUser').value.trim().toLowerCase();if(!un.startsWith('@'))un='@'+un;return Object.keys(ALL_USERS).find(k=>ALL_USERS[k].username&&ALL_USERS[k].username.toLowerCase()===un);}
+  function adminAssignAnon(){const uid=adminFindTarget();let digits=document.getElementById('adminAnonDigits').value.trim().replace(/^\+?888/, '');if(!uid){alert('Пользователь не найден');return;}if(!/^\d{5,10}$/.test(digits)){alert('После +888 укажите 5–10 цифр');return;}const number='888'+digits;if(Object.values(ALL_USERS).some(u=>u.anonNumber===number)){alert('Этот номер уже выдан');return;}db.ref('users/'+uid+'/anonNumber').set(number).then(()=>alert('Номер +'+number+' выдан'));}
+  function adminRemoveAnon(){const uid=adminFindTarget();if(!uid){alert('Пользователь не найден');return;}db.ref('users/'+uid+'/anonNumber').remove().then(()=>alert('Номер отозван'));}
+
   function renderBlacklist() {
     const container = document.getElementById('blacklistContainer');
     if (!container) return;
@@ -2512,7 +2821,7 @@
   }
 
   document.getElementById('setHideOnline').addEventListener('change', function() {
-    db.ref('users/' + state.uid + '/settings/hideOnline').set(this.checked);
+    db.ref('users/' + state.uid + '/settings/hideOnline').set(this.checked); db.ref('users/'+state.uid+'/lastSeen').set(firebase.database.ServerValue.TIMESTAMP);
   });
 
   // 11. АДМИНКА (Секретная команда)
@@ -2570,7 +2879,9 @@
   // Глобальная инициализация при загрузке
   window.onload = () => {
     setTimeout(() => {
-      if (!state.uid) showScreen('welcomeScreen');
+      const loader = document.getElementById('loaderScreen');
+      if (loader && loader.classList.contains('active')) showScreen('welcomeScreen');
+      if (!state.uid && !document.getElementById('mainScreen').classList.contains('active')) showScreen('welcomeScreen');
       
       // Init nav bubble position
       const activeBtn = document.querySelector('.nav-btn.active');
